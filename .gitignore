@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# local devenv files
+*.mp3
+*.wav
+
+# CMake
+cmake-build-debug/
+
+# CLion
+.idea/
