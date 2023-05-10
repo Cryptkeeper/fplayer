@@ -8,7 +8,7 @@ if (APPLE)
     link_directories(/usr/local/lib)
 endif ()
 
-add_executable(fplayer src/main.c src/audio.c src/audio.h libtinyfseq/tinyfseq.h src/seq.c src/seq.h)
+add_executable(fplayer src/main.c src/audio.c src/audio.h libtinyfseq/tinyfseq.h src/seq.c src/seq.h src/sleep.c src/sleep.h)
 
 if (APPLE)
     target_link_libraries(fplayer libalut.a)
