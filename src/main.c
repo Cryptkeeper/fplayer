@@ -9,9 +9,10 @@
 static void print_usage(void) {
     printf("Usage: fplayer -f=FILE [options] ...\n");
     printf("Options:\n");
-    printf("\t-f=FILE\t\tFSEQ sequence file path (required)\n");
-    printf("\t-a=FILE\t\tAudio override file path\n");
-    printf("\t-h\t\tPrints this message\n");
+    printf("\t-f=FILE\t\tFSEQ v2 sequence file path (required)\n");
+    printf("\t-a=FILE\t\tAudio filepath for playback (defaults to sequence "
+           "preset)\n");
+    printf("\t-h\t\tPrint this message and exit\n");
 }
 
 static PlayerOpts gPlayerOpts;
