@@ -1,0 +1,3 @@
+[submodule "libtinyfseq"]
+	path = libtinyfseq
+	url = git@github.com:Cryptkeeper/libtinyfseq.git

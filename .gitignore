@@ -4,6 +4,7 @@
 # local devenv files
 *.mp3
 *.wav
+*.fseq
 
 # CMake
 cmake-build-debug/
