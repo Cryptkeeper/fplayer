@@ -155,3 +155,14 @@ bool sequenceNextFrame(Sequence *seq) {
 
     return true;
 }
+
+void sequenceGetDuration(Sequence *seq, char *b, int c) {
+    const int fps = 1000 / seq->frameStepTimeMillis;
+
+    long framesRemaining = seq->frameCount;
+    if (seq->currentFrame != -1) framesRemaining -= seq->currentFrame;
+
+    const long seconds = framesRemaining / fps;
+
+    snprintf(b, c, "%02ldm %02lds", seconds / 60, seconds % 60);
+}

@@ -1,36 +1,58 @@
+#include <assert.h>
+#include <getopt.h>
+#include <stdio.h>
+#include <string.h>
+
 #include "audio.h"
-#include "seq.h"
-#include "sleep.h"
+#include "player.h"
 
-static Sequence seq;
-
-static bool next_frame(void) {
-    if (!sequenceNextFrame(&seq)) return false;
-
-    printf("%d - %d\n", seq.currentFrame, seq.frameCount);
-
-    return true;
+static void print_usage(void) {
+    printf("Usage: fplayer -f=FILE [options] ...\n");
+    printf("Options:\n");
+    printf("\t-f=FILE\t\tFSEQ sequence file path (required)\n");
+    printf("\t-a=FILE\t\tAudio override file path\n");
+    printf("\t-h\t\tPrints this message\n");
 }
 
+static PlayerOpts gPlayerOpts;
+
 int main(int argc, char **argv) {
-    /*audioInit(&argc, argv);
+    int c;
+    while ((c = getopt(argc, argv, ":hf:a:")) != -1) {
+        switch (c) {
+            case 'h':
+                print_usage();
+                return 0;
+            case ':':
+                fprintf(stderr, "argument is missing option: %c\n", optopt);
+                return 1;
+            case '?':
+            default:
+                fprintf(stderr, "unknown argument: %c\n", optopt);
+                return 1;
+            case 'f':
+                gPlayerOpts.sequenceFilePath = strdup(optarg);
+                assert(gPlayerOpts.sequenceFilePath != NULL);
+                break;
+            case 'a':
+                gPlayerOpts.audioOverrideFilePath = strdup(optarg);
+                assert(gPlayerOpts.audioOverrideFilePath != NULL);
+                break;
+        }
+    }
 
-    audioPlayFile("../The Crypt Jam.wav");
+    if (gPlayerOpts.sequenceFilePath == NULL) {
+        print_usage();
 
-    while (audioCheckPlaying())
-        ;
+        return 1;
+    }
 
-    audioExit();*/
+    argc -= optind;
+    argv += optind;
 
-    sequenceInit(&seq);
+    audioInit(&argc, argv);
 
-    if (sequenceOpen("../test.fseq", &seq)) return 1;
+    const bool err = playerInit(gPlayerOpts);
 
-    printf("%s\n", seq.audioFilePath);
-
-    sleepTimerLoop(next_frame, seq.frameStepTimeMillis);
-
-    sequenceFree(&seq);
-
-    return 0;
+    return err ? 1 : 0;
 }

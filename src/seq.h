@@ -23,4 +23,6 @@ void sequenceFree(Sequence *seq);
 
 bool sequenceNextFrame(Sequence *seq);
 
+void sequenceGetDuration(Sequence *seq, char *b, int c);
+
 #endif//FPLAYER_SEQ_H

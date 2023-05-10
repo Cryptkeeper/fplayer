@@ -46,7 +46,7 @@ void sleepTimerLoop(sleep_fn_t sleep, long millis) {
         markTime(&start);
 
         const bool doContinue = sleep();
-        if (!doContinue) return;
+        if (!doContinue) break;
 
         markTime(&end);
 

@@ -8,10 +8,10 @@ if (APPLE)
     link_directories(/usr/local/lib)
 endif ()
 
-add_executable(fplayer src/main.c src/audio.c src/audio.h libtinyfseq/tinyfseq.h src/seq.c src/seq.h src/sleep.c src/sleep.h)
+add_executable(fplayer src/main.c src/audio.c src/audio.h libtinyfseq/tinyfseq.h src/seq.c src/seq.h src/sleep.c src/sleep.h src/player.c src/player.h)
 
 if (APPLE)
-    target_link_libraries(fplayer libalut.a)
+    target_link_libraries(fplayer libalut.a libserialport.a)
     target_link_libraries(fplayer "-framework OpenAL")
 endif ()
 
