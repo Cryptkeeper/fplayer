@@ -21,6 +21,12 @@ static Sequence gPlaying;
 static bool playerHandleNextFrame(void) {
     if (!sequenceNextFrame(&gPlaying)) return false;
 
+    char duration[128];
+    sequenceGetDuration(&gPlaying, duration, sizeof(duration));
+
+    printf("\r%s", duration);
+    fflush(stdout);
+
     // TODO: handle frame data
 
     return true;
