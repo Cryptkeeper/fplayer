@@ -71,7 +71,6 @@ static void sequenceGetAudioFilePath(FILE *f, struct tf_file_header_t tfHeader,
 
 bool sequenceOpen(const char *filepath, Sequence *seq) {
     FILE *f;
-
     if ((seq->openFile = f = fopen(filepath, "rb")) == NULL) {
         perror("error while opening sequence filepath");
 
@@ -79,7 +78,6 @@ bool sequenceOpen(const char *filepath, Sequence *seq) {
     }
 
     uint8_t b[32];
-
     if (fread(b, sizeof(b), 1, f) == 0) {
         perror("error while reading sequence file header");
 
@@ -87,7 +85,6 @@ bool sequenceOpen(const char *filepath, Sequence *seq) {
     }
 
     struct tf_file_header_t tfHeader;
-
     enum tf_err_t tfErr;
     if ((tfErr = tf_read_file_header(b, sizeof(b), &tfHeader, NULL)) != TF_OK) {
         tfPrintError(tfErr, "error when deserializing sequence file header");
@@ -133,7 +130,6 @@ bool sequenceNextFrame(Sequence *seq) {
     if (seq->currentFrame >= seq->frameCount) return false;
 
     uint8_t *frameData = seq->currentFrameData;
-
     if (frameData == NULL)
         frameData = seq->currentFrameData = malloc(seq->channelCount);
 

@@ -58,7 +58,7 @@ bool playerInit(PlayerOpts opts) {
         ;
 
     // cleanup resources
-    audioExit();
+    audioStop();
 
     sequenceFree(&gPlaying);
 
