@@ -7,8 +7,8 @@
 
 static void channelMapPut(ChannelMap *map, const ChannelNode *node) {
     if (node->id >= map->size) {
-        const int oldSize = map->size;
-        const int newSize = node->id + 1;
+        const uint16_t oldSize = map->size;
+        const uint16_t newSize = node->id + 1;
 
         map->size = newSize;
         map->nodes = realloc(map->nodes, sizeof(ChannelNode) * newSize);

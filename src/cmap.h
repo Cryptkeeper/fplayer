@@ -12,7 +12,7 @@ typedef struct channel_node_t {
 
 typedef struct channel_map_t {
     ChannelNode *nodes;
-    int size;
+    uint16_t size;
 } ChannelMap;
 
 bool channelMapInit(ChannelMap *map, const char *filepath);
