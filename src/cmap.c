@@ -36,6 +36,8 @@ static bool channelMapParseCSV(ChannelMap *map, char *b) {
     char *lStart = NULL;
     char *lEnd = b;
 
+    int lines = 0;
+
     while ((lStart = strsep(&lEnd, "\n")) != NULL) {
         // ignoring empty new lines
         if (strlen(lStart) == 0) continue;
@@ -64,12 +66,16 @@ static bool channelMapParseCSV(ChannelMap *map, char *b) {
                             channelMapParseAttr(sStart, UINT16_MAX);
                     break;
                 default:
-                    continue;
+                    assert(false);
             }
 
             channelMapPut(map, &channelNode);
         }
+
+        lines += 1;
     }
+
+    printf("loaded %d channel maps\n", lines);
 
     return false;
 }
