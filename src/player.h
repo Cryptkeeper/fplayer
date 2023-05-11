@@ -6,6 +6,7 @@
 typedef struct player_opts_t {
     char *sequenceFilePath;
     char *audioOverrideFilePath;
+    char *channelMapFilePath;
 } PlayerOpts;
 
 bool playerInit(PlayerOpts opts);

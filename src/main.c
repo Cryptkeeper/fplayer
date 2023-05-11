@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "audio.h"
+#include "cmap.h"
 #include "player.h"
 #include "serial.h"
 
@@ -13,6 +14,7 @@ static void printUsage(void) {
     printf("Usage: fplayer -f=FILE [options] ...\n");
     printf("Options:\n");
     printf("\t-f <file>\t\tFSEQ v2 sequence file path (required)\n");
+    printf("\t-c <file>\t\tNetwork channel map file path\n");
     printf("\t-a <file>\t\tOverride audio with specified filepath\n");
     printf("\t-d <device name>\tDevice name for serial port connection\n");
     printf("\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n");
@@ -27,7 +29,7 @@ static SerialOpts gSerialOpts = {
 
 int main(int argc, char **argv) {
     int c;
-    while ((c = getopt(argc, argv, ":hf:a:d:b:")) != -1) {
+    while ((c = getopt(argc, argv, ":hf:c:a:d:b:")) != -1) {
         switch (c) {
             case 'h':
                 printUsage();
@@ -45,6 +47,11 @@ int main(int argc, char **argv) {
             case 'f':
                 gPlayerOpts.sequenceFilePath = strdup(optarg);
                 assert(gPlayerOpts.sequenceFilePath != NULL);
+                break;
+
+            case 'c':
+                gPlayerOpts.channelMapFilePath = strdup(optarg);
+                assert(gPlayerOpts.channelMapFilePath != NULL);
                 break;
 
             case 'a':
@@ -82,8 +89,13 @@ int main(int argc, char **argv) {
 
     audioInit(&argc, argv);
 
+    ChannelMap map;
+    if (channelMapInit(&map, gPlayerOpts.channelMapFilePath)) return 1;
+
     if (serialInit(gSerialOpts)) return 1;
     if (playerInit(gPlayerOpts)) return 1;
+
+    channelMapFree(&map);
 
     audioExit();
 
