@@ -71,12 +71,22 @@ bool serialInit(SerialOpts opts) {
 
 static uint8_t gEncodeBuffer[64];
 
+static bool serialChannelHasChanged(ChannelNode *node, uint8_t intensity) {
+    const bool hasChanged =
+            node->hasLastIntensity && node->lastIntensity != intensity;
+
+    node->lastIntensity = intensity;
+    node->hasLastIntensity = true;
+
+    return hasChanged;
+}
+
 static void serialWriteChannelData(ChannelNode *node, uint8_t intensity) {
+    if (!serialChannelHasChanged(node, intensity)) return;
+
     static struct lor_effect_setintensity_t gSetEffect;
 
     gSetEffect.intensity = lor_intensity_curve_vendor((float) intensity / 255);
-
-    // TODO: avoid duplicate writes
 
     const int written = lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY,
                                                  &gSetEffect, node->circuit - 1,

@@ -8,6 +8,10 @@ typedef struct channel_node_t {
     uint16_t id;
     uint8_t unit;
     uint16_t circuit;
+
+    bool hasLastIntensity : 1;
+
+    uint8_t lastIntensity;
 } ChannelNode;
 
 typedef struct channel_map_t {
