@@ -8,12 +8,15 @@
 #include "../libtinyfseq/tinyfseq.h"
 
 #define tfPrintError(err, msg)                                                 \
-    if (err != TF_OK) {                                                        \
-        fprintf(stderr, "libtinyfseq error (version %s)\n", TINYFSEQ_VERSION); \
-        fprintf(stderr, "%s (%d)\n", tf_err_str(err), err);                    \
-        fprintf(stderr, "%s\n", msg);                                          \
-        fprintf(stderr, "%s#L%d\n", __FILE_NAME__, __LINE__ - 1);              \
-    }
+    do {                                                                       \
+        if (err != TF_OK) {                                                    \
+            fprintf(stderr, "libtinyfseq error (version %s)\n",                \
+                    TINYFSEQ_VERSION);                                         \
+            fprintf(stderr, "%s (%d)\n", tf_err_str(err), err);                \
+            fprintf(stderr, "%s\n", msg);                                      \
+            fprintf(stderr, "%s#L%d\n", __FILE_NAME__, __LINE__ - 1);          \
+        }                                                                      \
+    } while (0)
 
 void sequenceInit(Sequence *seq) {
     memset(seq, 0, sizeof(Sequence));

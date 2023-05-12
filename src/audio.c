@@ -5,7 +5,7 @@
 #include <AL/alut.h>
 
 #define alPrintError(msg)                                                      \
-    {                                                                          \
+    do {                                                                       \
         ALenum err;                                                            \
         if ((err = alGetError()) != AL_NO_ERROR) {                             \
             fprintf(stderr, "OpenAL error (version 0x%04x)\n", AL_VERSION);    \
@@ -13,10 +13,10 @@
             fprintf(stderr, "%s\n", msg);                                      \
             fprintf(stderr, "%s#L%d\n", __FILE_NAME__, __LINE__ - 1);          \
         }                                                                      \
-    }
+    } while (0)
 
 #define alutPrintError(msg)                                                    \
-    {                                                                          \
+    do {                                                                       \
         ALenum err;                                                            \
         if ((err = alutGetError()) != ALUT_ERROR_NO_ERROR) {                   \
             fprintf(stderr, "ALUT error (version %d.%d)\n",                    \
@@ -25,7 +25,7 @@
             fprintf(stderr, "%s\n", msg);                                      \
             fprintf(stderr, "%s#L%d\n", __FILE_NAME__, __LINE__ - 1);          \
         }                                                                      \
-    }
+    } while (0)
 
 static ALuint alSource;
 static ALuint alBuffer = AL_NONE;

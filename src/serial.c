@@ -10,7 +10,7 @@
 #include "sleep.h"
 
 #define spPrintError(err, msg)                                                 \
-    {                                                                          \
+    do {                                                                       \
         if (err != SP_OK) {                                                    \
             fprintf(stderr, "libserialport error (version %s)\n",              \
                     SP_PACKAGE_VERSION_STRING);                                \
@@ -29,7 +29,7 @@
             fprintf(stderr, "%s\n", msg);                                      \
             fprintf(stderr, "%s#L%d\n", __FILE_NAME__, __LINE__ - 1);          \
         }                                                                      \
-    }
+    } while (0)
 
 static struct sp_port *gPort;
 
