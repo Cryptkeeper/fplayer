@@ -7,6 +7,7 @@
 #include <lightorama/lightorama.h>
 
 #include "cmap.h"
+#include "sleep.h"
 
 #define spPrintError(err, msg)                                                 \
     {                                                                          \
@@ -90,8 +91,23 @@ static void serialWriteChannelData(ChannelNode node, uint8_t intensity) {
     }
 }
 
+static struct timespec gLastHeartbeat;
+static bool gHasSentHeartbeat = false;
+
 static void serialWriteHeartbeat(void) {
-    // TODO: write every N frames
+    // each frame will request a heartbeat be sent
+    // this logic throttles that to every Nms according to a liblightorama magic value
+    if (gHasSentHeartbeat) {
+        struct timespec now;
+        timeGetNow(&now);
+
+        if (timeMillisElapsed(&gLastHeartbeat, &now) < LOR_HEARTBEAT_DELAY_MS) {
+            return;
+        }
+    }
+
+    gHasSentHeartbeat = true;
+    timeGetNow(&gLastHeartbeat);
 
     const int written = lor_write_heartbeat(gEncodeBuffer);
 
