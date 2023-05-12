@@ -152,4 +152,5 @@ void serialExit(void) {
     sp_free_port(gPort);
 
     gPort = NULL;
+    gHasSentHeartbeat = false;
 }
