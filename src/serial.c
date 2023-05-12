@@ -71,7 +71,7 @@ bool serialInit(SerialOpts opts) {
 
 static uint8_t gEncodeBuffer[64];
 
-static void serialWriteChannelData(ChannelNode node, uint8_t intensity) {
+static void serialWriteChannelData(ChannelNode *node, uint8_t intensity) {
     static struct lor_effect_setintensity_t gSetEffect;
 
     gSetEffect.intensity = lor_intensity_curve_vendor((float) intensity / 255);
@@ -79,8 +79,8 @@ static void serialWriteChannelData(ChannelNode node, uint8_t intensity) {
     // TODO: avoid duplicate writes
 
     const int written = lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY,
-                                                 &gSetEffect, node.circuit - 1,
-                                                 node.unit, gEncodeBuffer);
+                                                 &gSetEffect, node->circuit - 1,
+                                                 node->unit, gEncodeBuffer);
 
     if (written > 0) {
         enum sp_return err;
@@ -125,7 +125,7 @@ bool serialWriteFrame(const uint8_t *b, uint32_t size) {
     const ChannelMap *channelMap = channelMapInstance();
 
     for (uint32_t id = 0; id < size; id++) {
-        ChannelNode channelNode;
+        ChannelNode *channelNode;
         if (!channelMapGet(channelMap, id, &channelNode)) continue;
 
         serialWriteChannelData(channelNode, b[id]);

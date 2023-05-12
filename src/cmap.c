@@ -117,10 +117,10 @@ bool channelMapInit(ChannelMap *map, const char *filepath) {
     return err;
 }
 
-bool channelMapGet(const ChannelMap *map, uint32_t id, ChannelNode *node) {
+bool channelMapGet(const ChannelMap *map, uint32_t id, ChannelNode **node) {
     assert(id >= 0 && id < map->size);
 
-    memcpy(node, &map->nodes[id], sizeof(ChannelNode));
+    *node = &map->nodes[id];
 
     return true;
 }
