@@ -13,4 +13,6 @@ bool serialInit(SerialOpts opts);
 
 bool serialWriteFrame(const uint8_t *b, uint32_t size);
 
+void serialExit(void);
+
 #endif//FPLAYER_SERIAL_H

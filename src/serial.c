@@ -133,10 +133,23 @@ bool serialWriteFrame(const uint8_t *b, uint32_t size) {
 
     enum sp_return err;
     if ((err = sp_drain(gPort)) != SP_OK) {
-        spPrintError(err, "error when waiting for serial queue drain");
+        spPrintError(err, "error when waiting for queue drain");
 
         return true;
     }
 
     return false;
+}
+
+void serialExit(void) {
+    if (gPort == NULL) return;
+
+    enum sp_return err;
+    if ((err = sp_close(gPort)) != SP_OK) {
+        spPrintError(err, "error when closing port");
+    }
+
+    sp_free_port(gPort);
+
+    gPort = NULL;
 }

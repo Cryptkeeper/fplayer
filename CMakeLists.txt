@@ -12,7 +12,7 @@ add_executable(fplayer src/main.c src/audio.c src/audio.h libtinyfseq/tinyfseq.h
 
 add_subdirectory(liblightorama)
 
-target_link_libraries(fplayer liblightorama)
+target_link_libraries(fplayer lightorama)
 
 if (APPLE)
     target_link_libraries(fplayer libalut.a libserialport.a)

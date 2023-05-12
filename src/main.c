@@ -95,6 +95,8 @@ int main(int argc, char **argv) {
     if (serialInit(gSerialOpts)) return 1;
     if (playerInit(gPlayerOpts)) return 1;
 
+    serialExit();
+
     channelMapFree(&map);
 
     audioExit();
