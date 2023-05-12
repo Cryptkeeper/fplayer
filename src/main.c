@@ -36,12 +36,12 @@ int main(int argc, char **argv) {
                 return 0;
 
             case ':':
-                fprintf(stderr, "argument is missing option: %c\n", optopt);
+                fprintf(stderr, "option is missing argument: %c\n", optopt);
                 return 1;
 
             case '?':
             default:
-                fprintf(stderr, "unknown argument: %c\n", optopt);
+                fprintf(stderr, "unknown option: %c\n", optopt);
                 return 1;
 
             case 'f':
