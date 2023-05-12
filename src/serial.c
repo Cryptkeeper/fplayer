@@ -71,26 +71,21 @@ bool serialInit(SerialOpts opts) {
 
 static uint8_t gEncodeBuffer[64];
 
-static bool serialChannelHasChanged(ChannelNode *node, uint8_t intensity) {
-    const bool hasChanged =
-            node->hasLastIntensity && node->lastIntensity != intensity;
-
-    node->lastIntensity = intensity;
-    node->hasLastIntensity = true;
-
-    return hasChanged;
-}
-
-static void serialWriteChannelData(ChannelNode *node, uint8_t intensity) {
-    if (!serialChannelHasChanged(node, intensity)) return;
-
+static void serialWriteChannelData(const ChannelMap *map, uint32_t id,
+                                   uint8_t intensity) {
     static struct lor_effect_setintensity_t gSetEffect;
 
     gSetEffect.intensity = lor_intensity_curve_vendor((float) intensity / 255);
 
-    const int written = lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY,
-                                                 &gSetEffect, node->circuit - 1,
-                                                 node->unit, gEncodeBuffer);
+    uint8_t unit;
+    uint16_t circuit;
+    if (!channelMapFind(map, id, &unit, &circuit)) return;
+
+    // TODO: avoid duplicate writes
+
+    const int written =
+            lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY, &gSetEffect,
+                                     circuit - 1, unit, gEncodeBuffer);
 
     if (written > 0) {
         enum sp_return err;
@@ -135,10 +130,7 @@ bool serialWriteFrame(const uint8_t *b, uint32_t size) {
     const ChannelMap *channelMap = channelMapInstance();
 
     for (uint32_t id = 0; id < size; id++) {
-        ChannelNode *channelNode;
-        if (!channelMapGet(channelMap, id, &channelNode)) continue;
-
-        serialWriteChannelData(channelNode, b[id]);
+        serialWriteChannelData(channelMap, id, b[id]);
     }
 
     enum sp_return err;

@@ -5,21 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void channelMapPut(ChannelMap *map, const ChannelNode *node) {
-    if (node->id >= map->size) {
-        const uint16_t oldSize = map->size;
-        const uint16_t newSize = node->id + 1;
+static void channelMapPut(ChannelMap *map, const ChannelRange channelRange) {
+    const int index = map->size;
 
-        map->size = newSize;
-        map->nodes = realloc(map->nodes, sizeof(ChannelNode) * newSize);
+    map->size += 1;
+    map->ranges = reallocf(map->ranges, sizeof(ChannelRange) * map->size);
 
-        assert(map->nodes != NULL);
-
-        memset(&map->nodes[oldSize], 0,
-               sizeof(ChannelNode) * (newSize - oldSize));
-    }
-
-    memcpy(&map->nodes[node->id], node, sizeof(ChannelNode));
+    memcpy(&map[index], &channelRange, sizeof(ChannelRange));
 }
 
 static long channelMapParseAttr(const char *b, long max) {
@@ -48,34 +40,48 @@ static bool channelMapParseCSV(ChannelMap *map, char *b) {
         char *sStart = NULL;
         char *sEnd = lStart;
 
-        ChannelNode channelNode;
+        ChannelRange newChannelRange;
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 5; i++) {
             sStart = strsep(&sEnd, ",");
-            assert(sStart != NULL);
+
+            // ensure all fields are set and read
+            // removing this enables fields to be unexpectedly empty
+            // since the parse loop won't otherwise break
+            assert(sStart != NULL && strlen(sStart) > 0);
 
             switch (i) {
                 case 0:
-                    channelNode.id = channelMapParseAttr(sStart, UINT16_MAX);
+                    newChannelRange.sid =
+                            channelMapParseAttr(sStart, UINT16_MAX);
                     break;
                 case 1:
-                    channelNode.unit = channelMapParseAttr(sStart, UINT8_MAX);
+                    newChannelRange.eid =
+                            channelMapParseAttr(sStart, UINT16_MAX);
                     break;
                 case 2:
-                    channelNode.circuit =
+                    newChannelRange.unit =
+                            channelMapParseAttr(sStart, UINT8_MAX);
+                    break;
+                case 3:
+                    newChannelRange.scircuit =
+                            channelMapParseAttr(sStart, UINT16_MAX);
+                    break;
+                case 4:
+                    newChannelRange.ecircuit =
                             channelMapParseAttr(sStart, UINT16_MAX);
                     break;
                 default:
-                    assert(false);
+                    assert(false && "unreachable statement");
             }
-
-            channelMapPut(map, &channelNode);
         }
+
+        channelMapPut(map, newChannelRange);
 
         lines += 1;
     }
 
-    printf("loaded %d channel maps\n", lines);
+    printf("loaded %d channel map(s)\n", lines);
 
     return false;
 }
@@ -117,23 +123,44 @@ bool channelMapInit(ChannelMap *map, const char *filepath) {
     return err;
 }
 
-bool channelMapGet(const ChannelMap *map, uint32_t id, ChannelNode **node) {
-    assert(id >= 0 && id < map->size);
+static void channelRangeMap(const ChannelRange *range, uint32_t id,
+                            uint8_t *unit, uint16_t *circuit) {
+    // ensure we can reliably map using the configured range
+    assert((range->eid - range->sid) == (range->ecircuit - range->scircuit));
 
-    *node = &map->nodes[id];
+    *unit = range->unit;
 
-    return true;
+    // relativize `id` against the first channel id in `range`, then offset
+    // against output range for final value
+    *circuit = range->scircuit + (id - range->sid);
+}
+
+bool channelMapFind(const ChannelMap *map, uint32_t id, uint8_t *unit,
+                    uint16_t *circuit) {
+    for (int i = 0; i < map->size; i++) {
+        const ChannelRange *range = &map->ranges[i];
+
+        if (id >= range->sid && id <= range->eid) {
+            channelRangeMap(range, id, unit, circuit);
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void channelMapFree(ChannelMap *map) {
-    ChannelNode *nodes;
-    if ((nodes = map->nodes) != NULL) {
-        map->nodes = NULL;
+    ChannelRange *ranges;
+    if ((ranges = map->ranges) != NULL) {
+        map->ranges = NULL;
 
-        free(nodes);
+        free(ranges);
     }
 
     map->size = 0;
+
+    if (gDefaultChannelMap == map) gDefaultChannelMap = NULL;
 }
 
 // we'll likely need multiple ChannelMaps in the future

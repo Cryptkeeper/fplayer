@@ -4,24 +4,27 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct channel_node_t {
-    uint16_t id;
+typedef struct channel_range_t ChannelRange;
+
+struct channel_range_t {
+    uint16_t sid;
+    uint16_t eid;
+
     uint8_t unit;
-    uint16_t circuit;
 
-    bool hasLastIntensity : 1;
-
-    uint8_t lastIntensity;
-} ChannelNode;
+    uint16_t scircuit;
+    uint16_t ecircuit;
+};
 
 typedef struct channel_map_t {
-    ChannelNode *nodes;
-    uint16_t size;
+    ChannelRange *ranges;
+    int size;
 } ChannelMap;
 
 bool channelMapInit(ChannelMap *map, const char *filepath);
 
-bool channelMapGet(const ChannelMap *map, uint32_t id, ChannelNode **node);
+bool channelMapFind(const ChannelMap *map, uint32_t id, uint8_t *unit,
+                    uint16_t *circuit);
 
 void channelMapFree(ChannelMap *map);
 
