@@ -2,6 +2,7 @@
 #define FPLAYER_SERIAL_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct serial_opts_t {
     char *devName;
@@ -9,5 +10,7 @@ typedef struct serial_opts_t {
 } SerialOpts;
 
 bool serialInit(SerialOpts opts);
+
+bool serialWriteFrame(const uint8_t *b, uint32_t size);
 
 #endif//FPLAYER_SERIAL_H

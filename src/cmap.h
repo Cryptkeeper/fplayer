@@ -17,6 +17,10 @@ typedef struct channel_map_t {
 
 bool channelMapInit(ChannelMap *map, const char *filepath);
 
+bool channelMapGet(const ChannelMap *map, uint32_t id, ChannelNode *node);
+
 void channelMapFree(ChannelMap *map);
+
+ChannelMap *channelMapInstance(void);
 
 #endif//FPLAYER_CMAP_H

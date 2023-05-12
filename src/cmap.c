@@ -80,7 +80,12 @@ static bool channelMapParseCSV(ChannelMap *map, char *b) {
     return false;
 }
 
+static ChannelMap *gDefaultChannelMap;
+
 bool channelMapInit(ChannelMap *map, const char *filepath) {
+    assert(gDefaultChannelMap == NULL);
+    gDefaultChannelMap = map;
+
     memset(map, 0, sizeof(ChannelMap));
 
     FILE *f = fopen(filepath, "rb");
@@ -112,6 +117,14 @@ bool channelMapInit(ChannelMap *map, const char *filepath) {
     return err;
 }
 
+bool channelMapGet(const ChannelMap *map, uint32_t id, ChannelNode *node) {
+    assert(id >= 0 && id < map->size);
+
+    memcpy(node, &map->nodes[id], sizeof(ChannelNode));
+
+    return true;
+}
+
 void channelMapFree(ChannelMap *map) {
     ChannelNode *nodes;
     if ((nodes = map->nodes) != NULL) {
@@ -121,4 +134,12 @@ void channelMapFree(ChannelMap *map) {
     }
 
     map->size = 0;
+}
+
+// we'll likely need multiple ChannelMaps in the future
+// this is a temporary helper method for getting the current, global ChannelMap
+ChannelMap *channelMapInstance(void) {
+    assert(gDefaultChannelMap != NULL);
+
+    return gDefaultChannelMap;
 }

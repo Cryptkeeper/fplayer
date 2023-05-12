@@ -10,6 +10,10 @@ endif ()
 
 add_executable(fplayer src/main.c src/audio.c src/audio.h libtinyfseq/tinyfseq.h src/seq.c src/seq.h src/sleep.c src/sleep.h src/player.c src/player.h src/serial.c src/serial.h src/cmap.c src/cmap.h)
 
+add_subdirectory(liblightorama)
+
+target_link_libraries(fplayer liblightorama)
+
 if (APPLE)
     target_link_libraries(fplayer libalut.a libserialport.a)
     target_link_libraries(fplayer "-framework OpenAL")

@@ -1,3 +1,6 @@
 [submodule "libtinyfseq"]
 	path = libtinyfseq
 	url = git@github.com:Cryptkeeper/libtinyfseq.git
+[submodule "liblightorama"]
+	path = liblightorama
+	url = git@github.com:Cryptkeeper/liblightorama.git

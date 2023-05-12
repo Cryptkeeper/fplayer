@@ -4,6 +4,7 @@
 
 #include "audio.h"
 #include "seq.h"
+#include "serial.h"
 #include "sleep.h"
 
 static char *playerGetAudioFile(PlayerOpts opts, Sequence *seq) {
@@ -27,7 +28,10 @@ static bool playerHandleNextFrame(void) {
     printf("\r%s", duration);
     fflush(stdout);
 
-    // TODO: handle frame data
+    if (serialWriteFrame(gPlaying.currentFrameData, gPlaying.channelCount))
+        return false;
+
+    // ...?
 
     return true;
 }
