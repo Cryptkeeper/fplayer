@@ -22,10 +22,17 @@ static Sequence gPlaying;
 static bool playerHandleNextFrame(void) {
     if (!sequenceNextFrame(&gPlaying)) return false;
 
-    char duration[128];
-    sequenceGetDuration(&gPlaying, duration, sizeof(duration));
+    static char gDurationBuf[32];
+    sequenceGetDuration(&gPlaying, gDurationBuf, sizeof(gDurationBuf));
 
-    printf("\r%s", duration);
+    static char gLatencyBuf[16];
+    sleepGetLatency(gLatencyBuf, sizeof(gLatencyBuf));
+
+    static char gStatusBuf[128];
+    snprintf(gStatusBuf, sizeof(gStatusBuf), "%s (drift: %s)", gDurationBuf,
+             gLatencyBuf);
+
+    printf("\r%s", gStatusBuf);
     fflush(stdout);
 
     if (serialWriteFrame(gPlaying.currentFrameData, gPlaying.channelCount))

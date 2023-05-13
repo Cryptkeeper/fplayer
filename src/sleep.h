@@ -11,6 +11,8 @@ long timeMillisElapsed(const struct timespec *start,
 
 void timeSetMillis(struct timespec *spec, long millis);
 
+void sleepGetLatency(char *b, int c);
+
 typedef bool (*sleep_fn_t)(void);
 
 void sleepTimerLoop(sleep_fn_t sleep, long millis);

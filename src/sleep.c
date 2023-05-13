@@ -19,6 +19,33 @@ void timeSetMillis(struct timespec *spec, long millis) {
     spec->tv_nsec = (millis % 1000) * 1000000;
 }
 
+#define gLatencyRecordsCount 20
+
+static long gLatencyRecords[gLatencyRecordsCount];
+static int gNextRecordIndex = 0;
+static int gEndRecordIndex = 0;
+
+static void sleepRecordLatency(long millis) {
+    gLatencyRecords[gNextRecordIndex++] = millis;
+    gNextRecordIndex %= gLatencyRecordsCount;
+
+    if (gNextRecordIndex > gEndRecordIndex) gEndRecordIndex = gNextRecordIndex;
+}
+
+void sleepGetLatency(char *b, int c) {
+    double avg = 0;
+    int n = 1;
+
+    for (int i = 0; i <= gEndRecordIndex; i++) {
+        long latency = gLatencyRecords[i];
+
+        avg += ((double) latency - avg) / n;
+        n++;
+    }
+
+    snprintf(b, c, "%.2fms", avg);
+}
+
 static inline void sleepTimer(long millis, long *latency) {
     struct timespec start, end;
 
@@ -34,7 +61,9 @@ static inline void sleepTimer(long millis, long *latency) {
     // this offsets the timing of the next frame by the difference in duration of
     //  the actual sleep time vs the expected sleep time
     // TODO: there are better ways to handle this using stdev
-    *latency = millis - timeMillisElapsed(&start, &end);
+    long l = *latency = millis - timeMillisElapsed(&start, &end);
+
+    sleepRecordLatency(l);
 }
 
 void sleepTimerLoop(sleep_fn_t sleep, long millis) {
