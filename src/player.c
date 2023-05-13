@@ -7,45 +7,47 @@
 #include "serial.h"
 #include "sleep.h"
 
-static char *playerGetAudioFile(PlayerOpts opts, Sequence *seq) {
+static Sequence gPlaying;
+
+static void playerLogStatus(void) {
+    static char bDuration[64];
+    sequenceGetDuration(&gPlaying, bDuration, sizeof(bDuration));
+
+    static char bDrift[64];
+    sleepGetDrift(bDrift, sizeof(bDrift));
+
+    static char bStatus[256];
+    snprintf(bStatus, sizeof(bStatus), "remaining: %s\t\ttime drift: %s",
+             bDuration, bDrift);
+
+    printf("\r%s", bStatus);
+    fflush(stdout);
+}
+
+static bool playerHandleNextFrame(void) {
+    if (!sequenceNextFrame(&gPlaying)) return false;
+
+    if (serialWriteFrame(gPlaying.currentFrameData, gPlaying.channelCount))
+        return false;
+
+    playerLogStatus();
+
+    return true;
+}
+
+static char *playerGetFirstAudioFile(PlayerOpts opts) {
     if (opts.audioOverrideFilePath != NULL) {
         return opts.audioOverrideFilePath;
-    } else if (seq->audioFilePath != NULL) {
-        return seq->audioFilePath;
+    } else if (gPlaying.audioFilePath != NULL) {
+        return gPlaying.audioFilePath;
     } else {
         return NULL;
     }
 }
 
-static Sequence gPlaying;
-
-static bool playerHandleNextFrame(void) {
-    if (!sequenceNextFrame(&gPlaying)) return false;
-
-    static char gDurationBuf[64];
-    sequenceGetDuration(&gPlaying, gDurationBuf, sizeof(gDurationBuf));
-
-    static char gLatencyBuf[64];
-    sleepGetDrift(gLatencyBuf, sizeof(gLatencyBuf));
-
-    static char gStatusBuf[256];
-    snprintf(gStatusBuf, sizeof(gStatusBuf), "remaining: %s\t\ttime drift: %s",
-             gDurationBuf, gLatencyBuf);
-
-    //printf("\r%s", gStatusBuf);
-    fflush(stdout);
-
-    if (serialWriteFrame(gPlaying.currentFrameData, gPlaying.channelCount))
-        return false;
-
-    // ...?
-
-    return true;
-}
-
 static void playerPlayFirstAudioFile(PlayerOpts opts) {
     // select best audio file and play
-    const char *audioFilePath = playerGetAudioFile(opts, &gPlaying);
+    const char *audioFilePath = playerGetFirstAudioFile(opts);
 
     if (audioFilePath != NULL) {
         printf("preparing to play %s\n", audioFilePath);

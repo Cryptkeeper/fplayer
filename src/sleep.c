@@ -111,9 +111,8 @@ static void sleepTimerTick(int64_t ns) {
     sleepPrecise(ns);
 
     const timeInstant end = timeGetNow();
-    const int64_t driftNs = ns - timeElapsedNs(start, end);
 
-    sleepRecordSample(driftNs);
+    sleepRecordSample(timeElapsedNs(start, end));
 }
 
 void sleepTimerLoop(sleep_fn_t sleep, long millis) {

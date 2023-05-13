@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static ChannelMap gDefaultChannelMap;
-
 static long channelMapParseAttr(const char *b, long max) {
     const long l = strtol(b, NULL, 10);
 
@@ -16,6 +14,8 @@ static long channelMapParseAttr(const char *b, long max) {
     else
         return l;
 }
+
+static ChannelMap gDefaultChannelMap;
 
 static void channelMapPut(const ChannelRange channelRange) {
     const int index = gDefaultChannelMap.size;
