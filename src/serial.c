@@ -71,15 +71,14 @@ bool serialInit(SerialOpts opts) {
 
 static uint8_t gEncodeBuffer[64];
 
-static void serialWriteChannelData(const ChannelMap *map, uint32_t id,
-                                   uint8_t intensity) {
+static void serialWriteChannelData(uint32_t id, uint8_t intensity) {
     static struct lor_effect_setintensity_t gSetEffect;
 
     gSetEffect.intensity = lor_intensity_curve_vendor((float) intensity / 255);
 
     uint8_t unit;
     uint16_t circuit;
-    if (!channelMapFind(map, id, &unit, &circuit)) return;
+    if (!channelMapFind(id, &unit, &circuit)) return;
 
     // TODO: avoid duplicate writes
 
@@ -126,10 +125,8 @@ bool serialWriteFrame(const uint8_t *b, uint32_t size) {
 
     serialWriteHeartbeat();
 
-    const ChannelMap *channelMap = channelMapInstance();
-
     for (uint32_t id = 0; id < size; id++) {
-        serialWriteChannelData(channelMap, id, b[id]);
+        serialWriteChannelData(id, b[id]);
     }
 
     enum sp_return err;

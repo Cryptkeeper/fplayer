@@ -2,10 +2,12 @@
 #define FPLAYER_PLAYER_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct player_opts_t {
     char *sequenceFilePath;
     char *audioOverrideFilePath;
+    uint8_t frameStepTimeOverrideMillis;
     char *channelMapFilePath;
 } PlayerOpts;
 

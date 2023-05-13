@@ -32,7 +32,7 @@ static bool playerHandleNextFrame(void) {
     snprintf(gStatusBuf, sizeof(gStatusBuf), "remaining: %s\t\ttime drift: %s",
              gDurationBuf, gLatencyBuf);
 
-    printf("\r%s", gStatusBuf);
+    //printf("\r%s", gStatusBuf);
     fflush(stdout);
 
     if (serialWriteFrame(gPlaying.currentFrameData, gPlaying.channelCount))
@@ -43,12 +43,7 @@ static bool playerHandleNextFrame(void) {
     return true;
 }
 
-bool playerInit(PlayerOpts opts) {
-    // read and parse sequence file data
-    sequenceInit(&gPlaying);
-
-    if (sequenceOpen(opts.sequenceFilePath, &gPlaying)) return true;
-
+static void playerPlayFirstAudioFile(PlayerOpts opts) {
     // select best audio file and play
     const char *audioFilePath = playerGetAudioFile(opts, &gPlaying);
 
@@ -59,9 +54,25 @@ bool playerInit(PlayerOpts opts) {
     } else {
         printf("no audio file detected using override or via sequence\n");
     }
+}
+
+static long playerGetFrameStepTime(PlayerOpts opts) {
+    if (opts.frameStepTimeOverrideMillis > 0)
+        return opts.frameStepTimeOverrideMillis;
+
+    return gPlaying.frameStepTimeMillis;
+}
+
+bool playerInit(PlayerOpts opts) {
+    // read and parse sequence file data
+    sequenceInit(&gPlaying);
+
+    if (sequenceOpen(opts.sequenceFilePath, &gPlaying)) return true;
+
+    playerPlayFirstAudioFile(opts);
 
     // start sequence timer loop
-    sleepTimerLoop(playerHandleNextFrame, gPlaying.frameStepTimeMillis);
+    sleepTimerLoop(playerHandleNextFrame, playerGetFrameStepTime(opts));
 
     // continue blocking until audio is finished
     // playback will continue until sequence and audio are both complete

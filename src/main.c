@@ -16,6 +16,8 @@ static void printUsage(void) {
     printf("\t-f <file>\t\tFSEQ v2 sequence file path (required)\n");
     printf("\t-c <file>\t\tNetwork channel map file path\n");
     printf("\t-a <file>\t\tOverride audio with specified filepath\n");
+    printf("\t-r <frame ms>\t\tOverride playback frame rate interval (in "
+           "milliseconds)\n");
     printf("\t-d <device name>\tDevice name for serial port connection\n");
     printf("\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n");
     printf("\t-h\t\t\tPrint this message and exit\n");
@@ -29,7 +31,7 @@ static SerialOpts gSerialOpts = {
 
 int main(int argc, char **argv) {
     int c;
-    while ((c = getopt(argc, argv, ":hf:c:a:d:b:")) != -1) {
+    while ((c = getopt(argc, argv, ":hf:c:a:r:d:b:")) != -1) {
         switch (c) {
             case 'h':
                 printUsage();
@@ -58,6 +60,20 @@ int main(int argc, char **argv) {
                 gPlayerOpts.audioOverrideFilePath = strdup(optarg);
                 assert(gPlayerOpts.audioOverrideFilePath != NULL);
                 break;
+
+            case 'r': {
+                const long l = strtol(optarg, NULL, 10);
+
+                if (l <= 0 || l > UINT8_MAX) {
+                    fprintf(stderr,
+                            "invalid frame step time (milliseconds): %s\n",
+                            optarg);
+                    return 1;
+                }
+
+                gPlayerOpts.frameStepTimeOverrideMillis = (uint8_t) l;
+                break;
+            }
 
             case 'd':
                 gSerialOpts.devName = strdup(optarg);
@@ -89,15 +105,14 @@ int main(int argc, char **argv) {
 
     audioInit(&argc, argv);
 
-    ChannelMap map;
-    if (channelMapInit(&map, gPlayerOpts.channelMapFilePath)) return 1;
+    if (channelMapInit(gPlayerOpts.channelMapFilePath)) return 1;
 
     if (serialInit(gSerialOpts)) return 1;
     if (playerInit(gPlayerOpts)) return 1;
 
     serialExit();
 
-    channelMapFree(&map);
+    channelMapFree();
 
     audioExit();
 

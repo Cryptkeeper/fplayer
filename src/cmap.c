@@ -5,14 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void channelMapPut(ChannelMap *map, const ChannelRange channelRange) {
-    const int index = map->size;
-
-    map->size += 1;
-    map->ranges = reallocf(map->ranges, sizeof(ChannelRange) * map->size);
-
-    memcpy(&map[index], &channelRange, sizeof(ChannelRange));
-}
+static ChannelMap gDefaultChannelMap;
 
 static long channelMapParseAttr(const char *b, long max) {
     const long l = strtol(b, NULL, 10);
@@ -24,7 +17,19 @@ static long channelMapParseAttr(const char *b, long max) {
         return l;
 }
 
-static bool channelMapParseCSV(ChannelMap *map, char *b) {
+static void channelMapPut(const ChannelRange channelRange) {
+    const int index = gDefaultChannelMap.size;
+
+    gDefaultChannelMap.size += 1;
+    gDefaultChannelMap.ranges =
+            reallocf(gDefaultChannelMap.ranges,
+                     sizeof(ChannelMap) * gDefaultChannelMap.size);
+
+    memcpy(&gDefaultChannelMap.ranges[index], &channelRange,
+           sizeof(ChannelRange));
+}
+
+static bool channelMapParseCSV(char *b) {
     char *lStart = NULL;
     char *lEnd = b;
 
@@ -76,7 +81,7 @@ static bool channelMapParseCSV(ChannelMap *map, char *b) {
             }
         }
 
-        channelMapPut(map, newChannelRange);
+        channelMapPut(newChannelRange);
 
         lines += 1;
     }
@@ -86,14 +91,7 @@ static bool channelMapParseCSV(ChannelMap *map, char *b) {
     return false;
 }
 
-static ChannelMap *gDefaultChannelMap;
-
-bool channelMapInit(ChannelMap *map, const char *filepath) {
-    assert(gDefaultChannelMap == NULL);
-    gDefaultChannelMap = map;
-
-    memset(map, 0, sizeof(ChannelMap));
-
+bool channelMapInit(const char *filepath) {
     FILE *f = fopen(filepath, "rb");
     if (f == NULL) return true;
 
@@ -102,6 +100,8 @@ bool channelMapInit(ChannelMap *map, const char *filepath) {
     const long filesize = ftell(f);
 
     rewind(f);
+
+    assert(filesize > 0);
 
     char *b = malloc(filesize);
     assert(b != NULL);
@@ -115,7 +115,7 @@ bool channelMapInit(ChannelMap *map, const char *filepath) {
 
     fclose(f);
 
-    const bool err = channelMapParseCSV(map, b);
+    const bool err = channelMapParseCSV(b);
 
     // cleanup local resources in same scope as allocation
     free(b);
@@ -135,10 +135,9 @@ static void channelRangeMap(const ChannelRange *range, uint32_t id,
     *circuit = range->scircuit + (id - range->sid);
 }
 
-bool channelMapFind(const ChannelMap *map, uint32_t id, uint8_t *unit,
-                    uint16_t *circuit) {
-    for (int i = 0; i < map->size; i++) {
-        const ChannelRange *range = &map->ranges[i];
+bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit) {
+    for (int i = 0; i < gDefaultChannelMap.size; i++) {
+        const ChannelRange *range = &gDefaultChannelMap.ranges[i];
 
         if (id >= range->sid && id <= range->eid) {
             channelRangeMap(range, id, unit, circuit);
@@ -150,23 +149,8 @@ bool channelMapFind(const ChannelMap *map, uint32_t id, uint8_t *unit,
     return false;
 }
 
-void channelMapFree(ChannelMap *map) {
-    ChannelRange *ranges;
-    if ((ranges = map->ranges) != NULL) {
-        map->ranges = NULL;
+void channelMapFree(void) {
+    if (gDefaultChannelMap.ranges != NULL) free(gDefaultChannelMap.ranges);
 
-        free(ranges);
-    }
-
-    map->size = 0;
-
-    if (gDefaultChannelMap == map) gDefaultChannelMap = NULL;
-}
-
-// we'll likely need multiple ChannelMaps in the future
-// this is a temporary helper method for getting the current, global ChannelMap
-ChannelMap *channelMapInstance(void) {
-    assert(gDefaultChannelMap != NULL);
-
-    return gDefaultChannelMap;
+    memset(&gDefaultChannelMap, 0, sizeof(ChannelMap));
 }
