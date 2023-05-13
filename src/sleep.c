@@ -1,87 +1,135 @@
 #include "sleep.h"
 
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <time.h>
 
-void timeGetNow(struct timespec *spec) {
-    clock_gettime(CLOCK_MONOTONIC_RAW, spec);
-}
+#include "time.h"
 
-long timeMillisElapsed(const struct timespec *start,
-                       const struct timespec *end) {
-    return (long) ((end->tv_sec - start->tv_sec) * 1000 +
-                   (end->tv_nsec - start->tv_nsec) / 1000000);
-}
+#define gSampleCount 20
 
-void timeSetMillis(struct timespec *spec, long millis) {
-    spec->tv_sec = millis / 1000;
-    spec->tv_nsec = (millis % 1000) * 1000000;
-}
+static int64_t gSampleNs[gSampleCount];
+static int gLastSampleIdx;
 
-#define gLatencyRecordsCount 20
-
-static long gLatencyRecords[gLatencyRecordsCount];
-static int gNextRecordIndex = 0;
-static int gEndRecordIndex = 0;
-
-static void sleepRecordLatency(long millis) {
-    gLatencyRecords[gNextRecordIndex++] = millis;
-    gNextRecordIndex %= gLatencyRecordsCount;
-
-    if (gNextRecordIndex > gEndRecordIndex) gEndRecordIndex = gNextRecordIndex;
-}
-
-void sleepGetLatency(char *b, int c) {
+void sleepGetDrift(char *b, int c) {
     double avg = 0;
     int n = 1;
 
-    for (int i = 0; i <= gEndRecordIndex; i++) {
-        long latency = gLatencyRecords[i];
+    for (int i = 0; i <= gLastSampleIdx; i++) {
+        const int64_t drift = gSampleNs[i];
 
-        avg += ((double) latency - avg) / n;
-        n++;
+        avg += ((double) drift - avg) / n;
+        n += 1;
     }
 
-    snprintf(b, c, "%.2fms", avg);
+    snprintf(b, c, "%.4fms", avg / 1e6);
 }
 
-static inline void sleepTimer(long millis, long *latency) {
-    struct timespec start, end;
+// The original `preciseSleep` function operates using double representation of
+// seconds. My other functions operate off ns precision using int64_t, so you'll
+// see conversions between the two types at code borders, but the core math
+// remains the same.
+static int64_t sleepEstimatedNs(int64_t ns) {
+    double estimate = 5e-3;
 
-    timeGetNow(&start);
+    double sampleMean = 5e-3;
+    double sampleM2 = 0;
+    int64_t sampleCount = 1;
 
-    struct timespec t;
-    timeSetMillis(&t, millis);
+    double remainingTime = (double) ns / 1e9;
 
-    if (nanosleep(&t, NULL) != 0) perror("error while invoking nanosleep");
+    timeInstant start, end;
 
-    timeGetNow(&end);
+    while (remainingTime > estimate) {
+        // measure the nanoseconds it takes for the system to perform
+        // a one millisecond #nanosleep call
+        start = timeGetNow();
 
-    // this offsets the timing of the next frame by the difference in duration of
-    //  the actual sleep time vs the expected sleep time
-    // TODO: there are better ways to handle this using stdev
-    long l = *latency = millis - timeMillisElapsed(&start, &end);
+        static const struct timespec timeOneMs = {
+                .tv_sec = 0,
+                .tv_nsec = 1000000,
+        };
 
-    sleepRecordLatency(l);
+        nanosleep(&timeOneMs, NULL);
+
+        end = timeGetNow();
+
+        const double sSample = (double) timeElapsedNs(start, end) / 1e9;
+        remainingTime -= sSample;
+        sampleCount++;
+
+        const double delta = sSample - sampleMean;
+        sampleMean += delta / sampleCount;
+        sampleM2 += delta * (sSample - sampleMean);
+
+        const double stddev = sqrt(sampleM2 / (sampleCount - 1));
+        estimate = sampleMean + stddev;
+    }
+
+    return (int64_t) (remainingTime * 1e9);
+}
+
+static void sleepSpinLockNs(int64_t ns) {
+    const timeInstant start = timeGetNow();
+
+    timeInstant now;
+
+spin:
+    now = timeGetNow();
+
+    if (timeElapsedNs(start, now) < ns) goto spin;
+}
+
+// This is a modified version of the C++ implementation shown in this article:
+// https://blat-blatnik.github.io/computerBear/making-accurate-sleep-function/
+//
+// This version ports it to C using nanosleep, and makes use of time conversion
+// helper functions provided by fplayer's `time.h`. The two core sleep behaviors:
+//
+// 1. an approximate, repeating millisecond sleep loop
+// and 2. a spin look for nanosecond precision at cost of CPU
+//
+// ...are split into individual functions for readability.
+static inline void sleepPrecise(int64_t ns) {
+    const int64_t preciseTime = sleepEstimatedNs(ns);
+
+    sleepSpinLockNs(preciseTime);
+}
+
+static int gNextSampleIdx = 0;
+
+static inline void sleepRecordSample(int64_t ns) {
+    gSampleNs[gNextSampleIdx++] = ns;
+    gNextSampleIdx %= gSampleCount;
+
+    if (gNextSampleIdx > gLastSampleIdx) gLastSampleIdx = gNextSampleIdx;
+}
+
+static void sleepTimerTick(int64_t ns) {
+    const timeInstant start = timeGetNow();
+
+    sleepPrecise(ns);
+
+    const timeInstant end = timeGetNow();
+    const int64_t driftNs = ns - timeElapsedNs(start, end);
+
+    sleepRecordSample(driftNs);
 }
 
 void sleepTimerLoop(sleep_fn_t sleep, long millis) {
-    struct timespec start, end;
-
-    long latency = 0;
+    timeInstant start, end;
 
     while (true) {
-        timeGetNow(&start);
+        start = timeGetNow();
 
         const bool doContinue = sleep();
         if (!doContinue) break;
 
-        timeGetNow(&end);
+        end = timeGetNow();
 
-        const long remainingTime =
-                millis - timeMillisElapsed(&start, &end) + latency;
+        const int64_t remainingTime =
+                (millis * 1000000) - timeElapsedNs(start, end);
 
-        if (remainingTime > 0) sleepTimer(remainingTime, &latency);
+        if (remainingTime > 0) sleepTimerTick(remainingTime);
     }
 }

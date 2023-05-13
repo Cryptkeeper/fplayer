@@ -7,7 +7,7 @@
 #include <lightorama/lightorama.h>
 
 #include "cmap.h"
-#include "sleep.h"
+#include "time.h"
 
 #define spPrintError(err, msg)                                                 \
     do {                                                                       \
@@ -96,23 +96,22 @@ static void serialWriteChannelData(const ChannelMap *map, uint32_t id,
     }
 }
 
-static struct timespec gLastHeartbeat;
+static timeInstant gLastHeartbeat;
 static bool gHasSentHeartbeat = false;
 
 static void serialWriteHeartbeat(void) {
     // each frame will request a heartbeat be sent
     // this logic throttles that to every Nms according to a liblightorama magic value
     if (gHasSentHeartbeat) {
-        struct timespec now;
-        timeGetNow(&now);
+        const timeInstant now = timeGetNow();
 
-        if (timeMillisElapsed(&gLastHeartbeat, &now) < LOR_HEARTBEAT_DELAY_MS) {
+        if (timeElapsedNs(gLastHeartbeat, now) < LOR_HEARTBEAT_DELAY_NS) {
             return;
         }
     }
 
     gHasSentHeartbeat = true;
-    timeGetNow(&gLastHeartbeat);
+    gLastHeartbeat = timeGetNow();
 
     const int written = lor_write_heartbeat(gEncodeBuffer);
 

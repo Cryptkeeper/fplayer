@@ -22,15 +22,15 @@ static Sequence gPlaying;
 static bool playerHandleNextFrame(void) {
     if (!sequenceNextFrame(&gPlaying)) return false;
 
-    static char gDurationBuf[32];
+    static char gDurationBuf[64];
     sequenceGetDuration(&gPlaying, gDurationBuf, sizeof(gDurationBuf));
 
-    static char gLatencyBuf[16];
-    sleepGetLatency(gLatencyBuf, sizeof(gLatencyBuf));
+    static char gLatencyBuf[64];
+    sleepGetDrift(gLatencyBuf, sizeof(gLatencyBuf));
 
-    static char gStatusBuf[128];
-    snprintf(gStatusBuf, sizeof(gStatusBuf), "%s (drift: %s)", gDurationBuf,
-             gLatencyBuf);
+    static char gStatusBuf[256];
+    snprintf(gStatusBuf, sizeof(gStatusBuf), "remaining: %s\t\ttime drift: %s",
+             gDurationBuf, gLatencyBuf);
 
     printf("\r%s", gStatusBuf);
     fflush(stdout);
