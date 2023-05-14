@@ -168,8 +168,22 @@ bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit,
     return false;
 }
 
-void channelMapFree(void) {
-    if (gDefaultChannelMap.ranges != NULL) free(gDefaultChannelMap.ranges);
+static inline void channelRangeFree(ChannelRange *range) {
+    free(range->data);
+    range->data = NULL;
+}
 
-    memset(&gDefaultChannelMap, 0, sizeof(ChannelMap));
+void channelMapFree(void) {
+    if (gDefaultChannelMap.size > 0) {
+        assert(gDefaultChannelMap.ranges != NULL);
+
+        for (int i = 0; i < gDefaultChannelMap.size; i++) {
+            channelRangeFree(&gDefaultChannelMap.ranges[i]);
+        }
+
+        gDefaultChannelMap.size = 0;
+    }
+
+    free(gDefaultChannelMap.ranges);
+    gDefaultChannelMap.ranges = NULL;
 }

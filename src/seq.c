@@ -112,20 +112,13 @@ bool sequenceOpen(const char *filepath, Sequence *seq) {
 }
 
 void sequenceFree(Sequence *seq) {
-    FILE *f;
-    if ((f = seq->openFile) != NULL) {
-        seq->openFile = NULL;
+    if (seq->openFile != NULL) fclose(seq->openFile);
+    seq->openFile = NULL;
 
-        fclose(f);
-    }
+    free(seq->audioFilePath);
+    seq->audioFilePath = NULL;
 
-    char *audioFilePath;
-    if ((audioFilePath = seq->audioFilePath) != NULL) {
-        seq->audioFilePath = NULL;
-
-        free(audioFilePath);
-    }
-
+    free(seq->currentFrameData);
     seq->currentFrameData = NULL;
 }
 
