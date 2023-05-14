@@ -11,8 +11,11 @@ typedef struct sequence_t {
     uint32_t frameCount;
     uint8_t frameStepTimeMillis;
     char *audioFilePath;
+
     int64_t currentFrame;
     uint8_t *currentFrameData;
+
+    uint8_t *lastFrameData;
 } Sequence;
 
 void sequenceInit(Sequence *seq);

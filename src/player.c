@@ -27,7 +27,8 @@ static void playerLogStatus(void) {
 static bool playerHandleNextFrame(void) {
     if (!sequenceNextFrame(&gPlaying)) return false;
 
-    if (serialWriteFrame(gPlaying.currentFrameData, gPlaying.channelCount))
+    if (serialWriteFrame(gPlaying.currentFrameData, gPlaying.lastFrameData,
+                         gPlaying.channelCount))
         return false;
 
     playerLogStatus();

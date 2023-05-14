@@ -79,12 +79,7 @@ static void serialWriteChannelData(uint32_t id, uint8_t newIntensity) {
 
     uint8_t unit;
     uint16_t circuit;
-    ChannelData *data;
-    if (!channelMapFind(id, &unit, &circuit, &data)) return;
-
-    // avoid duplicate writes of the same intensity value
-    if (data->intensity == newIntensity) return;
-    data->intensity = newIntensity;
+    if (!channelMapFind(id, &unit, &circuit)) return;
 
     const int written =
             lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY, &gSetEffect,
@@ -124,13 +119,16 @@ static void serialWriteHeartbeat(void) {
     }
 }
 
-bool serialWriteFrame(const uint8_t *b, uint32_t size) {
+bool serialWriteFrame(const uint8_t *currentData, const uint8_t *lastData,
+                      uint32_t size) {
     if (gPort == NULL) return false;
 
     serialWriteHeartbeat();
 
     for (uint32_t id = 0; id < size; id++) {
-        serialWriteChannelData(id, b[id]);
+        // avoid duplicate writes of the same intensity value
+        if (currentData[id] != lastData[id])
+            serialWriteChannelData(id, currentData[id]);
     }
 
     enum sp_return err;

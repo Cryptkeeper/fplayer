@@ -11,7 +11,8 @@ typedef struct serial_opts_t {
 
 bool serialInit(SerialOpts opts);
 
-bool serialWriteFrame(const uint8_t *b, uint32_t size);
+bool serialWriteFrame(const uint8_t *currentData, const uint8_t *lastData,
+                      uint32_t size);
 
 void serialExit(void);
 

@@ -120,19 +120,33 @@ void sequenceFree(Sequence *seq) {
 
     free(seq->currentFrameData);
     seq->currentFrameData = NULL;
+
+    free(seq->lastFrameData);
+    seq->lastFrameData = NULL;
 }
 
 bool sequenceNextFrame(Sequence *seq) {
     if (seq->currentFrame >= seq->frameCount) return false;
 
+    uint8_t *lastFrameData = seq->lastFrameData;
+    if (lastFrameData == NULL)
+        lastFrameData = seq->lastFrameData = calloc(seq->channelCount, 1);
+
+    assert(lastFrameData != NULL);
+
     uint8_t *frameData = seq->currentFrameData;
     if (frameData == NULL)
-        frameData = seq->currentFrameData = malloc(seq->channelCount);
+        frameData = seq->currentFrameData = calloc(seq->channelCount, 1);
 
     assert(frameData != NULL);
 
     FILE *f;
     assert((f = seq->openFile) != NULL);
+
+    // copy previous frame data prior to overwrite with new data
+    // this allows the program to more easily diff between the two frames
+    if (seq->currentFrame > 0)
+        memcpy(lastFrameData, frameData, seq->channelCount);
 
     seq->currentFrame += 1;
 

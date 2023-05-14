@@ -19,17 +19,8 @@ static bool channelRangeIsMappable(const ChannelRange range) {
     return true;
 }
 
-static int channelRangeCount(const ChannelRange range) {
-    return range.eid - range.sid;
-}
-
 static void channelMapPut(ChannelRange channelRange) {
     assert(channelRangeIsMappable(channelRange));
-
-    channelRange.data =
-            calloc(channelRangeCount(channelRange), sizeof(ChannelData));
-
-    assert(channelRange.data != NULL);
 
     // append to ChannelMap array
     const int index = gDefaultChannelMap.size;
@@ -147,8 +138,7 @@ bool channelMapInit(const char *filepath) {
     return err;
 }
 
-bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit,
-                    ChannelData **data) {
+bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit) {
     for (int i = 0; i < gDefaultChannelMap.size; i++) {
         const ChannelRange range = gDefaultChannelMap.ranges[i];
 
@@ -159,8 +149,6 @@ bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit,
             // against output range for final value
             *circuit = range.scircuit + (id - range.sid);
 
-            *data = &range.data[id - range.sid];
-
             return true;
         }
     }
@@ -168,22 +156,9 @@ bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit,
     return false;
 }
 
-static inline void channelRangeFree(ChannelRange *range) {
-    free(range->data);
-    range->data = NULL;
-}
-
 void channelMapFree(void) {
-    if (gDefaultChannelMap.size > 0) {
-        assert(gDefaultChannelMap.ranges != NULL);
-
-        for (int i = 0; i < gDefaultChannelMap.size; i++) {
-            channelRangeFree(&gDefaultChannelMap.ranges[i]);
-        }
-
-        gDefaultChannelMap.size = 0;
-    }
-
     free(gDefaultChannelMap.ranges);
     gDefaultChannelMap.ranges = NULL;
+
+    gDefaultChannelMap.size = 0;
 }
