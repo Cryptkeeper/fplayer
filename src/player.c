@@ -17,8 +17,8 @@ static void playerLogStatus(void) {
     sleepGetDrift(bDrift, sizeof(bDrift));
 
     static char bStatus[256];
-    snprintf(bStatus, sizeof(bStatus), "remaining: %s\t\ttime drift: %s",
-             bDuration, bDrift);
+    snprintf(bStatus, sizeof(bStatus), "remaining: %s\t\tdt: %s", bDuration,
+             bDrift);
 
     printf("\r%s", bStatus);
     fflush(stdout);
