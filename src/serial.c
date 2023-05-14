@@ -71,16 +71,20 @@ bool serialInit(SerialOpts opts) {
 
 static uint8_t gEncodeBuffer[64];
 
-static void serialWriteChannelData(uint32_t id, uint8_t intensity) {
+static void serialWriteChannelData(uint32_t id, uint8_t newIntensity) {
     static struct lor_effect_setintensity_t gSetEffect;
 
-    gSetEffect.intensity = lor_intensity_curve_vendor((float) intensity / 255);
+    gSetEffect.intensity =
+            lor_intensity_curve_vendor((float) newIntensity / 255);
 
     uint8_t unit;
     uint16_t circuit;
-    if (!channelMapFind(id, &unit, &circuit)) return;
+    ChannelData *data;
+    if (!channelMapFind(id, &unit, &circuit, &data)) return;
 
-    // TODO: avoid duplicate writes
+    // avoid duplicate writes of the same intensity value
+    if (data->intensity == newIntensity) return;
+    data->intensity = newIntensity;
 
     const int written =
             lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY, &gSetEffect,

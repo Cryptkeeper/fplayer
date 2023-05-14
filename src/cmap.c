@@ -5,19 +5,33 @@
 #include <stdlib.h>
 #include <string.h>
 
-static long channelMapParseAttr(const char *b, long max) {
-    const long l = strtol(b, NULL, 10);
-
-    if (l <= 0) return 0;
-    else if (l >= max)
-        return max;
-    else
-        return l;
-}
-
 static ChannelMap gDefaultChannelMap;
 
-static void channelMapPut(const ChannelRange channelRange) {
+static bool channelRangeIsMappable(const ChannelRange range) {
+    const int rid = range.eid - range.sid;
+    if (rid < 0) return false;
+
+    const int rcircuit = range.ecircuit - range.scircuit;
+    if (rcircuit < 0) return false;
+
+    if (rid != rcircuit) return false;
+
+    return true;
+}
+
+static int channelRangeCount(const ChannelRange range) {
+    return range.eid - range.sid;
+}
+
+static void channelMapPut(ChannelRange channelRange) {
+    assert(channelRangeIsMappable(channelRange));
+
+    channelRange.data =
+            calloc(channelRangeCount(channelRange), sizeof(ChannelData));
+
+    assert(channelRange.data != NULL);
+
+    // append to ChannelMap array
     const int index = gDefaultChannelMap.size;
 
     gDefaultChannelMap.size += 1;
@@ -27,6 +41,16 @@ static void channelMapPut(const ChannelRange channelRange) {
 
     memcpy(&gDefaultChannelMap.ranges[index], &channelRange,
            sizeof(ChannelRange));
+}
+
+static long channelMapParseAttr(const char *b, long max) {
+    const long l = strtol(b, NULL, 10);
+
+    if (l <= 0) return 0;
+    else if (l >= max)
+        return max;
+    else
+        return l;
 }
 
 static bool channelMapParseCSV(char *b) {
@@ -123,24 +147,19 @@ bool channelMapInit(const char *filepath) {
     return err;
 }
 
-static void channelRangeMap(const ChannelRange *range, uint32_t id,
-                            uint8_t *unit, uint16_t *circuit) {
-    // ensure we can reliably map using the configured range
-    assert((range->eid - range->sid) == (range->ecircuit - range->scircuit));
-
-    *unit = range->unit;
-
-    // relativize `id` against the first channel id in `range`, then offset
-    // against output range for final value
-    *circuit = range->scircuit + (id - range->sid);
-}
-
-bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit) {
+bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit,
+                    ChannelData **data) {
     for (int i = 0; i < gDefaultChannelMap.size; i++) {
-        const ChannelRange *range = &gDefaultChannelMap.ranges[i];
+        const ChannelRange range = gDefaultChannelMap.ranges[i];
 
-        if (id >= range->sid && id <= range->eid) {
-            channelRangeMap(range, id, unit, circuit);
+        if (id >= range.sid && id <= range.eid) {
+            *unit = range.unit;
+
+            // relativize `id` against the first channel id in `range`, then offset
+            // against output range for final value
+            *circuit = range.scircuit + (id - range.sid);
+
+            *data = &range.data[id - range.sid];
 
             return true;
         }
