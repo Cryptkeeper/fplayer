@@ -116,5 +116,8 @@ int main(int argc, char **argv) {
 
     audioExit();
 
+    serialOptsFree(&gSerialOpts);
+    playerOptsFree(&gPlayerOpts);
+
     return 0;
 }

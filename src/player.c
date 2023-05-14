@@ -1,11 +1,23 @@
 #include "player.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "audio.h"
 #include "seq.h"
 #include "serial.h"
 #include "sleep.h"
+
+void playerOptsFree(PlayerOpts *opts) {
+    free(opts->sequenceFilePath);
+    opts->sequenceFilePath = NULL;
+
+    free(opts->channelMapFilePath);
+    opts->channelMapFilePath = NULL;
+
+    free(opts->audioOverrideFilePath);
+    opts->audioOverrideFilePath = NULL;
+}
 
 static Sequence gPlaying;
 

@@ -9,6 +9,8 @@ typedef struct serial_opts_t {
     int baudRate;
 } SerialOpts;
 
+void serialOptsFree(SerialOpts *opts);
+
 bool serialInit(SerialOpts opts);
 
 bool serialWriteFrame(const uint8_t *currentData, const uint8_t *lastData,

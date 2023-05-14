@@ -1,6 +1,7 @@
 #include "serial.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <libserialport.h>
 #include <lightorama/easy.h>
@@ -30,6 +31,11 @@
             fprintf(stderr, "%s#L%d\n", __FILE_NAME__, __LINE__ - 1);          \
         }                                                                      \
     } while (0)
+
+void serialOptsFree(SerialOpts *opts) {
+    free(opts->devName);
+    opts->devName = NULL;
+}
 
 static struct sp_port *gPort;
 

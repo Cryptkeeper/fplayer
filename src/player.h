@@ -11,6 +11,8 @@ typedef struct player_opts_t {
     char *channelMapFilePath;
 } PlayerOpts;
 
+void playerOptsFree(PlayerOpts *opts);
+
 bool playerInit(PlayerOpts opts);
 
 #endif//FPLAYER_PLAYER_H
