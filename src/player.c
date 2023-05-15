@@ -1,9 +1,11 @@
 #include "player.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "audio.h"
+#include "pump.h"
 #include "seq.h"
 #include "serial.h"
 #include "sleep.h"
@@ -20,6 +22,7 @@ void playerOptsFree(PlayerOpts *opts) {
 }
 
 static Sequence gPlaying;
+static FramePump gFramePump;
 
 static void playerLogStatus(void) {
     static char bDuration[64];
@@ -29,18 +32,31 @@ static void playerLogStatus(void) {
     sleepGetDrift(bDrift, sizeof(bDrift));
 
     static char bStatus[256];
-    snprintf(bStatus, sizeof(bStatus), "remaining: %s\t\tdt: %s", bDuration,
-             bDrift);
+    snprintf(bStatus, sizeof(bStatus), "remaining: %s\t\tdt: %s\t\tpump: %d",
+             bDuration, bDrift, gFramePump.frameEnd - gFramePump.framePos);
 
     printf("\r%s", bStatus);
     fflush(stdout);
 }
 
+static uint8_t *gLastFrameData;
+
 static bool playerHandleNextFrame(void) {
     if (!sequenceNextFrame(&gPlaying)) return false;
 
-    if (serialWriteFrame(gPlaying.currentFrameData, gPlaying.lastFrameData,
-                         sequenceGetFrameSize(&gPlaying)))
+    // maintain a copy of the previous frame to use for detecting differences
+    const uint32_t frameSize = sequenceGetFrameSize(&gPlaying);
+
+    if (gLastFrameData == NULL) gLastFrameData = malloc(frameSize);
+
+    assert(gLastFrameData != NULL);
+
+    // fetch the current frame data
+    uint8_t *frameDataHead = NULL;
+
+    if (!framePumpGet(&gFramePump, &gPlaying, &frameDataHead)) return false;
+
+    if (serialWriteFrame(frameDataHead, gLastFrameData, frameSize))
         return false;
 
     playerLogStatus();
@@ -82,6 +98,8 @@ bool playerInit(PlayerOpts opts) {
     // read and parse sequence file data
     sequenceInit(&gPlaying);
 
+    framePumpInit(&gFramePump);
+
     if (sequenceOpen(opts.sequenceFilePath, &gPlaying)) return true;
 
     playerPlayFirstAudioFile(opts);
@@ -98,6 +116,11 @@ bool playerInit(PlayerOpts opts) {
     audioStop();
 
     sequenceFree(&gPlaying);
+
+    framePumpFree(&gFramePump);
+
+    free(gLastFrameData);
+    gLastFrameData = NULL;
 
     return false;
 }

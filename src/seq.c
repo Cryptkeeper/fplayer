@@ -7,7 +7,6 @@
 #define TINYFSEQ_IMPLEMENTATION
 #include "../libtinyfseq/tinyfseq.h"
 
-#include "compress.h"
 #include "err.h"
 
 #define tfPrintError(err, msg)                                                 \
@@ -139,55 +138,17 @@ void sequenceFree(Sequence *seq) {
 
     free(seq->audioFilePath);
     seq->audioFilePath = NULL;
-
-    free(seq->currentFrameData);
-    seq->currentFrameData = NULL;
-
-    free(seq->lastFrameData);
-    seq->lastFrameData = NULL;
 }
 
 bool sequenceNextFrame(Sequence *seq) {
     if (seq->currentFrame >= seq->header.frameCount) return false;
 
-    const uint32_t frameSize = sequenceGetFrameSize(seq);
-
-    uint8_t *lastFrameData = seq->lastFrameData;
-    if (lastFrameData == NULL)
-        lastFrameData = seq->lastFrameData = calloc(frameSize, 1);
-
-    assert(lastFrameData != NULL);
-
-    uint8_t *frameData = seq->currentFrameData;
-    if (frameData == NULL)
-        frameData = seq->currentFrameData = calloc(frameSize, 1);
-
-    assert(frameData != NULL);
-
-    FILE *f;
-    assert((f = seq->openFile) != NULL);
-
-    // copy previous frame data prior to overwrite with new data
-    // this allows the program to more easily diff between the two frames
-    if (seq->currentFrame > 0) memcpy(lastFrameData, frameData, frameSize);
-
     seq->currentFrame += 1;
-
-    const uint32_t frameReadIdx = seq->currentFrame * frameSize;
-
-    if (fseek(f, frameReadIdx, SEEK_SET) != 0 ||
-        fread(frameData, frameSize, 1, f) != 1) {
-        fprintf(stderr,
-                "error when seeking to next frame read position: %d %d\n",
-                ferror(f), feof(f));
-
-        return false;
-    }
 
     return true;
 }
 
-size_t sequenceGetFrameSize(const Sequence *seq) {
+uint32_t sequenceGetFrameSize(const Sequence *seq) {
     return seq->header.channelCount * sizeof(uint8_t);
 }
 

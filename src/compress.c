@@ -31,19 +31,20 @@ static uint32_t sequenceGetComBlockPos(const Sequence *seq, int comBlockIndex) {
 
 static bool decompressBlockZstd(Sequence *seq, int comBlockIndex,
                                 uint8_t **frameData, uint32_t *size) {
-    const size_t dInSize = ZSTD_DStreamInSize();
-    void *dIn = malloc(dInSize);
+    bool err = false;
 
-    assert(dIn != NULL);
+    const size_t dInSize = seq->compressionBlocks[comBlockIndex].size;
+    void *dIn;
+
+    assert((dIn = malloc(dInSize)) != NULL);
 
     const size_t dOutSize = ZSTD_DStreamOutSize();
-    void *dOut = malloc(dOutSize);
+    void *dOut;
 
-    assert(dOut != NULL);
+    assert((dOut = malloc(dOutSize)) != NULL);
 
-    ZSTD_DCtx *ctx = ZSTD_createDCtx();
-
-    assert(ctx != NULL);
+    ZSTD_DCtx *ctx;
+    assert((ctx = ZSTD_createDCtx()) != NULL);
 
     FILE *f;
     assert((f = seq->openFile) != NULL);
@@ -51,44 +52,51 @@ static bool decompressBlockZstd(Sequence *seq, int comBlockIndex,
     // seek to start position of this compression block's frame data
     fseek(f, sequenceGetComBlockPos(seq, comBlockIndex), SEEK_SET);
 
-    size_t read;
-    while ((read = fread(dIn, 1, dInSize, f)) > 0) {
-        ZSTD_inBuffer in = {
-                .src = dIn,
-                .size = read,
+    if (fread(dIn, 1, dInSize, f) != dInSize) {
+        perror("error when reading compression block frame data");
+
+        err = true;
+        goto free_and_return;
+    }
+
+    ZSTD_inBuffer in = {
+            .src = dIn,
+            .size = dInSize,
+            .pos = 0,
+    };
+
+    while (in.pos < in.size) {
+        ZSTD_outBuffer out = {
+                .dst = dOut,
+                .size = dOutSize,
                 .pos = 0,
         };
 
-        while (in.pos < in.size) {
-            ZSTD_outBuffer out = {
-                    .dst = dOut,
-                    .size = dOutSize,
-                    .pos = 0,
-            };
+        const size_t zstdErr = ZSTD_decompressStream(ctx, &out, &in);
 
-            size_t zstdErr;
-            if (ZSTD_isError(zstdErr = ZSTD_decompressStream(ctx, &out, &in))) {
-                zstdPrintError(zstdErr,
-                               "error when decompressing zstd stream section");
+        if (ZSTD_isError(zstdErr)) {
+            zstdPrintError(zstdErr,
+                           "error when decompressing zstd stream section");
 
-                return true;
-            }
-
-            // append the decompressed data chunk to the full array
-            const size_t head = *size;
-            *size += out.pos;
-            *frameData = reallocf(*frameData, *size);
-
-            memcpy(&(*frameData)[head], dOut, out.pos);
+            err = true;
+            goto free_and_return;
         }
+
+        // append the decompressed data chunk to the full array
+        const size_t head = *size;
+        *size += out.pos;
+        *frameData = reallocf(*frameData, *size);
+
+        memcpy(&(*frameData)[head], dOut, out.pos);
     }
 
+free_and_return:
     ZSTD_freeDCtx(ctx);
 
     free(dIn);
     free(dOut);
 
-    return false;
+    return err;
 }
 
 bool decompressBlock(Sequence *seq, int comBlockIndex, uint8_t **frameData,
@@ -103,4 +111,6 @@ bool decompressBlock(Sequence *seq, int comBlockIndex, uint8_t **frameData,
             fprintf(stderr, "cannot decompress unsupported zlib\n");
             return true;
     }
+
+    return false;
 }

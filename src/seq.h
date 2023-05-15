@@ -16,9 +16,6 @@ typedef struct sequence_t {
     char *audioFilePath;
 
     int64_t currentFrame;
-    uint8_t *currentFrameData;
-
-    uint8_t *lastFrameData;
 } Sequence;
 
 void sequenceInit(Sequence *seq);
@@ -29,7 +26,7 @@ void sequenceFree(Sequence *seq);
 
 bool sequenceNextFrame(Sequence *seq);
 
-size_t sequenceGetFrameSize(const Sequence *seq);
+uint32_t sequenceGetFrameSize(const Sequence *seq);
 
 void sequenceGetDuration(Sequence *seq, char *b, int c);
 
