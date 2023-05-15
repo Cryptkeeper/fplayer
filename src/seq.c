@@ -28,16 +28,39 @@ void sequenceInit(Sequence *seq) {
     seq->currentFrame = -1;
 }
 
+#define COMPRESSION_BLOCK_SIZE 8
+
+static void sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
+    const uint8_t comBlockCount = seq->header.compressionBlockCount;
+
+    if (comBlockCount == 0) return;
+
+    const uint16_t comDataSize = comBlockCount * COMPRESSION_BLOCK_SIZE;
+
+    struct tf_compression_block_t *compressionBlocks = seq->compressionBlocks =
+            malloc(comDataSize);
+
+    assert(compressionBlocks != NULL);
+
+    fseek(f, 32, SEEK_SET);
+
+    if (fread(compressionBlocks, COMPRESSION_BLOCK_SIZE, comBlockCount, f) !=
+        comBlockCount)
+        perror("error while reading sequence compression blocks table");
+}
+
 #define MAX_VAR_VALUE_SIZE 256
 
 static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
     const uint16_t varDataSize =
             seq->header.channelDataOffset - seq->header.variableDataOffset;
 
+    fseek(f, seq->header.variableDataOffset, SEEK_SET);
+
     uint8_t b[varDataSize];
 
     if (fread(b, sizeof(b), 1, f) == 0) {
-        perror("error while reading sequence sequence variables table");
+        perror("error while reading sequence variables table");
 
         return;
     }
@@ -96,6 +119,8 @@ bool sequenceOpen(const char *filepath, Sequence *seq) {
         return true;
     }
 
+    sequenceGetCompressionBlocks(f, seq);
+
     sequenceGetAudioFilePath(f, seq);
 
     return false;
@@ -104,6 +129,9 @@ bool sequenceOpen(const char *filepath, Sequence *seq) {
 void sequenceFree(Sequence *seq) {
     if (seq->openFile != NULL) fclose(seq->openFile);
     seq->openFile = NULL;
+
+    free(seq->compressionBlocks);
+    seq->compressionBlocks = NULL;
 
     free(seq->audioFilePath);
     seq->audioFilePath = NULL;

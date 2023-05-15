@@ -11,6 +11,7 @@ typedef struct sequence_t {
     FILE *openFile;
 
     struct tf_file_header_t header;
+    struct tf_compression_block_t *compressionBlocks;
 
     char *audioFilePath;
 
