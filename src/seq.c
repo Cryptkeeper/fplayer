@@ -7,6 +7,7 @@
 #define TINYFSEQ_IMPLEMENTATION
 #include "../libtinyfseq/tinyfseq.h"
 
+#include "compress.h"
 #include "err.h"
 
 #define tfPrintError(err, msg)                                                 \
@@ -30,10 +31,10 @@ void sequenceInit(Sequence *seq) {
 
 #define COMPRESSION_BLOCK_SIZE 8
 
-static void sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
+static bool sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
     const uint8_t comBlockCount = seq->header.compressionBlockCount;
 
-    if (comBlockCount == 0) return;
+    if (comBlockCount == 0) return false;
 
     const uint16_t comDataSize = comBlockCount * COMPRESSION_BLOCK_SIZE;
 
@@ -46,9 +47,12 @@ static void sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
 
     if (fread(compressionBlocks, COMPRESSION_BLOCK_SIZE, comBlockCount, f) !=
         comBlockCount)
-        perror("error while reading sequence compression blocks table");
+        return true;
+
+    return false;
 }
 
+#define VAR_HEADER_SIZE 4
 #define MAX_VAR_VALUE_SIZE 256
 
 static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
@@ -74,7 +78,7 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
     memset(valueBuf, 0, sizeof(valueBuf));
 
     // 4 is the packed sizeof(struct tf_var_header_t)
-    for (uint16_t remaining = varDataSize; remaining > 4;) {
+    for (uint16_t remaining = varDataSize; remaining > VAR_HEADER_SIZE;) {
         if ((tfErr = tf_read_var_header(readIdx, remaining, &tfVarHeader,
                                         valueBuf, sizeof(valueBuf),
                                         &readIdx)) != TF_OK) {
@@ -119,7 +123,7 @@ bool sequenceOpen(const char *filepath, Sequence *seq) {
         return true;
     }
 
-    sequenceGetCompressionBlocks(f, seq);
+    if (sequenceGetCompressionBlocks(f, seq)) return true;
 
     sequenceGetAudioFilePath(f, seq);
 
@@ -173,7 +177,9 @@ bool sequenceNextFrame(Sequence *seq) {
 
     if (fseek(f, frameReadIdx, SEEK_SET) != 0 ||
         fread(frameData, frameSize, 1, f) != 1) {
-        perror("error when seeking to next frame read position");
+        fprintf(stderr,
+                "error when seeking to next frame read position: %d %d\n",
+                ferror(f), feof(f));
 
         return false;
     }
