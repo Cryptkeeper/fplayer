@@ -24,7 +24,7 @@ void sleepGetDrift(char *b, int c) {
 
     const double ms = avg / 1e6;
 
-    snprintf(b, c, "%.4fms (%d fps)", ms, (int) (1000 / ms));
+    snprintf(b, c, "%.4fms (%.2f fps)", ms, (1000 / ms));
 }
 
 // The original `preciseSleep` function operates using double representation of

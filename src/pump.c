@@ -12,31 +12,32 @@ void framePumpInit(FramePump *pump) {
     pump->comBlockIndex = -1;
 }
 
-static bool framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
+static void framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
+    const int fps = 1000 / seq->header.frameStepTimeMillis;
+
     const uint32_t frameSize = sequenceGetFrameSize(seq);
 
-    if (pump->frameData == NULL) pump->frameData = malloc(frameSize);
+    // generates a frame data buffer of 5 seconds worth of playback
+    // FIXME: this doesn't respect possible frame rate override
+    const uint32_t reqFrameCount = fps * 5;
+    const uint32_t reqFrameDataSize = reqFrameCount * frameSize;
+
+    if (pump->frameData == NULL) pump->frameData = malloc(reqFrameDataSize);
 
     assert(pump->frameData != NULL);
 
     FILE *f;
     assert((f = seq->openFile) != NULL);
 
-    const uint32_t frameReadIdx = seq->currentFrame * frameSize;
+    fseek(f, seq->currentFrame * frameSize, SEEK_SET);
 
-    if (fseek(f, frameReadIdx, SEEK_SET) != 0 ||
-        fread(pump->frameData, frameSize, 1, f) != 1) {
-        fprintf(stderr,
-                "error when seeking to next frame read position: %d %d\n",
-                ferror(f), feof(f));
+    const unsigned long size = fread(pump->frameData, 1, reqFrameDataSize, f);
 
-        return true;
-    }
+    // ensure whatever amount of data was read is divisible into frames
+    assert(size % frameSize == 0);
 
     pump->framePos = 0;
-    pump->frameEnd = 1;
-
-    return false;
+    pump->frameEnd = size / frameSize;
 }
 
 static bool framePumpChargeCompressionBlock(FramePump *pump, Sequence *seq) {
@@ -75,15 +76,16 @@ bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead) {
         // recharge pump depending on the compression type
         switch (seq->header.compressionType) {
             case TF_COMPRESSION_NONE:
-                if (framePumpChargeSequentialRead(pump, seq)) return false;
+                framePumpChargeSequentialRead(pump, seq);
                 break;
+
             case TF_COMPRESSION_ZLIB:
             case TF_COMPRESSION_ZSTD:
                 if (framePumpChargeCompressionBlock(pump, seq)) return false;
                 break;
         }
 
-        if (framePumpIsEmpty(pump)) return false;
+        assert(!framePumpIsEmpty(pump));
     }
 
     *frameDataHead = &pump->frameData[pump->framePos];

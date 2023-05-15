@@ -51,6 +51,8 @@ static bool playerHandleNextFrame(void) {
 
     assert(gLastFrameData != NULL);
 
+    // FIXME: data never copied, diffing mechanism is broken
+
     // fetch the current frame data
     uint8_t *frameDataHead = NULL;
 
