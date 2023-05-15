@@ -31,10 +31,10 @@ static void framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
 
     fseek(f, seq->currentFrame * frameSize, SEEK_SET);
 
-    const unsigned long size = fread(pump->frameData, 1, reqFrameDataSize, f);
+    unsigned long size = fread(pump->frameData, 1, reqFrameDataSize, f);
 
     // ensure whatever amount of data was read is divisible into frames
-    assert(size % frameSize == 0);
+    size -= (size % frameSize);
 
     pump->framePos = 0;
     pump->frameEnd = size / frameSize;
