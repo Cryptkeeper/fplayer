@@ -5,11 +5,13 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "../libtinyfseq/tinyfseq.h"
+
 typedef struct sequence_t {
     FILE *openFile;
-    uint32_t channelCount;
-    uint32_t frameCount;
-    uint8_t frameStepTimeMillis;
+
+    struct tf_file_header_t header;
+
     char *audioFilePath;
 
     int64_t currentFrame;
@@ -25,6 +27,8 @@ bool sequenceOpen(const char *filepath, Sequence *seq);
 void sequenceFree(Sequence *seq);
 
 bool sequenceNextFrame(Sequence *seq);
+
+size_t sequenceGetFrameSize(const Sequence *seq);
 
 void sequenceGetDuration(Sequence *seq, char *b, int c);
 

@@ -30,10 +30,9 @@ void sequenceInit(Sequence *seq) {
 
 #define MAX_VAR_VALUE_SIZE 256
 
-static void sequenceGetAudioFilePath(FILE *f, struct tf_file_header_t tfHeader,
-                                     Sequence *seq) {
+static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
     const uint16_t varDataSize =
-            tfHeader.channelDataOffset - tfHeader.variableDataOffset;
+            seq->header.channelDataOffset - seq->header.variableDataOffset;
 
     uint8_t b[varDataSize];
 
@@ -89,26 +88,15 @@ bool sequenceOpen(const char *filepath, Sequence *seq) {
         return true;
     }
 
-    struct tf_file_header_t tfHeader;
     enum tf_err_t tfErr;
-    if ((tfErr = tf_read_file_header(b, sizeof(b), &tfHeader, NULL)) != TF_OK) {
+    if ((tfErr = tf_read_file_header(b, sizeof(b), &seq->header, NULL)) !=
+        TF_OK) {
         tfPrintError(tfErr, "error when deserializing sequence file header");
 
         return true;
     }
 
-    if (tfHeader.compressionType != TF_COMPRESSION_NONE) {
-        fprintf(stderr, "compressed fseq files are currently unsupported\n");
-        fprintf(stderr, "decompress your sequence using fsequtils first\n");
-
-        return true;
-    }
-
-    seq->channelCount = tfHeader.channelCount;
-    seq->frameCount = tfHeader.frameCount;
-    seq->frameStepTimeMillis = tfHeader.frameStepTimeMillis;
-
-    sequenceGetAudioFilePath(f, tfHeader, seq);
+    sequenceGetAudioFilePath(f, seq);
 
     return false;
 }
@@ -128,17 +116,19 @@ void sequenceFree(Sequence *seq) {
 }
 
 bool sequenceNextFrame(Sequence *seq) {
-    if (seq->currentFrame >= seq->frameCount) return false;
+    if (seq->currentFrame >= seq->header.frameCount) return false;
+
+    const uint32_t frameSize = sequenceGetFrameSize(seq);
 
     uint8_t *lastFrameData = seq->lastFrameData;
     if (lastFrameData == NULL)
-        lastFrameData = seq->lastFrameData = calloc(seq->channelCount, 1);
+        lastFrameData = seq->lastFrameData = calloc(frameSize, 1);
 
     assert(lastFrameData != NULL);
 
     uint8_t *frameData = seq->currentFrameData;
     if (frameData == NULL)
-        frameData = seq->currentFrameData = calloc(seq->channelCount, 1);
+        frameData = seq->currentFrameData = calloc(frameSize, 1);
 
     assert(frameData != NULL);
 
@@ -147,15 +137,14 @@ bool sequenceNextFrame(Sequence *seq) {
 
     // copy previous frame data prior to overwrite with new data
     // this allows the program to more easily diff between the two frames
-    if (seq->currentFrame > 0)
-        memcpy(lastFrameData, frameData, seq->channelCount);
+    if (seq->currentFrame > 0) memcpy(lastFrameData, frameData, frameSize);
 
     seq->currentFrame += 1;
 
-    const uint32_t frameReadIdx = seq->currentFrame * seq->channelCount;
+    const uint32_t frameReadIdx = seq->currentFrame * frameSize;
 
     if (fseek(f, frameReadIdx, SEEK_SET) != 0 ||
-        fread(frameData, seq->channelCount, 1, f) != 1) {
+        fread(frameData, frameSize, 1, f) != 1) {
         perror("error when seeking to next frame read position");
 
         return false;
@@ -164,10 +153,14 @@ bool sequenceNextFrame(Sequence *seq) {
     return true;
 }
 
-void sequenceGetDuration(Sequence *seq, char *b, int c) {
-    const int fps = 1000 / seq->frameStepTimeMillis;
+size_t sequenceGetFrameSize(const Sequence *seq) {
+    return seq->header.channelCount * sizeof(uint8_t);
+}
 
-    long framesRemaining = seq->frameCount;
+void sequenceGetDuration(Sequence *seq, char *b, int c) {
+    const int fps = 1000 / seq->header.frameStepTimeMillis;
+
+    long framesRemaining = seq->header.frameCount;
     if (seq->currentFrame != -1) framesRemaining -= seq->currentFrame;
 
     const long seconds = framesRemaining / fps;

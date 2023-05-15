@@ -40,7 +40,7 @@ static bool playerHandleNextFrame(void) {
     if (!sequenceNextFrame(&gPlaying)) return false;
 
     if (serialWriteFrame(gPlaying.currentFrameData, gPlaying.lastFrameData,
-                         gPlaying.channelCount))
+                         sequenceGetFrameSize(&gPlaying)))
         return false;
 
     playerLogStatus();
@@ -75,7 +75,7 @@ static long playerGetFrameStepTime(PlayerOpts opts) {
     if (opts.frameStepTimeOverrideMillis > 0)
         return opts.frameStepTimeOverrideMillis;
 
-    return gPlaying.frameStepTimeMillis;
+    return gPlaying.header.frameStepTimeMillis;
 }
 
 bool playerInit(PlayerOpts opts) {
