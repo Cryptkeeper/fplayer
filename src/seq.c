@@ -7,14 +7,16 @@
 #define TINYFSEQ_IMPLEMENTATION
 #include "../libtinyfseq/tinyfseq.h"
 
+#include "err.h"
+
 #define tfPrintError(err, msg)                                                 \
     do {                                                                       \
         if (err != TF_OK) {                                                    \
             fprintf(stderr, "libtinyfseq error (version %s)\n",                \
                     TINYFSEQ_VERSION);                                         \
             fprintf(stderr, "%s (%d)\n", tf_err_str(err), err);                \
-            fprintf(stderr, "%s\n", msg);                                      \
-            fprintf(stderr, "%s#L%d\n", __FILE_NAME__, __LINE__ - 1);          \
+                                                                               \
+            errPrintTrace(msg);                                                \
         }                                                                      \
     } while (0)
 

@@ -8,7 +8,7 @@ if (APPLE)
     link_directories(/usr/local/lib)
 endif ()
 
-add_executable(fplayer src/main.c src/audio.c src/audio.h src/seq.c src/seq.h src/time.c src/time.h src/player.c src/player.h src/serial.c src/serial.h src/cmap.c src/cmap.h libtinyfseq/tinyfseq.h src/sleep.c src/sleep.h)
+add_executable(fplayer src/main.c src/audio.c src/audio.h src/seq.c src/seq.h src/time.c src/time.h src/player.c src/player.h src/serial.c src/serial.h src/cmap.c src/cmap.h libtinyfseq/tinyfseq.h src/sleep.c src/sleep.h src/err.h)
 
 add_subdirectory(liblightorama)
 

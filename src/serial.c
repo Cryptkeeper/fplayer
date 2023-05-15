@@ -8,7 +8,20 @@
 #include <lightorama/lightorama.h>
 
 #include "cmap.h"
+#include "err.h"
 #include "time.h"
+
+static inline void serialPrintLastError(enum sp_return err) {
+    // global error handling is only used with a single super error type
+    if (err != SP_ERR_FAIL) return;
+
+    char *msg = NULL;
+    if ((msg = sp_last_error_message()) != NULL) {
+        fprintf(stderr, "%s\n", msg);
+
+        sp_free_error_message(msg);
+    }
+}
 
 #define spPrintError(err, msg)                                                 \
     do {                                                                       \
@@ -17,18 +30,9 @@
                     SP_PACKAGE_VERSION_STRING);                                \
             fprintf(stderr, "0x%02x\n", err);                                  \
                                                                                \
-            if (err == SP_ERR_FAIL) {                                          \
-                char *lastErrMsg = NULL;                                       \
+            serialPrintLastError(err);                                         \
                                                                                \
-                if ((lastErrMsg = sp_last_error_message()) != NULL) {          \
-                    fprintf(stderr, "%s\n", lastErrMsg);                       \
-                                                                               \
-                    sp_free_error_message(lastErrMsg);                         \
-                }                                                              \
-            }                                                                  \
-                                                                               \
-            fprintf(stderr, "%s\n", msg);                                      \
-            fprintf(stderr, "%s#L%d\n", __FILE_NAME__, __LINE__ - 1);          \
+            errPrintTrace(msg);                                                \
         }                                                                      \
     } while (0)
 

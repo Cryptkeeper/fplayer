@@ -4,14 +4,16 @@
 
 #include <AL/alut.h>
 
+#include "err.h"
+
 #define alPrintError(msg)                                                      \
     do {                                                                       \
         ALenum err;                                                            \
         if ((err = alGetError()) != AL_NO_ERROR) {                             \
             fprintf(stderr, "OpenAL error (version 0x%04x)\n", AL_VERSION);    \
             fprintf(stderr, "0x%02x\n", err);                                  \
-            fprintf(stderr, "%s\n", msg);                                      \
-            fprintf(stderr, "%s#L%d\n", __FILE_NAME__, __LINE__ - 1);          \
+                                                                               \
+            errPrintTrace(msg);                                                \
         }                                                                      \
     } while (0)
 
@@ -22,8 +24,8 @@
             fprintf(stderr, "ALUT error (version %d.%d)\n",                    \
                     alutGetMajorVersion(), alutGetMinorVersion());             \
             fprintf(stderr, "%s (0x%02x)\n", alutGetErrorString(err), err);    \
-            fprintf(stderr, "%s\n", msg);                                      \
-            fprintf(stderr, "%s#L%d\n", __FILE_NAME__, __LINE__ - 1);          \
+                                                                               \
+            errPrintTrace(msg);                                                \
         }                                                                      \
     } while (0)
 
