@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "parse.h"
+
 static ChannelMap gDefaultChannelMap;
 
 static bool channelRangeIsMappable(const ChannelRange range) {
@@ -32,16 +34,6 @@ static void channelMapPut(ChannelRange channelRange) {
 
     memcpy(&gDefaultChannelMap.ranges[index], &channelRange,
            sizeof(ChannelRange));
-}
-
-static long channelMapParseAttr(const char *b, long max) {
-    const long l = strtol(b, NULL, 10);
-
-    if (l <= 0) return 0;
-    else if (l >= max)
-        return max;
-    else
-        return l;
 }
 
 static bool channelMapParseCSV(char *b) {
@@ -72,24 +64,24 @@ static bool channelMapParseCSV(char *b) {
 
             switch (i) {
                 case 0:
-                    newChannelRange.sid =
-                            channelMapParseAttr(sStart, UINT16_MAX);
+                    parseLong(sStart, &newChannelRange.sid,
+                              sizeof(newChannelRange.sid), 0, UINT16_MAX);
                     break;
                 case 1:
-                    newChannelRange.eid =
-                            channelMapParseAttr(sStart, UINT16_MAX);
+                    parseLong(sStart, &newChannelRange.eid,
+                              sizeof(newChannelRange.eid), 0, UINT16_MAX);
                     break;
                 case 2:
-                    newChannelRange.unit =
-                            channelMapParseAttr(sStart, UINT8_MAX);
+                    parseLong(sStart, &newChannelRange.unit,
+                              sizeof(newChannelRange.unit), 0, UINT8_MAX);
                     break;
                 case 3:
-                    newChannelRange.scircuit =
-                            channelMapParseAttr(sStart, UINT16_MAX);
+                    parseLong(sStart, &newChannelRange.scircuit,
+                              sizeof(newChannelRange.scircuit), 0, UINT16_MAX);
                     break;
                 case 4:
-                    newChannelRange.ecircuit =
-                            channelMapParseAttr(sStart, UINT16_MAX);
+                    parseLong(sStart, &newChannelRange.ecircuit,
+                              sizeof(newChannelRange.ecircuit), 0, UINT16_MAX);
                     break;
                 default:
                     assert(false && "unreachable statement");

@@ -1,12 +1,11 @@
 #include <assert.h>
 #include <getopt.h>
-#include <limits.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "audio.h"
 #include "cmap.h"
+#include "parse.h"
 #include "player.h"
 #include "serial.h"
 
@@ -62,16 +61,9 @@ int main(int argc, char **argv) {
                 break;
 
             case 'r': {
-                const long l = strtol(optarg, NULL, 10);
-
-                if (l <= 0 || l > UINT8_MAX) {
-                    fprintf(stderr,
-                            "invalid frame step time (milliseconds): %s\n",
-                            optarg);
-                    return 1;
-                }
-
-                gPlayerOpts.frameStepTimeOverrideMillis = (uint8_t) l;
+                parseLong(optarg, &gPlayerOpts.frameStepTimeOverrideMillis,
+                          sizeof(gPlayerOpts.frameStepTimeOverrideMillis), 1,
+                          UINT8_MAX);
                 break;
             }
 
@@ -81,14 +73,8 @@ int main(int argc, char **argv) {
                 break;
 
             case 'b': {
-                const long l = strtol(optarg, NULL, 10);
-
-                if (l < UINT_MAX || l > UINT_MAX) {
-                    fprintf(stderr, "invalid baud rate: %s\n", optarg);
-                    return 1;
-                }
-
-                gSerialOpts.baudRate = (int) l;
+                parseLong(optarg, &gSerialOpts.baudRate,
+                          sizeof(gSerialOpts.baudRate), 0, UINT32_MAX);
                 break;
             }
         }
