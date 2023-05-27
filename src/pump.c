@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "compress.h"
+#include "time.h"
 
 void framePumpInit(FramePump *pump) {
     memset(pump, 0, sizeof(FramePump));
@@ -71,8 +72,12 @@ static bool framePumpIsEmpty(const FramePump *pump) {
     return pump->framePos >= pump->frameEnd;
 }
 
+int64_t framePumpLastChargeTime;
+
 bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead) {
     if (framePumpIsEmpty(pump)) {
+        const timeInstant start = timeGetNow();
+
         // recharge pump depending on the compression type
         switch (seq->header.compressionType) {
             case TF_COMPRESSION_NONE:
@@ -86,6 +91,8 @@ bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead) {
         }
 
         assert(!framePumpIsEmpty(pump));
+
+        framePumpLastChargeTime = timeElapsedNs(start, timeGetNow());
     }
 
     *frameDataHead = &pump->frameData[pump->framePos];

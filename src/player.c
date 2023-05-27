@@ -33,8 +33,10 @@ static void playerLogStatus(void) {
     sleepGetDrift(bDrift, sizeof(bDrift));
 
     static char bStatus[256];
-    snprintf(bStatus, sizeof(bStatus), "remaining: %s\t\tdt: %s\t\tpump: %d",
-             bDuration, bDrift, gFramePump.frameEnd - gFramePump.framePos);
+    snprintf(bStatus, sizeof(bStatus),
+             "remaining: %s\t\tdt: %s\t\tpump: %4d\t\tcharge time: %.3fms",
+             bDuration, bDrift, gFramePump.frameEnd - gFramePump.framePos,
+             framePumpLastChargeTime / 1000000.0);
 
     printf("\r%s", bStatus);
     fflush(stdout);
