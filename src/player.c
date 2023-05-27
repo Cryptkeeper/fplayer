@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "audio.h"
 #include "pump.h"
@@ -51,12 +52,15 @@ static bool playerHandleNextFrame(void) {
 
     assert(gLastFrameData != NULL);
 
-    // FIXME: data never copied, diffing mechanism is broken
-
     // fetch the current frame data
     uint8_t *frameDataHead = NULL;
 
     if (!framePumpGet(&gFramePump, &gPlaying, &frameDataHead)) return false;
+
+    // copy previous frame to the secondary frame buffer
+    // this enables the serial system to diff between the two frames and only
+    // write outgoing state changes
+    memcpy(gLastFrameData, frameDataHead, frameSize);
 
     if (serialWriteFrame(frameDataHead, gLastFrameData, frameSize))
         return false;
