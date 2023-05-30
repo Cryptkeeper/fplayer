@@ -7,6 +7,11 @@
 #define TINYFSEQ_IMPLEMENTATION
 #include "../libtinyfseq/tinyfseq.h"
 
+#ifdef TINYFSEQ_MEMCPY
+#undef TINYFSEQ_MEMCPY
+#endif
+#define TINYFSEQ_MEMCPY memcpy
+
 #include "err.h"
 #include "mem.h"
 
