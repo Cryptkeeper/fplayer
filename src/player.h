@@ -7,7 +7,7 @@
 typedef struct player_opts_t {
     char *sequenceFilePath;
     char *audioOverrideFilePath;
-    uint8_t frameStepTimeOverrideMillis;
+    uint8_t frameStepTimeOverrideMs;
     char *channelMapFilePath;
 } PlayerOpts;
 

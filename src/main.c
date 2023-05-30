@@ -60,23 +60,21 @@ int main(int argc, char **argv) {
                 assert(gPlayerOpts.audioOverrideFilePath != NULL);
                 break;
 
-            case 'r': {
-                parseLong(optarg, &gPlayerOpts.frameStepTimeOverrideMillis,
-                          sizeof(gPlayerOpts.frameStepTimeOverrideMillis), 1,
+            case 'r':
+                parseLong(optarg, &gPlayerOpts.frameStepTimeOverrideMs,
+                          sizeof(gPlayerOpts.frameStepTimeOverrideMs), 1,
                           UINT8_MAX);
                 break;
-            }
 
             case 'd':
                 gSerialOpts.devName = strdup(optarg);
                 assert(gSerialOpts.devName != NULL);
                 break;
 
-            case 'b': {
+            case 'b':
                 parseLong(optarg, &gSerialOpts.baudRate,
                           sizeof(gSerialOpts.baudRate), 0, UINT32_MAX);
                 break;
-            }
         }
     }
 

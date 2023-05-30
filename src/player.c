@@ -95,8 +95,7 @@ static void playerPlayFirstAudioFile(PlayerOpts opts) {
 }
 
 static long playerGetFrameStepTime(PlayerOpts opts) {
-    if (opts.frameStepTimeOverrideMillis > 0)
-        return opts.frameStepTimeOverrideMillis;
+    if (opts.frameStepTimeOverrideMs > 0) return opts.frameStepTimeOverrideMs;
 
     return gPlaying.header.frameStepTimeMillis;
 }
