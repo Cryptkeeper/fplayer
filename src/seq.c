@@ -147,8 +147,8 @@ bool sequenceOpen(const char *filepath, Sequence *seq) {
 void sequenceFree(Sequence *seq) {
     freeAndNullWith(&seq->openFile, fclose);
 
-    freeAndNull((void **) seq->compressionBlocks);
-    freeAndNull((void **) seq->audioFilePath);
+    freeAndNull((void **) &seq->compressionBlocks);
+    freeAndNull((void **) &seq->audioFilePath);
 }
 
 bool sequenceNextFrame(Sequence *seq) {
