@@ -11,7 +11,7 @@
 
 #define tfPrintError(err, msg)                                                 \
     do {                                                                       \
-        if (err != TF_OK) {                                                    \
+        if ((err) != TF_OK) {                                                  \
             fprintf(stderr, "libtinyfseq error (version %s)\n",                \
                     TINYFSEQ_VERSION);                                         \
             fprintf(stderr, "%s (%d)\n", tf_err_str(err), err);                \

@@ -36,7 +36,7 @@ static int64_t sleepEstimatedNs(int64_t ns) {
 
     double sampleMean = 5e-3;
     double sampleM2 = 0;
-    int64_t sampleCount = 1;
+    unsigned int sampleCount = 1;
 
     double remainingTime = (double) ns / 1e9;
 

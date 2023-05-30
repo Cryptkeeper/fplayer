@@ -25,7 +25,7 @@ static inline void serialPrintLastError(enum sp_return err) {
 
 #define spPrintError(err, msg)                                                 \
     do {                                                                       \
-        if (err != SP_OK) {                                                    \
+        if ((err) != SP_OK) {                                                  \
             fprintf(stderr, "libserialport error (version %s)\n",              \
                     SP_PACKAGE_VERSION_STRING);                                \
             fprintf(stderr, "0x%02x\n", err);                                  \
