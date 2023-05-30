@@ -37,7 +37,9 @@ static inline void serialPrintLastError(enum sp_return err) {
         }                                                                      \
     } while (0)
 
-void serialOptsFree(SerialOpts *opts) { freeAndNull((void **) &opts->devName); }
+void serialOptsFree(SerialOpts *opts) {
+    freeAndNull((void **) &opts->devName);
+}
 
 static struct sp_port *gPort;
 
@@ -121,7 +123,8 @@ static void serialWriteHeartbeat(void) {
     }
 }
 
-bool serialWriteFrame(const uint8_t *currentData, const uint8_t *lastData,
+bool serialWriteFrame(const uint8_t *currentData,
+                      const uint8_t *lastData,
                       uint32_t size) {
     if (gPort == NULL) return false;
 
@@ -152,4 +155,6 @@ static void serialPortFree(struct sp_port *port) {
     sp_free_port(port);
 }
 
-void serialExit(void) { freeAndNullWith(&gPort, serialPortFree); }
+void serialExit(void) {
+    freeAndNullWith(&gPort, serialPortFree);
+}

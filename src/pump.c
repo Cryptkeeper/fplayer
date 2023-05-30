@@ -72,7 +72,8 @@ static bool framePumpIsEmpty(const FramePump *pump) {
     return pump->framePos >= pump->frameEnd;
 }
 
-static void framePumpCorrectLongChargeTime(const FramePump *pump, Sequence *seq,
+static void framePumpCorrectLongChargeTime(const FramePump *pump,
+                                           Sequence *seq,
                                            int64_t chargeTimeNs) {
     const double chargeTimeMs = (double) chargeTimeNs / 1000000.0;
 
@@ -122,4 +123,6 @@ bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead) {
     return true;
 }
 
-void framePumpFree(FramePump *pump) { freeAndNull((void **) &pump->frameData); }
+void framePumpFree(FramePump *pump) {
+    freeAndNull((void **) &pump->frameData);
+}

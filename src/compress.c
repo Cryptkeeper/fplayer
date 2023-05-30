@@ -29,8 +29,10 @@ static uint32_t sequenceGetComBlockPos(const Sequence *seq, int comBlockIndex) {
     return seq->header.channelDataOffset + offset;
 }
 
-static bool decompressBlockZstd(Sequence *seq, int comBlockIndex,
-                                uint8_t **frameData, uint32_t *size) {
+static bool decompressBlockZstd(Sequence *seq,
+                                int comBlockIndex,
+                                uint8_t **frameData,
+                                uint32_t *size) {
     bool err = false;
 
     const size_t dInSize = seq->compressionBlocks[comBlockIndex].size;
@@ -95,7 +97,9 @@ free_and_return:
     return err;
 }
 
-bool decompressBlock(Sequence *seq, int comBlockIndex, uint8_t **frameData,
+bool decompressBlock(Sequence *seq,
+                     int comBlockIndex,
+                     uint8_t **frameData,
                      uint32_t *size) {
     switch (seq->header.compressionType) {
         case TF_COMPRESSION_NONE:

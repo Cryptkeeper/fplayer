@@ -6,7 +6,9 @@
 
 #include "seq.h"
 
-bool decompressBlock(Sequence *seq, int comBlockIndex, uint8_t **frameData,
+bool decompressBlock(Sequence *seq,
+                     int comBlockIndex,
+                     uint8_t **frameData,
                      uint32_t *size);
 
 #endif//FPLAYER_COMPRESS_H
