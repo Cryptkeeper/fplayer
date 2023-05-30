@@ -15,8 +15,6 @@ typedef struct frame_pump_t {
 
 void framePumpInit(FramePump *pump);
 
-extern int64_t framePumpLastChargeTime;
-
 bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead);
 
 void framePumpFree(FramePump *pump);

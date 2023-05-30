@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mem.h"
 #include "parse.h"
 
 static ChannelMap gDefaultChannelMap;
@@ -149,8 +150,7 @@ bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit) {
 }
 
 void channelMapFree(void) {
-    free(gDefaultChannelMap.ranges);
-    gDefaultChannelMap.ranges = NULL;
+    freeAndNull((void **) &gDefaultChannelMap.ranges);
 
     gDefaultChannelMap.size = 0;
 }

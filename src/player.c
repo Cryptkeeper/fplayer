@@ -6,40 +6,39 @@
 #include <string.h>
 
 #include "audio.h"
+#include "mem.h"
 #include "pump.h"
 #include "seq.h"
 #include "serial.h"
 #include "sleep.h"
+#include "time.h"
 
 void playerOptsFree(PlayerOpts *opts) {
-    free(opts->sequenceFilePath);
-    opts->sequenceFilePath = NULL;
-
-    free(opts->channelMapFilePath);
-    opts->channelMapFilePath = NULL;
-
-    free(opts->audioOverrideFilePath);
-    opts->audioOverrideFilePath = NULL;
+    freeAndNull((void **) &opts->sequenceFilePath);
+    freeAndNull((void **) &opts->channelMapFilePath);
+    freeAndNull((void **) &opts->audioOverrideFilePath);
 }
 
 static Sequence gPlaying;
 static FramePump gFramePump;
 
 static void playerLogStatus(void) {
+    static timeInstant gLastLog;
+
+    const timeInstant now = timeGetNow();
+
+    if (timeElapsedNs(gLastLog, now) < 1000000000) return;
+
+    gLastLog = timeGetNow();
+
     static char bDuration[64];
     sequenceGetDuration(&gPlaying, bDuration, sizeof(bDuration));
 
     static char bDrift[64];
     sleepGetDrift(bDrift, sizeof(bDrift));
 
-    static char bStatus[256];
-    snprintf(bStatus, sizeof(bStatus),
-             "remaining: %s\t\tdt: %s\t\tpump: %4d\t\tcharge time: %.3fms",
-             bDuration, bDrift, gFramePump.frameEnd - gFramePump.framePos,
-             framePumpLastChargeTime / 1000000.0);
-
-    printf("\r%s", bStatus);
-    fflush(stdout);
+    printf("remaining: %s\t\tdt: %s\t\tpump: %4d\n", bDuration, bDrift,
+           gFramePump.frameEnd - gFramePump.framePos);
 }
 
 static uint8_t *gLastFrameData;
@@ -127,8 +126,7 @@ bool playerInit(PlayerOpts opts) {
 
     framePumpFree(&gFramePump);
 
-    free(gLastFrameData);
-    gLastFrameData = NULL;
+    freeAndNull((void **) &gLastFrameData);
 
     return false;
 }

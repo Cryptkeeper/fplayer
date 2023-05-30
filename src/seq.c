@@ -8,6 +8,7 @@
 #include "../libtinyfseq/tinyfseq.h"
 
 #include "err.h"
+#include "mem.h"
 
 #define tfPrintError(err, msg)                                                 \
     do {                                                                       \
@@ -155,11 +156,8 @@ void sequenceFree(Sequence *seq) {
     if (seq->openFile != NULL) fclose(seq->openFile);
     seq->openFile = NULL;
 
-    free(seq->compressionBlocks);
-    seq->compressionBlocks = NULL;
-
-    free(seq->audioFilePath);
-    seq->audioFilePath = NULL;
+    freeAndNull((void **) seq->compressionBlocks);
+    freeAndNull((void **) seq->audioFilePath);
 }
 
 bool sequenceNextFrame(Sequence *seq) {
@@ -175,12 +173,14 @@ uint32_t sequenceGetFrameSize(const Sequence *seq) {
 }
 
 void sequenceGetDuration(Sequence *seq, char *b, int c) {
-    const int fps = 1000 / seq->header.frameStepTimeMillis;
-
     long framesRemaining = seq->header.frameCount;
     if (seq->currentFrame != -1) framesRemaining -= seq->currentFrame;
 
-    const long seconds = framesRemaining / fps;
+    const long seconds = framesRemaining / sequenceGetFPS(seq);
 
     snprintf(b, c, "%02ldm %02lds", seconds / 60, seconds % 60);
+}
+
+int sequenceGetFPS(const Sequence *seq) {
+    return 1000 / seq->header.frameStepTimeMillis;
 }

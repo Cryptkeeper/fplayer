@@ -9,6 +9,7 @@
 
 #include "cmap.h"
 #include "err.h"
+#include "mem.h"
 #include "time.h"
 
 static inline void serialPrintLastError(enum sp_return err) {
@@ -36,10 +37,7 @@ static inline void serialPrintLastError(enum sp_return err) {
         }                                                                      \
     } while (0)
 
-void serialOptsFree(SerialOpts *opts) {
-    free(opts->devName);
-    opts->devName = NULL;
-}
+void serialOptsFree(SerialOpts *opts) { freeAndNull((void **) &opts->devName); }
 
 static struct sp_port *gPort;
 

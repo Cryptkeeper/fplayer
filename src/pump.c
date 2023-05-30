@@ -1,10 +1,12 @@
 #include "pump.h"
 
 #include <assert.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "compress.h"
+#include "mem.h"
 #include "time.h"
 
 void framePumpInit(FramePump *pump) {
@@ -14,13 +16,11 @@ void framePumpInit(FramePump *pump) {
 }
 
 static void framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
-    const int fps = 1000 / seq->header.frameStepTimeMillis;
-
     const uint32_t frameSize = sequenceGetFrameSize(seq);
 
     // generates a frame data buffer of 5 seconds worth of playback
     // FIXME: this doesn't respect possible frame rate override
-    const uint32_t reqFrameCount = fps * 5;
+    const uint32_t reqFrameCount = sequenceGetFPS(seq) * 5;
     const uint32_t reqFrameDataSize = reqFrameCount * frameSize;
 
     if (pump->frameData == NULL) pump->frameData = malloc(reqFrameDataSize);
@@ -72,7 +72,25 @@ static bool framePumpIsEmpty(const FramePump *pump) {
     return pump->framePos >= pump->frameEnd;
 }
 
-int64_t framePumpLastChargeTime;
+static void framePumpCorrectLongChargeTime(const FramePump *pump, Sequence *seq,
+                                           int64_t chargeTimeNs) {
+    const double chargeTimeMs = chargeTimeNs / 1000000.0;
+
+    printf("loaded %d frames in %.4fms\n", pump->frameEnd, chargeTimeMs);
+
+    if (chargeTimeMs <= seq->header.frameStepTimeMillis) return;
+
+    const int skippedFrames =
+            (int) ceil((chargeTimeMs - seq->header.frameStepTimeMillis) /
+                       (double) seq->header.frameStepTimeMillis);
+
+    int64_t newFrame = seq->currentFrame + skippedFrames;
+    if (newFrame > seq->header.frameCount) newFrame = seq->header.frameCount;
+
+    seq->currentFrame = newFrame;
+
+    printf("warning: skipping %d frames\n", skippedFrames);
+}
 
 bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead) {
     if (framePumpIsEmpty(pump)) {
@@ -92,7 +110,9 @@ bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead) {
 
         assert(!framePumpIsEmpty(pump));
 
-        framePumpLastChargeTime = timeElapsedNs(start, timeGetNow());
+        // check for performance issues after reading
+        framePumpCorrectLongChargeTime(pump, seq,
+                                       timeElapsedNs(start, timeGetNow()));
     }
 
     *frameDataHead = &pump->frameData[pump->framePos];
@@ -102,7 +122,4 @@ bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead) {
     return true;
 }
 
-void framePumpFree(FramePump *pump) {
-    free(pump->frameData);
-    pump->frameData = NULL;
-}
+void framePumpFree(FramePump *pump) { freeAndNull((void **) &pump->frameData); }
