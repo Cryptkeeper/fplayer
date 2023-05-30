@@ -30,6 +30,26 @@ void sequenceInit(Sequence *seq) {
 
 #define COMPRESSION_BLOCK_SIZE 8
 
+static void sequenceTrimCompressionBlockCount(Sequence *seq) {
+    // a fseq file may include multiple empty compression blocks for padding purposes
+    // these will appear with a 0 size value, trailing previously valid blocks
+    // this function finds the first instance of a zero sized block and adjusts the
+    // decoded compressionBlockCount to match
+    for (int i = 0; i < seq->header.compressionBlockCount; i++) {
+        const struct tf_compression_block_t compressionBlock =
+                seq->compressionBlocks[i];
+
+        if (compressionBlock.size == 0) {
+            printf("corrected compression block count %d->%d\n",
+                   seq->header.compressionBlockCount, i);
+
+            seq->header.compressionBlockCount = i;
+
+            break;
+        }
+    }
+}
+
 static bool sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
     const uint8_t comBlockCount = seq->header.compressionBlockCount;
 
@@ -47,6 +67,8 @@ static bool sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
     if (fread(compressionBlocks, COMPRESSION_BLOCK_SIZE, comBlockCount, f) !=
         comBlockCount)
         return true;
+
+    sequenceTrimCompressionBlockCount(seq);
 
     return false;
 }
@@ -141,7 +163,7 @@ void sequenceFree(Sequence *seq) {
 }
 
 bool sequenceNextFrame(Sequence *seq) {
-    if (seq->currentFrame >= seq->header.frameCount) return false;
+    if (seq->currentFrame >= seq->header.frameCount - 1) return false;
 
     seq->currentFrame += 1;
 
