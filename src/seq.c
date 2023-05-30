@@ -12,19 +12,15 @@
 #endif
 #define TINYFSEQ_MEMCPY memcpy
 
-#include "err.h"
 #include "mem.h"
 
-#define tfPrintError(err, msg)                                                 \
-    do {                                                                       \
-        if ((err) != TF_OK) {                                                  \
-            fprintf(stderr, "libtinyfseq error (version %s)\n",                \
-                    TINYFSEQ_VERSION);                                         \
-            fprintf(stderr, "%s (%d)\n", tf_err_str(err), err);                \
-                                                                               \
-            errPrintTrace(msg);                                                \
-        }                                                                      \
-    } while (0)
+static inline void tfPrintError(enum tf_err_t err, const char *msg) {
+    if (err == TF_OK) return;
+
+    fprintf(stderr, "libtinyfseq error (version %s)\n", TINYFSEQ_VERSION);
+    fprintf(stderr, "%s (%d)\n", tf_err_str(err), err);
+    fprintf(stderr, "%s\n", msg);
+}
 
 void sequenceInit(Sequence *seq) {
     memset(seq, 0, sizeof(Sequence));

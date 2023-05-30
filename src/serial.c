@@ -8,11 +8,10 @@
 #include <lightorama/lightorama.h>
 
 #include "cmap.h"
-#include "err.h"
 #include "mem.h"
 #include "time.h"
 
-static inline void serialPrintLastError(enum sp_return err) {
+static inline void spPrintErrorMessage(enum sp_return err) {
     // global error handling is only used with a single super error type
     if (err != SP_ERR_FAIL) return;
 
@@ -24,18 +23,17 @@ static inline void serialPrintLastError(enum sp_return err) {
     }
 }
 
-#define spPrintError(err, msg)                                                 \
-    do {                                                                       \
-        if ((err) != SP_OK) {                                                  \
-            fprintf(stderr, "libserialport error (version %s)\n",              \
-                    SP_PACKAGE_VERSION_STRING);                                \
-            fprintf(stderr, "0x%02x\n", err);                                  \
-                                                                               \
-            serialPrintLastError(err);                                         \
-                                                                               \
-            errPrintTrace(msg);                                                \
-        }                                                                      \
-    } while (0)
+static inline void spPrintError(enum sp_return err, const char *msg) {
+    if (err == SP_OK) return;
+
+    fprintf(stderr, "libserialport error (version %s)\n",
+            SP_PACKAGE_VERSION_STRING);
+    fprintf(stderr, "0x%02x\n", err);
+
+    spPrintErrorMessage(err);
+
+    fprintf(stderr, "%s\n", msg);
+}
 
 void serialOptsFree(SerialOpts *opts) {
     freeAndNull((void **) &opts->devName);

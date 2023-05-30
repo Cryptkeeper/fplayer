@@ -6,18 +6,13 @@
 
 #include <zstd.h>
 
-#include "err.h"
+static inline void zstdPrintError(size_t err, const char *msg) {
+    if (!ZSTD_isError(err)) return;
 
-#define zstdPrintError(err, msg)                                               \
-    do {                                                                       \
-        if (ZSTD_isError(err)) {                                               \
-            fprintf(stderr, "zstd error (version %s)\n",                       \
-                    ZSTD_versionString());                                     \
-            fprintf(stderr, "%s (%zu)\n", ZSTD_getErrorName(err), err);        \
-                                                                               \
-            errPrintTrace(msg);                                                \
-        }                                                                      \
-    } while (0)
+    fprintf(stderr, "zstd error (version %s)\n", ZSTD_versionString());
+    fprintf(stderr, "%s (%zu)\n", ZSTD_getErrorName(err), err);
+    fprintf(stderr, "%s\n", msg);
+}
 
 static uint32_t sequenceGetComBlockPos(const Sequence *seq, int comBlockIndex) {
     uint32_t offset = 0;

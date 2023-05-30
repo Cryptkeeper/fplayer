@@ -4,30 +4,24 @@
 
 #include <AL/alut.h>
 
-#include "err.h"
+static inline void alPrintError(const char *msg) {
+    ALenum err;
+    if ((err = alGetError()) == AL_NO_ERROR) return;
 
-#define alPrintError(msg)                                                      \
-    do {                                                                       \
-        ALenum err;                                                            \
-        if ((err = alGetError()) != AL_NO_ERROR) {                             \
-            fprintf(stderr, "OpenAL error (version 0x%04x)\n", AL_VERSION);    \
-            fprintf(stderr, "0x%02x\n", err);                                  \
-                                                                               \
-            errPrintTrace(msg);                                                \
-        }                                                                      \
-    } while (0)
+    fprintf(stderr, "OpenAL error (version 0x%04x)\n", AL_VERSION);
+    fprintf(stderr, "0x%02x\n", err);
+    fprintf(stderr, "%s\n", msg);
+}
 
-#define alutPrintError(msg)                                                    \
-    do {                                                                       \
-        ALenum err;                                                            \
-        if ((err = alutGetError()) != ALUT_ERROR_NO_ERROR) {                   \
-            fprintf(stderr, "ALUT error (version %d.%d)\n",                    \
-                    alutGetMajorVersion(), alutGetMinorVersion());             \
-            fprintf(stderr, "%s (0x%02x)\n", alutGetErrorString(err), err);    \
-                                                                               \
-            errPrintTrace(msg);                                                \
-        }                                                                      \
-    } while (0)
+static inline void alutPrintError(const char *msg) {
+    ALenum err;
+    if ((err = alutGetError()) == ALUT_ERROR_NO_ERROR) return;
+
+    fprintf(stderr, "ALUT error (version %d.%d)\n", alutGetMajorVersion(),
+            alutGetMinorVersion());
+    fprintf(stderr, "%s (0x%02x)\n", alutGetErrorString(err), err);
+    fprintf(stderr, "%s\n", msg);
+}
 
 static ALuint alSource;
 static ALuint alBuffer = AL_NONE;
