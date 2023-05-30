@@ -7,6 +7,6 @@
     do {                                                                       \
         free(*p);                                                              \
         *p = NULL;                                                             \
-    } while (0);
+    } while (0)
 
 #endif//FPLAYER_MEM_H
