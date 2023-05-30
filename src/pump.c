@@ -74,7 +74,7 @@ static bool framePumpIsEmpty(const FramePump *pump) {
 
 static void framePumpCorrectLongChargeTime(const FramePump *pump, Sequence *seq,
                                            int64_t chargeTimeNs) {
-    const double chargeTimeMs = chargeTimeNs / 1000000.0;
+    const double chargeTimeMs = (double) chargeTimeNs / 1000000.0;
 
     printf("loaded %d frames in %.4fms\n", pump->frameEnd, chargeTimeMs);
 

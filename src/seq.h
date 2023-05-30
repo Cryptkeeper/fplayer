@@ -26,10 +26,10 @@ void sequenceFree(Sequence *seq);
 
 bool sequenceNextFrame(Sequence *seq);
 
-uint32_t sequenceGetFrameSize(const Sequence *seq);
+#define sequenceGetFrameSize(seq) ((seq)->header.channelCount * sizeof(uint8_t))
+
+#define sequenceGetFPS(seq) (1000 / (seq)->header.frameStepTimeMillis)
 
 void sequenceGetDuration(Sequence *seq, char *b, int c);
-
-int sequenceGetFPS(const Sequence *seq);
 
 #endif//FPLAYER_SEQ_H

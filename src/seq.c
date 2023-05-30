@@ -124,7 +124,7 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
 
 bool sequenceOpen(const char *filepath, Sequence *seq) {
     FILE *f;
-    if ((seq->openFile = f = fopen(filepath, "rb")) == NULL) {
+    if ((f = seq->openFile = fopen(filepath, "rb")) == NULL) {
         perror("error while opening sequence filepath");
 
         return true;
@@ -153,8 +153,7 @@ bool sequenceOpen(const char *filepath, Sequence *seq) {
 }
 
 void sequenceFree(Sequence *seq) {
-    if (seq->openFile != NULL) fclose(seq->openFile);
-    seq->openFile = NULL;
+    freeAndNullWith(&seq->openFile, fclose);
 
     freeAndNull((void **) seq->compressionBlocks);
     freeAndNull((void **) seq->audioFilePath);
@@ -168,10 +167,6 @@ bool sequenceNextFrame(Sequence *seq) {
     return true;
 }
 
-uint32_t sequenceGetFrameSize(const Sequence *seq) {
-    return seq->header.channelCount * sizeof(uint8_t);
-}
-
 void sequenceGetDuration(Sequence *seq, char *b, int c) {
     long framesRemaining = seq->header.frameCount;
     if (seq->currentFrame != -1) framesRemaining -= seq->currentFrame;
@@ -179,8 +174,4 @@ void sequenceGetDuration(Sequence *seq, char *b, int c) {
     const long seconds = framesRemaining / sequenceGetFPS(seq);
 
     snprintf(b, c, "%02ldm %02lds", seconds / 60, seconds % 60);
-}
-
-int sequenceGetFPS(const Sequence *seq) {
-    return 1000 / seq->header.frameStepTimeMillis;
 }

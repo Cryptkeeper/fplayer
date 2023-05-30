@@ -5,8 +5,14 @@
 
 #define freeAndNull(p)                                                         \
     do {                                                                       \
-        free(*p);                                                              \
-        *p = NULL;                                                             \
+        free(*(p));                                                            \
+        *(p) = NULL;                                                           \
+    } while (0)
+
+#define freeAndNullWith(p, fn)                                                 \
+    do {                                                                       \
+        fn(*(p));                                                              \
+        *(p) = NULL;                                                           \
     } while (0)
 
 #endif//FPLAYER_MEM_H

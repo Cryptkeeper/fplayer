@@ -20,7 +20,7 @@ static inline void serialPrintLastError(enum sp_return err) {
     if ((msg = sp_last_error_message()) != NULL) {
         fprintf(stderr, "%s\n", msg);
 
-        sp_free_error_message(msg);
+        freeAndNullWith(&msg, sp_free_error_message);
     }
 }
 
@@ -83,7 +83,7 @@ static void serialWriteChannelData(uint32_t id, uint8_t newIntensity) {
     static struct lor_effect_setintensity_t gSetEffect;
 
     gSetEffect.intensity =
-            lor_intensity_curve_vendor((float) newIntensity / 255);
+            lor_intensity_curve_vendor((float) (newIntensity / 255.0));
 
     uint8_t unit;
     uint16_t circuit;
@@ -102,21 +102,15 @@ static void serialWriteChannelData(uint32_t id, uint8_t newIntensity) {
     }
 }
 
-static timeInstant gLastHeartbeat;
-static bool gHasSentHeartbeat = false;
-
 static void serialWriteHeartbeat(void) {
+    static timeInstant gLastHeartbeat;
+
     // each frame will request a heartbeat be sent
     // this logic throttles that to every Nms according to a liblightorama magic value
-    if (gHasSentHeartbeat) {
-        const timeInstant now = timeGetNow();
+    const timeInstant now = timeGetNow();
 
-        if (timeElapsedNs(gLastHeartbeat, now) < LOR_HEARTBEAT_DELAY_NS) {
-            return;
-        }
-    }
+    if (timeElapsedNs(gLastHeartbeat, now) < LOR_HEARTBEAT_DELAY_NS) return;
 
-    gHasSentHeartbeat = true;
     gLastHeartbeat = timeGetNow();
 
     const int written = lor_write_heartbeat(gEncodeBuffer);
@@ -157,8 +151,5 @@ void serialExit(void) {
         spPrintError(err, "error when closing port");
     }
 
-    sp_free_port(gPort);
-
-    gPort = NULL;
-    gHasSentHeartbeat = false;
+    freeAndNullWith(&gPort, sp_free_port);
 }
