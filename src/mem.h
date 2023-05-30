@@ -11,7 +11,7 @@
 
 #define freeAndNullWith(p, fn)                                                 \
     do {                                                                       \
-        fn(*(p));                                                              \
+        if (*(p) != NULL) fn(*(p));                                            \
         *(p) = NULL;                                                           \
     } while (0)
 
