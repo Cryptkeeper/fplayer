@@ -143,13 +143,13 @@ bool serialWriteFrame(const uint8_t *currentData, const uint8_t *lastData,
     return false;
 }
 
-void serialExit(void) {
-    if (gPort == NULL) return;
-
+static void serialPortFree(struct sp_port *port) {
     enum sp_return err;
     if ((err = sp_close(gPort)) != SP_OK) {
         spPrintError(err, "error when closing port");
     }
 
-    freeAndNullWith(&gPort, sp_free_port);
+    sp_free_port(port);
 }
+
+void serialExit(void) { freeAndNullWith(&gPort, serialPortFree); }
