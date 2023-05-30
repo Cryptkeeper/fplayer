@@ -34,27 +34,23 @@ static bool decompressBlockZstd(Sequence *seq, int comBlockIndex,
     bool err = false;
 
     const size_t dInSize = seq->compressionBlocks[comBlockIndex].size;
-    void *dIn;
-
-    assert((dIn = malloc(dInSize)) != NULL);
+    void *dIn = malloc(dInSize);
+    assert(dIn != NULL);
 
     const size_t dOutSize = ZSTD_DStreamOutSize();
-    void *dOut;
+    void *dOut = malloc(dOutSize);
+    assert(dOut != NULL);
 
-    assert((dOut = malloc(dOutSize)) != NULL);
+    ZSTD_DCtx *ctx = ZSTD_createDCtx();
+    assert(ctx != NULL);
 
-    ZSTD_DCtx *ctx;
-    assert((ctx = ZSTD_createDCtx()) != NULL);
-
-    FILE *f;
-    assert((f = seq->openFile) != NULL);
+    FILE *f = seq->openFile;
+    assert(f != NULL);
 
     // seek to start position of this compression block's frame data
     fseek(f, sequenceGetComBlockPos(seq, comBlockIndex), SEEK_SET);
 
     if (fread(dIn, 1, dInSize, f) != dInSize) {
-        perror("error when reading compression block frame data");
-
         err = true;
         goto free_and_return;
     }

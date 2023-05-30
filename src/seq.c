@@ -85,11 +85,7 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
 
     uint8_t b[varDataSize];
 
-    if (fread(b, sizeof(b), 1, f) == 0) {
-        perror("error while reading sequence variables table");
-
-        return;
-    }
+    if (fread(b, sizeof(b), 1, f) != 1) return;
 
     struct tf_var_header_t tfVarHeader;
     enum tf_err_t tfErr;
@@ -123,19 +119,15 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
 }
 
 bool sequenceOpen(const char *filepath, Sequence *seq) {
-    FILE *f;
-    if ((f = seq->openFile = fopen(filepath, "rb")) == NULL) {
+    FILE *f = seq->openFile = fopen(filepath, "rb");
+    if (f == NULL) {
         perror("error while opening sequence filepath");
 
         return true;
     }
 
     uint8_t b[32];
-    if (fread(b, sizeof(b), 1, f) == 0) {
-        perror("error while reading sequence file header");
-
-        return true;
-    }
+    if (fread(b, sizeof(b), 1, f) != 1) return true;
 
     enum tf_err_t tfErr;
     if ((tfErr = tf_read_file_header(b, sizeof(b), &seq->header, NULL)) !=
