@@ -15,4 +15,8 @@
         *(p) = NULL;                                                           \
     } while (0)
 
+void *mustMalloc(size_t size);
+
+char *mustStrdup(const char *src);
+
 #endif//FPLAYER_MEM_H

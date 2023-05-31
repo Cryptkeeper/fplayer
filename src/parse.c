@@ -1,10 +1,10 @@
 #include "parse.h"
 
-#include <assert.h>
 #include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "err.h"
 
 static inline long clampLong(long l, long min, long max) {
     if (l <= min) return min;
@@ -14,7 +14,7 @@ static inline long clampLong(long l, long min, long max) {
 }
 
 void parseLong(const char *s, void *i, int n, long min, long max) {
-    assert(s != NULL && strlen(s) > 0);
+    if (s == NULL || strlen(s) == 0) goto fail;
 
     char *endptr = NULL;
 
@@ -35,11 +35,9 @@ void parseLong(const char *s, void *i, int n, long min, long max) {
     return;
 
 fail:
-    fprintf(stderr, "error when parsing number: %s\n", s);
-
     // auto exit due to parsing fail
     // this is an opinionated decision, built on the assumption that
     // input is only parsed once at program start and is otherwise not at risk
     // of hurting the program during active runtime
-    exit(1);
+    fatalf(E_FATAL, "error parsing number: %s\n", s);
 }

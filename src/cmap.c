@@ -1,7 +1,6 @@
 #include "cmap.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "err.h"
@@ -23,7 +22,9 @@ static bool channelRangeIsMappable(const ChannelRange range) {
 }
 
 static void channelMapPut(ChannelRange channelRange) {
-    if (!channelRangeIsMappable(channelRange)) fatalError(E_INVALID_RANGE);
+    if (!channelRangeIsMappable(channelRange))
+        fatalf(E_FATAL, "error registering unmappable channel range: L%d\n",
+               channelRange.line);
 
     // append to ChannelMap array
     const int index = gDefaultChannelMap.size;
@@ -63,7 +64,9 @@ static void channelMapParseCSV(char *b) {
         char *sStart = NULL;
         char *sEnd = lStart;
 
-        ChannelRange newChannelRange;
+        ChannelRange newChannelRange = {
+                .line = lines,
+        };
 
         for (CMapField f = F_SID; f < F_COUNT; f++) {
             sStart = strsep(&sEnd, ",");
@@ -72,7 +75,7 @@ static void channelMapParseCSV(char *b) {
             // removing this enables fields to be unexpectedly empty
             // since the parse loop won't otherwise break
             if (sStart == NULL || strlen(sStart) == 0)
-                fatalError(E_INVALID_CONF);
+                fatalf(E_FATAL, "error parsing channel map: L%d\n", lines);
 
             switch (f) {
                 case F_SID:
@@ -108,19 +111,20 @@ static void channelMapParseCSV(char *b) {
 
 void channelMapInit(const char *filepath) {
     FILE *f = fopen(filepath, "rb");
-    if (f == NULL) fatalError(E_FILE_NOT_FOUND);
 
-    if (fseek(f, 0, SEEK_END) < 0) fatalError(E_FILE_IO);
+    if (f == NULL)
+        fatalf(E_FILE_NOT_FOUND, "error opening channel map: %s\n", filepath);
+
+    if (fseek(f, 0, SEEK_END) < 0) fatalf(E_FILE_IO, NULL);
 
     const long filesize = ftell(f);
-    if (filesize <= 0) fatalError(E_FILE_IO);
+    if (filesize <= 0) fatalf(E_FILE_IO, NULL);
 
     rewind(f);
 
-    char *b = malloc(filesize);
-    if (b == NULL) fatalError(E_ALLOC_FAIL);
+    char *b = mustMalloc(filesize);
 
-    if (fread(b, 1, filesize, f) != filesize) fatalError(E_FILE_IO);
+    if (fread(b, 1, filesize, f) != filesize) fatalf(E_FILE_IO, NULL);
 
     fclose(f);
 

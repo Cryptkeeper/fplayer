@@ -1,6 +1,5 @@
 #include "seq.h"
 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -12,6 +11,7 @@
 #endif
 #define TINYFSEQ_MEMCPY memcpy
 
+#include "err.h"
 #include "mem.h"
 
 static inline void tfPrintError(enum tf_err_t err, const char *msg) {
@@ -52,27 +52,23 @@ static void sequenceTrimCompressionBlockCount(Sequence *seq) {
     }
 }
 
-static bool sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
+static void sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
     const uint8_t comBlockCount = seq->header.compressionBlockCount;
 
-    if (comBlockCount == 0) return false;
+    if (comBlockCount == 0) return;
 
     const uint16_t comDataSize = comBlockCount * COMPRESSION_BLOCK_SIZE;
 
     struct tf_compression_block_t *compressionBlocks = seq->compressionBlocks =
-            malloc(comDataSize);
-
-    assert(compressionBlocks != NULL);
+            mustMalloc(comDataSize);
 
     fseek(f, 32, SEEK_SET);
 
     if (fread(compressionBlocks, COMPRESSION_BLOCK_SIZE, comBlockCount, f) !=
         comBlockCount)
-        return true;
+        fatalf(E_FILE_IO, "unexpected end of compression blocks\n");
 
     sequenceTrimCompressionBlockCount(seq);
-
-    return false;
 }
 
 #define VAR_HEADER_SIZE 4
@@ -107,9 +103,9 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
         }
 
         if (tfVarHeader.id[0] == 'm' && tfVarHeader.id[1] == 'f') {
-            char *fp = seq->audioFilePath = malloc((size_t) tfVarHeader.size);
+            char *fp = seq->audioFilePath =
+                    mustMalloc((size_t) tfVarHeader.size);
 
-            assert(fp != NULL);
             strcpy(fp, (const char *) &valueBuf[0]);
 
             return;
@@ -119,30 +115,27 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
     }
 }
 
-bool sequenceOpen(const char *filepath, Sequence *seq) {
+void sequenceOpen(const char *filepath, Sequence *seq) {
     FILE *f = seq->openFile = fopen(filepath, "rb");
-    if (f == NULL) {
-        perror("error while opening sequence filepath");
 
-        return true;
-    }
+    if (f == NULL)
+        fatalf(E_FILE_NOT_FOUND, "error opening sequence: %s\n", filepath);
 
     uint8_t b[32];
-    if (fread(b, sizeof(b), 1, f) != 1) return true;
+
+    if (fread(b, sizeof(b), 1, f) != 1) fatalf(E_FILE_IO, NULL);
 
     enum tf_err_t tfErr;
     if ((tfErr = tf_read_file_header(b, sizeof(b), &seq->header, NULL)) !=
         TF_OK) {
         tfPrintError(tfErr, "error when deserializing sequence file header");
 
-        return true;
+        fatalf(E_FATAL, "error parsing fseq header\n");
     }
 
-    if (sequenceGetCompressionBlocks(f, seq)) return true;
+    sequenceGetCompressionBlocks(f, seq);
 
     sequenceGetAudioFilePath(f, seq);
-
-    return false;
 }
 
 void sequenceFree(Sequence *seq) {

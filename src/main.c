@@ -1,10 +1,11 @@
-#include <assert.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "audio.h"
 #include "cmap.h"
+#include "err.h"
+#include "mem.h"
 #include "parse.h"
 #include "player.h"
 #include "serial.h"
@@ -46,18 +47,15 @@ int main(int argc, char **argv) {
                 return 1;
 
             case 'f':
-                gPlayerOpts.sequenceFilePath = strdup(optarg);
-                assert(gPlayerOpts.sequenceFilePath != NULL);
+                gPlayerOpts.sequenceFilePath = mustStrdup(optarg);
                 break;
 
             case 'c':
-                gPlayerOpts.channelMapFilePath = strdup(optarg);
-                assert(gPlayerOpts.channelMapFilePath != NULL);
+                gPlayerOpts.channelMapFilePath = mustStrdup(optarg);
                 break;
 
             case 'a':
-                gPlayerOpts.audioOverrideFilePath = strdup(optarg);
-                assert(gPlayerOpts.audioOverrideFilePath != NULL);
+                gPlayerOpts.audioOverrideFilePath = mustStrdup(optarg);
                 break;
 
             case 'r':
@@ -67,8 +65,7 @@ int main(int argc, char **argv) {
                 break;
 
             case 'd':
-                gSerialOpts.devName = strdup(optarg);
-                assert(gSerialOpts.devName != NULL);
+                gSerialOpts.devName = mustStrdup(optarg);
                 break;
 
             case 'b':
@@ -91,8 +88,8 @@ int main(int argc, char **argv) {
 
     channelMapInit(gPlayerOpts.channelMapFilePath);
 
-    if (serialInit(gSerialOpts)) return 1;
-    if (playerInit(gPlayerOpts)) return 1;
+    serialInit(gSerialOpts);
+    playerInit(gPlayerOpts);
 
     serialExit();
 

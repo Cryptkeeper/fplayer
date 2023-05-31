@@ -1,10 +1,11 @@
 #include "compress.h"
 
-#include <assert.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include <zstd.h>
+
+#include "err.h"
+#include "mem.h"
 
 static inline void zstdPrintError(size_t err, const char *msg) {
     if (!ZSTD_isError(err)) return;
@@ -24,33 +25,26 @@ static uint32_t sequenceGetComBlockPos(const Sequence *seq, int comBlockIndex) {
     return seq->header.channelDataOffset + offset;
 }
 
-static bool decompressBlockZstd(Sequence *seq,
+static void decompressBlockZstd(Sequence *seq,
                                 int comBlockIndex,
                                 uint8_t **frameData,
                                 uint32_t *size) {
-    bool err = false;
-
     const size_t dInSize = seq->compressionBlocks[comBlockIndex].size;
-    void *dIn = malloc(dInSize);
-    assert(dIn != NULL);
+    void *dIn = mustMalloc(dInSize);
 
     const size_t dOutSize = ZSTD_DStreamOutSize();
-    void *dOut = malloc(dOutSize);
-    assert(dOut != NULL);
+    void *dOut = mustMalloc(dOutSize);
 
     ZSTD_DCtx *ctx = ZSTD_createDCtx();
-    assert(ctx != NULL);
+    if (ctx == NULL) fatalf(E_ALLOC_FAIL, NULL);
 
     FILE *f = seq->openFile;
-    assert(f != NULL);
 
     // seek to start position of this compression block's frame data
-    fseek(f, sequenceGetComBlockPos(seq, comBlockIndex), SEEK_SET);
+    if (fseek(f, sequenceGetComBlockPos(seq, comBlockIndex), SEEK_SET) < 0)
+        fatalf(E_FILE_IO, NULL);
 
-    if (fread(dIn, 1, dInSize, f) != dInSize) {
-        err = true;
-        goto free_and_return;
-    }
+    if (fread(dIn, 1, dInSize, f) != dInSize) fatalf(E_FILE_IO, NULL);
 
     ZSTD_inBuffer in = {
             .src = dIn,
@@ -71,8 +65,7 @@ static bool decompressBlockZstd(Sequence *seq,
             zstdPrintError(zstdErr,
                            "error when decompressing zstd stream section");
 
-            err = true;
-            goto free_and_return;
+            fatalf(E_FILE_IO, NULL);
         }
 
         // append the decompressed data chunk to the full array
@@ -83,29 +76,19 @@ static bool decompressBlockZstd(Sequence *seq,
         memcpy(&(*frameData)[head], dOut, out.pos);
     }
 
-free_and_return:
     ZSTD_freeDCtx(ctx);
 
     free(dIn);
     free(dOut);
-
-    return err;
 }
 
-bool decompressBlock(Sequence *seq,
+void decompressBlock(Sequence *seq,
                      int comBlockIndex,
                      uint8_t **frameData,
                      uint32_t *size) {
-    switch (seq->header.compressionType) {
-        case TF_COMPRESSION_NONE:
-            fprintf(stderr, "cannot decompress non-compressed block\n");
-            return true;
-        case TF_COMPRESSION_ZSTD:
-            return decompressBlockZstd(seq, comBlockIndex, frameData, size);
-        case TF_COMPRESSION_ZLIB:
-            fprintf(stderr, "cannot decompress unsupported zlib\n");
-            return true;
-    }
+    if (seq->header.compressionType != TF_COMPRESSION_ZSTD)
+        fatalf(E_FATAL, "cannot decompress type: %d\n",
+               seq->header.compressionType);
 
-    return false;
+    decompressBlockZstd(seq, comBlockIndex, frameData, size);
 }

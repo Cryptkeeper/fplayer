@@ -20,7 +20,7 @@ typedef struct sequence_t {
 
 void sequenceInit(Sequence *seq);
 
-bool sequenceOpen(const char *filepath, Sequence *seq);
+void sequenceOpen(const char *filepath, Sequence *seq);
 
 void sequenceFree(Sequence *seq);
 

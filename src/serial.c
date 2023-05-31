@@ -8,6 +8,7 @@
 #include <lightorama/lightorama.h>
 
 #include "cmap.h"
+#include "err.h"
 #include "mem.h"
 #include "time.h"
 
@@ -71,10 +72,11 @@ static bool serialOpenPort(SerialOpts opts) {
     return false;
 }
 
-bool serialInit(SerialOpts opts) {
-    if (opts.devName != NULL) return serialOpenPort(opts);
+void serialInit(SerialOpts opts) {
+    if (opts.devName == NULL) return;
 
-    return false;
+    if (serialOpenPort(opts))
+        fatalf(E_FATAL, "error opening serial port: %s\n", opts.devName);
 }
 
 static uint8_t gEncodeBuffer[64];
@@ -121,10 +123,10 @@ static void serialWriteHeartbeat(void) {
     }
 }
 
-bool serialWriteFrame(const uint8_t *currentData,
+void serialWriteFrame(const uint8_t *currentData,
                       const uint8_t *lastData,
                       uint32_t size) {
-    if (gPort == NULL) return false;
+    if (gPort == NULL) return;
 
     serialWriteHeartbeat();
 
@@ -138,10 +140,8 @@ bool serialWriteFrame(const uint8_t *currentData,
     if ((err = sp_drain(gPort)) != SP_OK) {
         spPrintError(err, "error when waiting for queue drain");
 
-        return true;
+        fatalf(E_FATAL, "writing LOR frame data\n");
     }
-
-    return false;
 }
 
 static void serialPortFree(struct sp_port *port) {

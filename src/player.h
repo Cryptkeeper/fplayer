@@ -1,7 +1,6 @@
 #ifndef FPLAYER_PLAYER_H
 #define FPLAYER_PLAYER_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 typedef struct player_opts_t {
@@ -13,6 +12,6 @@ typedef struct player_opts_t {
 
 void playerOptsFree(PlayerOpts *opts);
 
-bool playerInit(PlayerOpts opts);
+void playerInit(PlayerOpts opts);
 
 #endif//FPLAYER_PLAYER_H

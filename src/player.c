@@ -1,8 +1,6 @@
 #include "player.h"
 
-#include <assert.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "audio.h"
@@ -49,9 +47,7 @@ static bool playerHandleNextFrame(void) {
     // maintain a copy of the previous frame to use for detecting differences
     const uint32_t frameSize = sequenceGetFrameSize(&gPlaying);
 
-    if (gLastFrameData == NULL) gLastFrameData = malloc(frameSize);
-
-    assert(gLastFrameData != NULL);
+    if (gLastFrameData == NULL) gLastFrameData = mustMalloc(frameSize);
 
     // fetch the current frame data
     uint8_t *frameDataHead = NULL;
@@ -63,8 +59,7 @@ static bool playerHandleNextFrame(void) {
     // write outgoing state changes
     memcpy(gLastFrameData, frameDataHead, frameSize);
 
-    if (serialWriteFrame(frameDataHead, gLastFrameData, frameSize))
-        return false;
+    serialWriteFrame(frameDataHead, gLastFrameData, frameSize);
 
     playerLogStatus();
 
@@ -100,13 +95,13 @@ static long playerGetFrameStepTime(PlayerOpts opts) {
     return gPlaying.header.frameStepTimeMillis;
 }
 
-bool playerInit(PlayerOpts opts) {
+void playerInit(PlayerOpts opts) {
     // read and parse sequence file data
     sequenceInit(&gPlaying);
 
     framePumpInit(&gFramePump);
 
-    if (sequenceOpen(opts.sequenceFilePath, &gPlaying)) return true;
+    sequenceOpen(opts.sequenceFilePath, &gPlaying);
 
     playerPlayFirstAudioFile(opts);
 
@@ -126,6 +121,4 @@ bool playerInit(PlayerOpts opts) {
     framePumpFree(&gFramePump);
 
     freeAndNull((void **) &gLastFrameData);
-
-    return false;
 }

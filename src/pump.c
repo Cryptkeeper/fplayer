@@ -1,11 +1,11 @@
 #include "pump.h"
 
-#include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "compress.h"
+#include "err.h"
 #include "mem.h"
 #include "time.h"
 
@@ -23,16 +23,16 @@ static void framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
     const uint32_t reqFrameCount = sequenceGetFPS(seq) * 5;
     const uint32_t reqFrameDataSize = reqFrameCount * frameSize;
 
-    if (pump->frameData == NULL) pump->frameData = malloc(reqFrameDataSize);
+    if (pump->frameData == NULL) pump->frameData = mustMalloc(reqFrameDataSize);
 
-    assert(pump->frameData != NULL);
+    FILE *f = seq->openFile;
 
-    FILE *f;
-    assert((f = seq->openFile) != NULL);
-
-    fseek(f, seq->currentFrame * frameSize, SEEK_SET);
+    if (fseek(f, seq->currentFrame * frameSize, SEEK_SET) < 0)
+        fatalf(E_FILE_IO, NULL);
 
     unsigned long size = fread(pump->frameData, 1, reqFrameDataSize, f);
+    if (size != reqFrameDataSize)
+        fatalf(E_FILE_IO, "unexpected end of frame data\n");
 
     // ensure whatever amount of data was read is divisible into frames
     size -= (size % frameSize);
@@ -49,14 +49,17 @@ static bool framePumpChargeCompressionBlock(FramePump *pump, Sequence *seq) {
     uint8_t *frameData = NULL;
     uint32_t size = 0;
 
-    if (decompressBlock(seq, pump->comBlockIndex, &frameData, &size))
-        return true;
+    decompressBlock(seq, pump->comBlockIndex, &frameData, &size);
 
     const uint32_t frameSize = sequenceGetFrameSize(seq);
 
     // the decompressed size should be a product of the frameSize
     // otherwise the data decompressed incorrectly
-    assert(size % frameSize == 0);
+    if (size % frameSize != 0)
+        fatalf(E_FATAL,
+               "decompressed frame data size (%d) is not multiple of frame "
+               "size (%d)",
+               size, frameSize);
 
     // free previously decompressed block prior to overwriting reference
     free(pump->frameData);
@@ -109,7 +112,8 @@ bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead) {
                 break;
         }
 
-        assert(!framePumpIsEmpty(pump));
+        if (framePumpIsEmpty(pump))
+            fatalf(E_FATAL, "unexpected end of frame pump\n");
 
         // check for performance issues after reading
         framePumpCorrectLongChargeTime(pump, seq,
