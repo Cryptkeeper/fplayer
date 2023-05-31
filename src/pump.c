@@ -58,7 +58,7 @@ static bool framePumpChargeCompressionBlock(FramePump *pump, Sequence *seq) {
     if (size % frameSize != 0)
         fatalf(E_FATAL,
                "decompressed frame data size (%d) is not multiple of frame "
-               "size (%d)",
+               "size (%d)\n",
                size, frameSize);
 
     // free previously decompressed block prior to overwriting reference
