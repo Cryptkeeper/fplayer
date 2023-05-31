@@ -8,10 +8,7 @@ static inline void alPrintError(const char *msg) {
     ALenum err;
     if ((err = alGetError()) == AL_NO_ERROR) return;
 
-    const char *version = alGetString(AL_VERSION);
-
-    fprintf(stderr, "OpenAL error (version %s)\n", version);
-    fprintf(stderr, "0x%02x\n", err);
+    fprintf(stderr, "OpenAL error: 0x%02x\n", err);
     fprintf(stderr, "%s\n", msg);
 }
 
@@ -19,9 +16,7 @@ static inline void alutPrintError(const char *msg) {
     ALenum err;
     if ((err = alutGetError()) == ALUT_ERROR_NO_ERROR) return;
 
-    fprintf(stderr, "ALUT error (version %d.%d)\n", alutGetMajorVersion(),
-            alutGetMinorVersion());
-    fprintf(stderr, "%s (0x%02x)\n", alutGetErrorString(err), err);
+    fprintf(stderr, "ALUT error: %s (0x%02x)\n", alutGetErrorString(err), err);
     fprintf(stderr, "%s\n", msg);
 }
 

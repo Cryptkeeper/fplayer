@@ -27,10 +27,7 @@ static inline void spPrintErrorMessage(enum sp_return err) {
 static inline void spPrintError(enum sp_return err, const char *msg) {
     if (err == SP_OK) return;
 
-    fprintf(stderr, "libserialport error (version %s)\n",
-            SP_PACKAGE_VERSION_STRING);
-    fprintf(stderr, "0x%02x\n", err);
-
+    fprintf(stderr, "libserialport error: 0x%02x\n", err);
     spPrintErrorMessage(err);
 
     fprintf(stderr, "%s\n", msg);

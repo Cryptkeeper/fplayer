@@ -1,10 +1,14 @@
 #include <getopt.h>
 #include <stdio.h>
-#include <string.h>
+
+#include <AL/alut.h>
+#include <libserialport.h>
+#include <zstd.h>
+
+#include "../libtinyfseq/tinyfseq.h"
 
 #include "audio.h"
 #include "cmap.h"
-#include "err.h"
 #include "mem.h"
 #include "parse.h"
 #include "player.h"
@@ -12,15 +16,31 @@
 
 static void printUsage(void) {
     printf("Usage: fplayer -f=FILE [options] ...\n");
-    printf("Options:\n");
+
+    printf("\nOptions:\n");
+
+    printf("\n[Playback]\n");
     printf("\t-f <file>\t\tFSEQ v2 sequence file path (required)\n");
     printf("\t-c <file>\t\tNetwork channel map file path\n");
+    printf("\t-d <device name>\tDevice name for serial port connection\n");
+    printf("\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n");
+
+    printf("\n[Controls]\n");
     printf("\t-a <file>\t\tOverride audio with specified filepath\n");
     printf("\t-r <frame ms>\t\tOverride playback frame rate interval (in "
            "milliseconds)\n");
-    printf("\t-d <device name>\tDevice name for serial port connection\n");
-    printf("\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n");
+
+    printf("\n[CLI]\n");
     printf("\t-h\t\t\tPrint this message and exit\n");
+    printf("\t-v\t\t\tPrint library versions and exit\n");
+}
+
+static void printVersions(void) {
+    printf("ALUT %d.%d\n", alutGetMajorVersion(), alutGetMinorVersion());
+    printf("libtinyfseq %s\n", TINYFSEQ_VERSION);
+    printf("libserialport %s\n", SP_PACKAGE_VERSION_STRING);
+    printf("OpenAL %s\n", alGetString(AL_VERSION));
+    printf("zstd %s\n", ZSTD_versionString());
 }
 
 static PlayerOpts gPlayerOpts;
@@ -31,10 +51,14 @@ static SerialOpts gSerialOpts = {
 
 int main(int argc, char **argv) {
     int c;
-    while ((c = getopt(argc, argv, ":hf:c:a:r:d:b:")) != -1) {
+    while ((c = getopt(argc, argv, ":hvf:c:a:r:d:b:")) != -1) {
         switch (c) {
             case 'h':
                 printUsage();
+                return 0;
+
+            case 'v':
+                printVersions();
                 return 0;
 
             case ':':

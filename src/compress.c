@@ -10,8 +10,7 @@
 static inline void zstdPrintError(size_t err, const char *msg) {
     if (!ZSTD_isError(err)) return;
 
-    fprintf(stderr, "zstd error (version %s)\n", ZSTD_versionString());
-    fprintf(stderr, "%s (%zu)\n", ZSTD_getErrorName(err), err);
+    fprintf(stderr, "ztd error: %s (%zu)\n", ZSTD_getErrorName(err), err);
     fprintf(stderr, "%s\n", msg);
 }
 
