@@ -12,7 +12,9 @@
 #include "mem.h"
 #include "time.h"
 
-static inline void spPrintErrorMessage(enum sp_return err) {
+static inline void spPrintError(enum sp_return err) {
+    fprintf(stderr, "libserialport error: 0x%02x\n", err);
+
     // global error handling is only used with a single super error type
     if (err != SP_ERR_FAIL) return;
 
@@ -24,14 +26,11 @@ static inline void spPrintErrorMessage(enum sp_return err) {
     }
 }
 
-static inline void spPrintError(enum sp_return err, const char *msg) {
-    if (err == SP_OK) return;
-
-    fprintf(stderr, "libserialport error: 0x%02x\n", err);
-    spPrintErrorMessage(err);
-
-    fprintf(stderr, "%s\n", msg);
-}
+#define spTry(fn)                                                              \
+    do {                                                                       \
+        enum sp_return _err = fn;                                              \
+        if (_err != SP_OK) spPrintError(_err);                                 \
+    } while (0)
 
 void serialOptsFree(SerialOpts *opts) {
     freeAndNull((void **) &opts->devName);
@@ -39,41 +38,25 @@ void serialOptsFree(SerialOpts *opts) {
 
 static struct sp_port *gPort;
 
-static bool serialOpenPort(SerialOpts opts) {
-    enum sp_return err;
+static void serialOpenPort(SerialOpts opts) {
+    spTry(sp_get_port_by_name(opts.devName, &gPort));
 
-    err = sp_get_port_by_name(opts.devName, &gPort);
-    spPrintError(err, "error when getting port by name");
-    if (err != SP_OK) return true;
+    // NULL indicates a failure to open, which is the only seriously "fatal"
+    // error that can occur during setup
+    if (gPort == NULL)
+        fatalf(E_FATAL, "error opening serial port: %s\n", opts.devName);
 
-    err = sp_open(gPort, SP_MODE_WRITE);
-    spPrintError(err, "error when opening port for writing");
-    if (err != SP_OK) return true;
-
-    err = sp_set_baudrate(gPort, opts.baudRate);
-    spPrintError(err, "error when setting baud rate");
-    if (err != SP_OK) return true;
-
-    err = sp_set_parity(gPort, SP_PARITY_NONE);
-    spPrintError(err, "error when setting parity mode");
-    if (err != SP_OK) return true;
-
-    err = sp_set_bits(gPort, 8);
-    spPrintError(err, "error when setting databits");
-    if (err != SP_OK) return true;
-
-    err = sp_set_stopbits(gPort, 1);
-    spPrintError(err, "error when setting stopbits");
-    if (err != SP_OK) return true;
-
-    return false;
+    // smaller errors from configuring the device connection are not fatal since
+    // it may likely work anyway or otherwise disregard these values
+    spTry(sp_open(gPort, SP_MODE_WRITE));
+    spTry(sp_set_baudrate(gPort, opts.baudRate));
+    spTry(sp_set_parity(gPort, SP_PARITY_NONE));
+    spTry(sp_set_bits(gPort, 8));
+    spTry(sp_set_stopbits(gPort, 1));
 }
 
 void serialInit(SerialOpts opts) {
-    if (opts.devName == NULL) return;
-
-    if (serialOpenPort(opts))
-        fatalf(E_FATAL, "error opening serial port: %s\n", opts.devName);
+    if (opts.devName != NULL) serialOpenPort(opts);
 }
 
 static uint8_t gEncodeBuffer[64];
@@ -93,11 +76,7 @@ static void serialWriteChannelData(uint32_t id, uint8_t newIntensity) {
                                      circuit - 1, unit, gEncodeBuffer);
 
     if (written > 0) {
-        enum sp_return err;
-        if ((err = sp_nonblocking_write(gPort, gEncodeBuffer, written)) !=
-            SP_OK) {
-            spPrintError(err, "error when writing LOR frame");
-        }
+        spTry(sp_nonblocking_write(gPort, gEncodeBuffer, written));
     }
 }
 
@@ -114,10 +93,7 @@ static void serialWriteHeartbeat(void) {
 
     const int written = lor_write_heartbeat(gEncodeBuffer);
 
-    enum sp_return err;
-    if ((err = sp_nonblocking_write(gPort, gEncodeBuffer, written)) != SP_OK) {
-        spPrintError(err, "error when writing LOR heartbeat");
-    }
+    spTry(sp_nonblocking_write(gPort, gEncodeBuffer, written));
 }
 
 void serialWriteFrame(const uint8_t *currentData,
@@ -133,19 +109,11 @@ void serialWriteFrame(const uint8_t *currentData,
             serialWriteChannelData(id, currentData[id]);
     }
 
-    enum sp_return err;
-    if ((err = sp_drain(gPort)) != SP_OK) {
-        spPrintError(err, "error when waiting for queue drain");
-
-        fatalf(E_FATAL, "writing LOR frame data\n");
-    }
+    spTry(sp_drain(gPort));
 }
 
 static void serialPortFree(struct sp_port *port) {
-    enum sp_return err;
-    if ((err = sp_close(gPort)) != SP_OK) {
-        spPrintError(err, "error when closing port");
-    }
+    spTry(sp_close(port));
 
     sp_free_port(port);
 }

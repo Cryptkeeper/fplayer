@@ -25,7 +25,7 @@ static ALuint alBuffer = AL_NONE;
 
 void audioInit(int *argc, char **argv) {
     alutInit(argc, argv);
-    alutPrintError("error when initializing ALUT");
+    alutPrintError("error while initializing ALUT");
 
     alGenSources(1, &alSource);
     alPrintError("error generating default audio source");
@@ -35,7 +35,7 @@ void audioExit(void) {
     audioStop();
 
     alutExit();
-    alutPrintError("error when exiting ALUT");
+    alutPrintError("error while exiting ALUT");
 }
 
 bool audioCheckPlaying(void) {
