@@ -8,7 +8,9 @@ static inline void alPrintError(const char *msg) {
     ALenum err;
     if ((err = alGetError()) == AL_NO_ERROR) return;
 
-    fprintf(stderr, "OpenAL error (version 0x%04x)\n", AL_VERSION);
+    const char *version = alGetString(AL_VERSION);
+
+    fprintf(stderr, "OpenAL error (version %s)\n", version);
     fprintf(stderr, "0x%02x\n", err);
     fprintf(stderr, "%s\n", msg);
 }
