@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 
     audioInit(&argc, argv);
 
-    if (channelMapInit(gPlayerOpts.channelMapFilePath)) return 1;
+    channelMapInit(gPlayerOpts.channelMapFilePath);
 
     if (serialInit(gSerialOpts)) return 1;
     if (playerInit(gPlayerOpts)) return 1;

@@ -1,10 +1,10 @@
 #include "cmap.h"
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "err.h"
 #include "mem.h"
 #include "parse.h"
 
@@ -23,7 +23,7 @@ static bool channelRangeIsMappable(const ChannelRange range) {
 }
 
 static void channelMapPut(ChannelRange channelRange) {
-    assert(channelRangeIsMappable(channelRange));
+    if (!channelRangeIsMappable(channelRange)) fatalError(E_INVALID_RANGE);
 
     // append to ChannelMap array
     const int index = gDefaultChannelMap.size;
@@ -37,7 +37,17 @@ static void channelMapPut(ChannelRange channelRange) {
            sizeof(ChannelRange));
 }
 
-static bool channelMapParseCSV(char *b) {
+typedef enum channel_map_field_t {
+    F_SID,
+    F_EID,
+    F_UNIT,
+    F_SCIRCUIT,
+    F_ECIRCUIT,
+} CMapField;
+
+#define F_COUNT 5
+
+static void channelMapParseCSV(char *b) {
     char *lStart = NULL;
     char *lEnd = b;
 
@@ -55,37 +65,36 @@ static bool channelMapParseCSV(char *b) {
 
         ChannelRange newChannelRange;
 
-        for (int i = 0; i < 5; i++) {
+        for (CMapField f = F_SID; f < F_COUNT; f++) {
             sStart = strsep(&sEnd, ",");
 
             // ensure all fields are set and read
             // removing this enables fields to be unexpectedly empty
             // since the parse loop won't otherwise break
-            assert(sStart != NULL && strlen(sStart) > 0);
+            if (sStart == NULL || strlen(sStart) == 0)
+                fatalError(E_INVALID_CONF);
 
-            switch (i) {
-                case 0:
+            switch (f) {
+                case F_SID:
                     parseLong(sStart, &newChannelRange.sid,
                               sizeof(newChannelRange.sid), 0, UINT16_MAX);
                     break;
-                case 1:
+                case F_EID:
                     parseLong(sStart, &newChannelRange.eid,
                               sizeof(newChannelRange.eid), 0, UINT16_MAX);
                     break;
-                case 2:
+                case F_UNIT:
                     parseLong(sStart, &newChannelRange.unit,
                               sizeof(newChannelRange.unit), 0, UINT8_MAX);
                     break;
-                case 3:
+                case F_SCIRCUIT:
                     parseLong(sStart, &newChannelRange.scircuit,
                               sizeof(newChannelRange.scircuit), 0, UINT16_MAX);
                     break;
-                case 4:
+                case F_ECIRCUIT:
                     parseLong(sStart, &newChannelRange.ecircuit,
                               sizeof(newChannelRange.ecircuit), 0, UINT16_MAX);
                     break;
-                default:
-                    assert(false && "unreachable statement");
             }
         }
 
@@ -95,40 +104,30 @@ static bool channelMapParseCSV(char *b) {
     }
 
     printf("loaded %d channel map(s)\n", lines);
-
-    return false;
 }
 
-bool channelMapInit(const char *filepath) {
+void channelMapInit(const char *filepath) {
     FILE *f = fopen(filepath, "rb");
-    if (f == NULL) return true;
+    if (f == NULL) fatalError(E_FILE_NOT_FOUND);
 
-    fseek(f, 0, SEEK_END);
+    if (fseek(f, 0, SEEK_END) < 0) fatalError(E_FILE_IO);
 
     const long filesize = ftell(f);
+    if (filesize <= 0) fatalError(E_FILE_IO);
 
     rewind(f);
 
-    assert(filesize > 0);
-
     char *b = malloc(filesize);
-    assert(b != NULL);
+    if (b == NULL) fatalError(E_ALLOC_FAIL);
 
-    if (fread(b, 1, filesize, f) != filesize) {
-        fclose(f);
-        free(b);
-
-        return true;
-    }
+    if (fread(b, 1, filesize, f) != filesize) fatalError(E_FILE_IO);
 
     fclose(f);
 
-    const bool err = channelMapParseCSV(b);
+    channelMapParseCSV(b);
 
     // cleanup local resources in same scope as allocation
     free(b);
-
-    return err;
 }
 
 bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit) {
