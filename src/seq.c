@@ -14,14 +14,6 @@
 #include "err.h"
 #include "mem.h"
 
-static inline void tfPrintError(enum tf_err_t err, const char *msg) {
-    if (err == TF_OK) return;
-
-    fprintf(stderr, "libtinyfseq error (version %s)\n", TINYFSEQ_VERSION);
-    fprintf(stderr, "%s (%d)\n", tf_err_str(err), err);
-    fprintf(stderr, "%s\n", msg);
-}
-
 void sequenceInit(Sequence *seq) {
     memset(seq, 0, sizeof(Sequence));
 
@@ -85,7 +77,7 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
     if (fread(b, sizeof(b), 1, f) != 1) return;
 
     struct tf_var_header_t tfVarHeader;
-    enum tf_err_t tfErr;
+    enum tf_err_t err;
 
     uint8_t *readIdx = &b[0];
 
@@ -94,10 +86,11 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
 
     // 4 is the packed sizeof(struct tf_var_header_t)
     for (uint16_t remaining = varDataSize; remaining > VAR_HEADER_SIZE;) {
-        if ((tfErr = tf_read_var_header(readIdx, remaining, &tfVarHeader,
-                                        valueBuf, sizeof(valueBuf),
-                                        &readIdx)) != TF_OK) {
-            tfPrintError(tfErr, "error when reading sequence variable header");
+        if ((err = tf_read_var_header(readIdx, remaining, &tfVarHeader,
+                                      valueBuf, sizeof(valueBuf), &readIdx)) !=
+            TF_OK) {
+            fatalf(E_FATAL, "error parsing sequence variable: %s\n",
+                   tf_err_str(err));
 
             return;
         }
@@ -125,13 +118,10 @@ void sequenceOpen(const char *filepath, Sequence *seq) {
 
     if (fread(b, sizeof(b), 1, f) != 1) fatalf(E_FILE_IO, NULL);
 
-    enum tf_err_t tfErr;
-    if ((tfErr = tf_read_file_header(b, sizeof(b), &seq->header, NULL)) !=
-        TF_OK) {
-        tfPrintError(tfErr, "error when deserializing sequence file header");
+    enum tf_err_t err;
 
-        fatalf(E_FATAL, "error parsing fseq header\n");
-    }
+    if ((err = tf_read_file_header(b, sizeof(b), &seq->header, NULL)) != TF_OK)
+        fatalf(E_FATAL, "error parsing sequence header: %s\n", tf_err_str(err));
 
     sequenceGetCompressionBlocks(f, seq);
 
