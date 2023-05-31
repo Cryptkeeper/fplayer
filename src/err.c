@@ -37,5 +37,13 @@ void fatalf(Err err, const char *format, ...) {
 
     fflush(stderr);
 
+    // Returning errors to propagate upward to the caller is cumbersome and
+    // requires promoting error context/special error context upward as well,
+    // resulting in a messy scope of inclusions.
+    //
+    // Given these fatal errors are unrecoverable, I've opted to inline the
+    // failure using `exit`. I don't like the idea of functions randomly failing
+    // internally, but it avoids the business logic being littered with unclear
+    // error handling.
     exit(1);
 }
