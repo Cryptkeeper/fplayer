@@ -10,7 +10,7 @@
 static ChannelMap gDefaultChannelMap;
 
 static bool channelRangeIsMappable(const ChannelRange range) {
-    const int rid = range.eid - range.sid;
+    const int64_t rid = range.eid - range.sid;
     if (rid < 0) return false;
 
     const int rcircuit = range.ecircuit - range.scircuit;
