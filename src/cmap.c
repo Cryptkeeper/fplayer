@@ -21,10 +21,10 @@ static bool channelRangeIsMappable(const ChannelRange range) {
     return true;
 }
 
-static void channelMapPut(ChannelRange channelRange) {
+static void channelMapPut(ChannelRange channelRange, int line) {
     if (!channelRangeIsMappable(channelRange))
         fatalf(E_FATAL, "error registering unmappable channel range: L%d\n",
-               channelRange.line);
+               line);
 
     // append to ChannelMap array
     const int index = gDefaultChannelMap.size;
@@ -52,7 +52,7 @@ static void channelMapParseCSV(char *b) {
     char *lStart = NULL;
     char *lEnd = b;
 
-    int lines = 0;
+    int lineAt = 0;
 
     while ((lStart = strsep(&lEnd, "\n")) != NULL) {
         // ignoring empty new lines
@@ -64,9 +64,7 @@ static void channelMapParseCSV(char *b) {
         char *sStart = NULL;
         char *sEnd = lStart;
 
-        ChannelRange newChannelRange = {
-                .line = lines,
-        };
+        ChannelRange newChannelRange;
 
         for (CMapField f = F_SID; f < F_COUNT; f++) {
             sStart = strsep(&sEnd, ",");
@@ -75,7 +73,7 @@ static void channelMapParseCSV(char *b) {
             // removing this enables fields to be unexpectedly empty
             // since the parse loop won't otherwise break
             if (sStart == NULL || strlen(sStart) == 0)
-                fatalf(E_FATAL, "error parsing channel map: L%d\n", lines);
+                fatalf(E_FATAL, "error parsing channel map: L%d\n", lineAt);
 
             switch (f) {
                 case F_SID:
@@ -101,12 +99,12 @@ static void channelMapParseCSV(char *b) {
             }
         }
 
-        channelMapPut(newChannelRange);
+        channelMapPut(newChannelRange, lineAt);
 
-        lines += 1;
+        lineAt += 1;
     }
 
-    printf("loaded %d channel map(s)\n", lines);
+    printf("loaded %d channel map(s)\n", lineAt);
 }
 
 void channelMapInit(const char *filepath) {
