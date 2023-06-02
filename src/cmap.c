@@ -34,8 +34,7 @@ static void channelMapPut(ChannelRange channelRange, int line) {
             reallocf(gDefaultChannelMap.ranges,
                      sizeof(ChannelMap) * gDefaultChannelMap.size);
 
-    memcpy(&gDefaultChannelMap.ranges[index], &channelRange,
-           sizeof(ChannelRange));
+    gDefaultChannelMap.ranges[index] = channelRange;
 }
 
 typedef enum channel_map_field_t {
