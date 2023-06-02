@@ -130,6 +130,8 @@ static void playerCheckSkippedFrames(int64_t ns) {
             (int) ceil((double) (millis - gPlaying.header.frameStepTimeMillis) /
                        (double) gPlaying.header.frameStepTimeMillis);
 
+    if (skippedFrames == 0) return;
+
     int64_t newFrame = gPlaying.currentFrame + skippedFrames;
 
     if (newFrame > gPlaying.header.frameCount)
