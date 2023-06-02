@@ -78,11 +78,11 @@ static void channelMapParseCSV(char *b) {
             switch (f) {
                 case F_SID:
                     parseLong(sStart, &newChannelRange.sid,
-                              sizeof(newChannelRange.sid), 0, UINT16_MAX);
+                              sizeof(newChannelRange.sid), 0, UINT32_MAX);
                     break;
                 case F_EID:
                     parseLong(sStart, &newChannelRange.eid,
-                              sizeof(newChannelRange.eid), 0, UINT16_MAX);
+                              sizeof(newChannelRange.eid), 0, UINT32_MAX);
                     break;
                 case F_UNIT:
                     parseLong(sStart, &newChannelRange.unit,

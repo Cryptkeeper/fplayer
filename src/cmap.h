@@ -7,8 +7,8 @@
 typedef struct channel_range_t ChannelRange;
 
 struct channel_range_t {
-    uint16_t sid;
-    uint16_t eid;
+    uint32_t sid;
+    uint32_t eid;
 
     uint8_t unit;
 
