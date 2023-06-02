@@ -30,7 +30,7 @@ static void framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
         fatalf(E_FILE_IO, NULL);
 
     unsigned long size = fread(pump->frameData, 1, reqFrameDataSize, f);
-    if (size != reqFrameDataSize)
+    if (size < reqFrameCount)
         fatalf(E_FILE_IO, "unexpected end of frame data\n");
 
     // ensure whatever amount of data was read is divisible into frames
