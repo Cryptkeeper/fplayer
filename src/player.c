@@ -1,5 +1,6 @@
 #include "player.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -120,6 +121,25 @@ static void playerWaitForConnection(PlayerOpts opts) {
     }
 }
 
+static void playerCheckSkippedFrames(int64_t ns) {
+    const long millis = ns / 1000000;
+
+    if (millis <= gPlaying.header.frameStepTimeMillis) return;
+
+    const int skippedFrames =
+            (int) ceil((double) (millis - gPlaying.header.frameStepTimeMillis) /
+                       (double) gPlaying.header.frameStepTimeMillis);
+
+    int64_t newFrame = gPlaying.currentFrame + skippedFrames;
+
+    if (newFrame > gPlaying.header.frameCount)
+        newFrame = gPlaying.header.frameCount;
+
+    gPlaying.currentFrame = newFrame;
+
+    printf("warning: skipping %d frames\n", skippedFrames);
+}
+
 void playerInit(PlayerOpts opts) {
     playerWaitForConnection(opts);
 
@@ -137,7 +157,8 @@ void playerInit(PlayerOpts opts) {
     playerPlayFirstAudioFile(opts);
 
     // start sequence timer loop
-    sleepTimerLoop(playerHandleNextFrame, gPlaying.header.frameStepTimeMillis);
+    sleepTimerLoop(playerHandleNextFrame, gPlaying.header.frameStepTimeMillis,
+                   playerCheckSkippedFrames);
 
     // continue blocking until audio is finished
     // playback will continue until sequence and audio are both complete

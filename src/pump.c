@@ -1,6 +1,5 @@
 #include "pump.h"
 
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -74,27 +73,6 @@ static bool framePumpIsEmpty(const FramePump *pump) {
     return pump->framePos >= pump->frameEnd;
 }
 
-static void framePumpCorrectLongChargeTime(const FramePump *pump,
-                                           Sequence *seq,
-                                           int64_t chargeTimeNs) {
-    const double chargeTimeMs = (double) chargeTimeNs / 1000000.0;
-
-    printf("loaded %d frames in %.4fms\n", pump->frameEnd, chargeTimeMs);
-
-    if (chargeTimeMs <= seq->header.frameStepTimeMillis) return;
-
-    const int skippedFrames =
-            (int) ceil((chargeTimeMs - seq->header.frameStepTimeMillis) /
-                       (double) seq->header.frameStepTimeMillis);
-
-    int64_t newFrame = seq->currentFrame + skippedFrames;
-    if (newFrame > seq->header.frameCount) newFrame = seq->header.frameCount;
-
-    seq->currentFrame = newFrame;
-
-    printf("warning: skipping %d frames\n", skippedFrames);
-}
-
 bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead) {
     if (framePumpIsEmpty(pump)) {
         const timeInstant start = timeGetNow();
@@ -115,8 +93,10 @@ bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead) {
             fatalf(E_FATAL, "unexpected end of frame pump\n");
 
         // check for performance issues after reading
-        framePumpCorrectLongChargeTime(pump, seq,
-                                       timeElapsedNs(start, timeGetNow()));
+        const double chargeTimeMs =
+                (double) timeElapsedNs(start, timeGetNow()) / 1000000.0;
+
+        printf("loaded %d frames in %.4fms\n", pump->frameEnd, chargeTimeMs);
     }
 
     *frameDataHead = &pump->frameData[pump->framePos];

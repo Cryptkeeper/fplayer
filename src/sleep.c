@@ -118,7 +118,7 @@ static void sleepTimerTick(int64_t ns) {
     sleepRecordSample(timeElapsedNs(start, end));
 }
 
-void sleepTimerLoop(sleep_fn_t sleep, long millis) {
+void sleepTimerLoop(sleep_fn_t sleep, long millis, skip_frame_fn_t skipFrame) {
     timeInstant start, end;
 
     while (true) {
@@ -132,6 +132,10 @@ void sleepTimerLoop(sleep_fn_t sleep, long millis) {
         const int64_t remainingTime =
                 (millis * 1000000) - timeElapsedNs(start, end);
 
-        if (remainingTime > 0) sleepTimerTick(remainingTime);
+        if (remainingTime > 0) {
+            sleepTimerTick(remainingTime);
+        } else if (remainingTime < 0) {
+            skipFrame(-remainingTime);
+        }
     }
 }
