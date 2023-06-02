@@ -19,7 +19,6 @@ static void framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
     const uint32_t frameSize = sequenceGetFrameSize(seq);
 
     // generates a frame data buffer of 5 seconds worth of playback
-    // FIXME: this doesn't respect possible frame rate override
     const uint32_t reqFrameCount = sequenceGetFPS(seq) * 5;
     const uint32_t reqFrameDataSize = reqFrameCount * frameSize;
 

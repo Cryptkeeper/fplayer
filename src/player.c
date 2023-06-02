@@ -98,12 +98,6 @@ static void playerPlayFirstAudioFile(PlayerOpts opts) {
     }
 }
 
-static long playerGetFrameStepTime(PlayerOpts opts) {
-    if (opts.frameStepTimeOverrideMs > 0) return opts.frameStepTimeOverrideMs;
-
-    return gPlaying.header.frameStepTimeMillis;
-}
-
 // LOR hardware may require several heartbeat messages are sent
 // before it considers itself connected to the player
 // This artificially waits prior to starting playback to ensure the device is
@@ -134,10 +128,14 @@ void playerInit(PlayerOpts opts) {
 
     sequenceOpen(opts.sequenceFilePath, &gPlaying);
 
+    // optionally override the sequence's playback rate with the CLI's value
+    if (opts.frameStepTimeOverrideMs > 0)
+        gPlaying.header.frameStepTimeMillis = opts.frameStepTimeOverrideMs;
+
     playerPlayFirstAudioFile(opts);
 
     // start sequence timer loop
-    sleepTimerLoop(playerHandleNextFrame, playerGetFrameStepTime(opts));
+    sleepTimerLoop(playerHandleNextFrame, gPlaying.header.frameStepTimeMillis);
 
     // continue blocking until audio is finished
     // playback will continue until sequence and audio are both complete
