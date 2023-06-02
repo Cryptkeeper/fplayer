@@ -105,6 +105,8 @@ static void playerPlayFirstAudioFile(PlayerOpts opts) {
 static void playerWaitForConnection(PlayerOpts opts) {
     if (opts.connectionWaitS == 0) return;
 
+    printf("waiting %d seconds for connection...\n", opts.connectionWaitS);
+
     // assumes 2 heartbeat messages per second (500ms delay)
     for (int toSend = opts.connectionWaitS * 2; toSend > 0; toSend--) {
         serialWriteHeartbeat();
@@ -141,6 +143,8 @@ void playerInit(PlayerOpts opts) {
     // playback will continue until sequence and audio are both complete
     while (audioCheckPlaying())
         ;
+
+    printf("end of sequence!\n");
 
     // cleanup resources
     audioStop();
