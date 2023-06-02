@@ -29,6 +29,8 @@ static void printUsage(void) {
     printf("\t-a <file>\t\tOverride audio with specified filepath\n");
     printf("\t-r <frame ms>\t\tOverride playback frame rate interval (in "
            "milliseconds)\n");
+    printf("\t-w <seconds>\t\tPlayback start delay to allow connection "
+           "setup\n");
 
     printf("\n[CLI]\n");
     printf("\t-h\t\t\tPrint this message and exit\n");
@@ -51,7 +53,7 @@ static SerialOpts gSerialOpts = {
 
 int main(int argc, char **argv) {
     int c;
-    while ((c = getopt(argc, argv, ":hvf:c:a:r:d:b:")) != -1) {
+    while ((c = getopt(argc, argv, ":hvf:c:a:r:w:d:b:")) != -1) {
         switch (c) {
             case 'h':
                 printUsage();
@@ -86,6 +88,11 @@ int main(int argc, char **argv) {
                 parseLong(optarg, &gPlayerOpts.frameStepTimeOverrideMs,
                           sizeof(gPlayerOpts.frameStepTimeOverrideMs), 1,
                           UINT8_MAX);
+                break;
+
+            case 'w':
+                parseLong(optarg, &gPlayerOpts.connectionWaitS,
+                          sizeof(gPlayerOpts.connectionWaitS), 0, UINT8_MAX);
                 break;
 
             case 'd':

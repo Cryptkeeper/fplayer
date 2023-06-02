@@ -13,7 +13,7 @@
 #include "time.h"
 
 static inline void spPrintError(enum sp_return err) {
-    fprintf(stderr, "libserialport error: 0x%02x\n", err);
+    fprintf(stderr, "libserialport error: %d\n", err);
 
     // global error handling is only used with a single super error type
     if (err != SP_ERR_FAIL) return;
@@ -80,7 +80,15 @@ static void serialWriteChannelData(uint32_t id, uint8_t newIntensity) {
     }
 }
 
-static void serialWriteHeartbeat(void) {
+void serialWriteHeartbeat(void) {
+    if (gPort == NULL) return;
+
+    const int written = lor_write_heartbeat(gEncodeBuffer);
+
+    spTry(sp_nonblocking_write(gPort, gEncodeBuffer, written));
+}
+
+static void serialWriteThrottledHeartbeat(void) {
     static timeInstant gLastHeartbeat;
 
     // each frame will request a heartbeat be sent
@@ -91,9 +99,7 @@ static void serialWriteHeartbeat(void) {
 
     gLastHeartbeat = timeGetNow();
 
-    const int written = lor_write_heartbeat(gEncodeBuffer);
-
-    spTry(sp_nonblocking_write(gPort, gEncodeBuffer, written));
+    serialWriteHeartbeat();
 }
 
 void serialWriteFrame(const uint8_t *currentData,
@@ -101,7 +107,7 @@ void serialWriteFrame(const uint8_t *currentData,
                       uint32_t size) {
     if (gPort == NULL) return;
 
-    serialWriteHeartbeat();
+    serialWriteThrottledHeartbeat();
 
     for (uint32_t id = 0; id < size; id++) {
         // avoid duplicate writes of the same intensity value

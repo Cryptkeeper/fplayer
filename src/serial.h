@@ -12,6 +12,8 @@ void serialOptsFree(SerialOpts *opts);
 
 void serialInit(SerialOpts opts);
 
+void serialWriteHeartbeat(void);
+
 void serialWriteFrame(const uint8_t *currentData,
                       const uint8_t *lastData,
                       uint32_t size);

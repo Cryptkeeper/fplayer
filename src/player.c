@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <lightorama/heartbeat.h>
+
 #include "audio.h"
 #include "mem.h"
 #include "pump.h"
@@ -102,7 +104,29 @@ static long playerGetFrameStepTime(PlayerOpts opts) {
     return gPlaying.header.frameStepTimeMillis;
 }
 
+// LOR hardware may require several heartbeat messages are sent
+// before it considers itself connected to the player
+// This artificially waits prior to starting playback to ensure the device is
+// considered connected and ready for frame data
+static void playerWaitForConnection(PlayerOpts opts) {
+    if (opts.connectionWaitS == 0) return;
+
+    // assumes 2 heartbeat messages per second (500ms delay)
+    for (int toSend = opts.connectionWaitS * 2; toSend > 0; toSend--) {
+        serialWriteHeartbeat();
+
+        const struct timespec itrSleep = {
+                .tv_sec = 0,
+                .tv_nsec = LOR_HEARTBEAT_DELAY_NS,
+        };
+
+        nanosleep(&itrSleep, NULL);
+    }
+}
+
 void playerInit(PlayerOpts opts) {
+    playerWaitForConnection(opts);
+
     // read and parse sequence file data
     sequenceInit(&gPlaying);
 
