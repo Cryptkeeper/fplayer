@@ -41,6 +41,13 @@ static void playerLogStatus(void) {
 
 static uint8_t *gLastFrameData;
 
+static void playerFree(void) {
+    freeAndNull((void **) &gLastFrameData);
+
+    memset(&gPlaying, 0, sizeof(Sequence));
+    memset(&gFramePump, 0, sizeof(FramePump));
+}
+
 static bool playerHandleNextFrame(void) {
     if (!sequenceNextFrame(&gPlaying)) return false;
 
@@ -120,5 +127,5 @@ void playerInit(PlayerOpts opts) {
 
     framePumpFree(&gFramePump);
 
-    freeAndNull((void **) &gLastFrameData);
+    playerFree();
 }
