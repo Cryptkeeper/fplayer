@@ -1,8 +1,10 @@
 #include "err.h"
 
+#include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static const char *errGetMessage(Err err) {
     switch (err) {
@@ -33,7 +35,11 @@ void fatalf(Err err, const char *format, ...) {
     }
 
     // `errno` is likely set
-    if (err == E_FILE_NOT_FOUND || err == E_ALLOC_FAIL) perror(NULL);
+    if (err == E_FILE_NOT_FOUND || err == E_ALLOC_FAIL) {
+        const char *msg = (const char *) strerror(errno);
+
+        if (msg != NULL) fprintf(stderr, "%s\n", msg);
+    }
 
     fflush(stderr);
 
