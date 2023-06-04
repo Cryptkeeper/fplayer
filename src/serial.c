@@ -1,7 +1,6 @@
 #include "serial.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 
 #include <libserialport.h>
 #include <lightorama/easy.h>
