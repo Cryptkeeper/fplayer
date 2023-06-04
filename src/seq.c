@@ -73,40 +73,41 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
     if (fseek(f, seq->header.variableDataOffset, SEEK_SET) < 0)
         fatalf(E_FILE_IO, NULL);
 
-    uint8_t b[varDataSize];
+    uint8_t *varTable = mustMalloc(varDataSize);
 
-    if (fread(b, sizeof(b), 1, f) != 1) return;
+    if (fread(varTable, varDataSize, 1, f) != 1) goto free_and_return;
 
-    struct tf_var_header_t tfVarHeader;
+    struct tf_var_header_t varHeader;
     enum tf_err_t err;
 
-    uint8_t *readIdx = &b[0];
+    uint8_t *readIdx = &varTable[0];
 
-    uint8_t valueBuf[MAX_VAR_VALUE_SIZE];
-    memset(valueBuf, 0, sizeof(valueBuf));
+    uint8_t *varString = mustMalloc(MAX_VAR_VALUE_SIZE);
 
     // 4 is the packed sizeof(struct tf_var_header_t)
     for (uint16_t remaining = varDataSize; remaining > VAR_HEADER_SIZE;) {
-        if ((err = tf_read_var_header(readIdx, remaining, &tfVarHeader,
-                                      valueBuf, sizeof(valueBuf), &readIdx)) !=
-            TF_OK) {
+        if ((err = tf_read_var_header(readIdx, remaining, &varHeader, varString,
+                                      MAX_VAR_VALUE_SIZE, &readIdx)) != TF_OK) {
             fatalf(E_FATAL, "error parsing sequence variable: %s\n",
                    tf_err_str(err));
 
-            return;
+            goto free_and_return;
         }
 
-        if (tfVarHeader.id[0] == 'm' && tfVarHeader.id[1] == 'f') {
-            char *fp = seq->audioFilePath =
-                    mustMalloc((size_t) tfVarHeader.size);
+        if (varHeader.id[0] == 'm' && varHeader.id[1] == 'f') {
+            char *fp = seq->audioFilePath = mustMalloc((size_t) varHeader.size);
 
-            strcpy(fp, (const char *) &valueBuf[0]);
+            strlcpy(fp, (const char *) &varString[0], varHeader.size);
 
-            return;
+            goto free_and_return;
         }
 
-        remaining -= tfVarHeader.size;
+        remaining -= varHeader.size;
     }
+
+free_and_return:
+    freeAndNull(&varTable);
+    freeAndNull(&varString);
 }
 
 void sequenceOpen(const char *filepath, Sequence *seq) {
