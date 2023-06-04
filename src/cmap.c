@@ -32,8 +32,8 @@ static void channelMapPut(ChannelRange channelRange, int line) {
 
     gDefaultChannelMap.size += 1;
     gDefaultChannelMap.ranges =
-            reallocf(gDefaultChannelMap.ranges,
-                     sizeof(ChannelMap) * gDefaultChannelMap.size);
+            mustRealloc(gDefaultChannelMap.ranges,
+                        sizeof(ChannelMap) * gDefaultChannelMap.size);
 
     gDefaultChannelMap.ranges[index] = channelRange;
 }

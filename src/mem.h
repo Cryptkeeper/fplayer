@@ -13,6 +13,8 @@ void freeAndNull(void **p);
 
 void *mustMalloc(size_t size);
 
+void *mustRealloc(void *p, size_t size);
+
 char *mustStrdup(const char *src);
 
 #endif//FPLAYER_MEM_H

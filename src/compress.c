@@ -1,6 +1,5 @@
 #include "compress.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 #include <zstd.h>
@@ -63,7 +62,7 @@ static void decompressBlockZstd(Sequence *seq,
         const size_t head = *size;
 
         *size += out.pos;
-        *frameData = reallocf(*frameData, *size);
+        *frameData = mustRealloc(*frameData, *size);
 
         memcpy(&(*frameData)[head], dOut, out.pos);
     }
