@@ -1,13 +1,9 @@
 #ifndef FPLAYER_MEM_H
 #define FPLAYER_MEM_H
 
-#include <stdlib.h>
+#include <stddef.h>
 
-#define freeAndNull(p)                                                         \
-    do {                                                                       \
-        free(*(p));                                                            \
-        *(p) = NULL;                                                           \
-    } while (0)
+void freeAndNull(void **p);
 
 #define freeAndNullWith(p, fn)                                                 \
     do {                                                                       \

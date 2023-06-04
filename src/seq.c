@@ -106,8 +106,8 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
     }
 
 free_and_return:
-    freeAndNull(&varTable);
-    freeAndNull(&varString);
+    freeAndNull((void **) &varTable);
+    freeAndNull((void **) &varString);
 }
 
 #define FSEQ_HEADER_SIZE 32
