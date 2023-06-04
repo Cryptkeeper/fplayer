@@ -19,24 +19,22 @@ static void framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
 
     // generates a frame data buffer of 5 seconds worth of playback
     const uint32_t reqFrameCount = sequenceGetFPS(seq) * 5;
-    const uint32_t reqFrameDataSize = reqFrameCount * frameSize;
 
-    if (pump->frameData == NULL) pump->frameData = mustMalloc(reqFrameDataSize);
+    if (pump->frameData == NULL)
+        pump->frameData = mustMalloc(frameSize * reqFrameCount);
 
     FILE *f = seq->openFile;
 
     if (fseek(f, seq->currentFrame * frameSize, SEEK_SET) < 0)
         fatalf(E_FILE_IO, NULL);
 
-    unsigned long size = fread(pump->frameData, 1, reqFrameDataSize, f);
-    if (size < reqFrameCount)
-        fatalf(E_FILE_IO, "unexpected end of frame data\n");
+    const unsigned long framesRead =
+            fread(pump->frameData, frameSize, reqFrameCount, f);
 
-    // ensure whatever amount of data was read is divisible into frames
-    size -= (size % frameSize);
+    if (framesRead == 0) fatalf(E_FILE_IO, "unexpected end of frame data\n");
 
     pump->framePos = 0;
-    pump->frameEnd = size / frameSize;
+    pump->frameEnd = framesRead;
 }
 
 static bool framePumpChargeCompressionBlock(FramePump *pump, Sequence *seq) {
