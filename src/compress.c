@@ -8,10 +8,6 @@
 #include "err.h"
 #include "mem.h"
 
-static inline void zstdPrintError(size_t err) {
-    fprintf(stderr, "ztd error: %s (%zu)\n", ZSTD_getErrorName(err), err);
-}
-
 static uint32_t sequenceGetComBlockPos(const Sequence *seq, int comBlockIndex) {
     uint32_t offset = 0;
 
@@ -56,26 +52,26 @@ static void decompressBlockZstd(Sequence *seq,
                 .pos = 0,
         };
 
-        const size_t zstdErr = ZSTD_decompressStream(ctx, &out, &in);
+        const size_t err = ZSTD_decompressStream(ctx, &out, &in);
 
-        if (ZSTD_isError(zstdErr)) {
-            zstdPrintError(zstdErr);
-
-            fatalf(E_FILE_IO, "error while decompressing zstd stream\n");
-        }
+        if (ZSTD_isError(err))
+            fatalf(E_FILE_IO,
+                   "error while decompressing zstd stream: %s (%zu)\n",
+                   ZSTD_getErrorName(err), err);
 
         // append the decompressed data chunk to the full array
         const size_t head = *size;
+
         *size += out.pos;
         *frameData = reallocf(*frameData, *size);
 
         memcpy(&(*frameData)[head], dOut, out.pos);
     }
 
-    ZSTD_freeDCtx(ctx);
+    freeAndNullWith(&ctx, ZSTD_freeDCtx);
 
-    free(dIn);
-    free(dOut);
+    freeAndNull(&dIn);
+    freeAndNull(&dOut);
 }
 
 void decompressBlock(Sequence *seq,
