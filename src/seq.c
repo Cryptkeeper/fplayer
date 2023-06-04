@@ -22,8 +22,6 @@ void sequenceInit(Sequence *seq) {
     seq->currentFrame = -1;
 }
 
-#define COMPRESSION_BLOCK_SIZE 8
-
 static void sequenceTrimCompressionBlockCount(Sequence *seq) {
     // a fseq file may include multiple empty compression blocks for padding purposes
     // these will appear with a 0 size value, trailing previously valid blocks
@@ -43,6 +41,8 @@ static void sequenceTrimCompressionBlockCount(Sequence *seq) {
         }
     }
 }
+
+#define COMPRESSION_BLOCK_SIZE 8
 
 static void sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
     const uint8_t comBlockCount = seq->header.compressionBlockCount;
@@ -75,7 +75,7 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
 
     uint8_t *varTable = mustMalloc(varDataSize);
 
-    if (fread(varTable, varDataSize, 1, f) != 1) goto free_and_return;
+    if (fread(varTable, 1, varDataSize, f) != varDataSize) goto free_and_return;
 
     struct tf_var_header_t varHeader;
     enum tf_err_t err;
@@ -110,15 +110,18 @@ free_and_return:
     freeAndNull(&varString);
 }
 
+#define FSEQ_HEADER_SIZE 32
+
 void sequenceOpen(const char *filepath, Sequence *seq) {
     FILE *f = seq->openFile = fopen(filepath, "rb");
 
     if (f == NULL)
         fatalf(E_FILE_NOT_FOUND, "error opening sequence: %s\n", filepath);
 
-    uint8_t b[32];
+    uint8_t b[FSEQ_HEADER_SIZE];
 
-    if (fread(b, sizeof(b), 1, f) != 1) fatalf(E_FILE_IO, NULL);
+    if (fread(b, 1, FSEQ_HEADER_SIZE, f) != FSEQ_HEADER_SIZE)
+        fatalf(E_FILE_IO, NULL);
 
     enum tf_err_t err;
 
