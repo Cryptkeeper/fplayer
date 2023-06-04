@@ -30,7 +30,7 @@ static void playerLogStatus(void) {
 
     if (timeElapsedNs(gLastLog, now) < 1000000000) return;
 
-    gLastLog = timeGetNow();
+    gLastLog = now;
 
     static char bDuration[64];
     sequenceGetDuration(&gPlaying, bDuration, sizeof(bDuration));

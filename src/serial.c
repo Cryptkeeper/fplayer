@@ -96,7 +96,7 @@ static void serialWriteThrottledHeartbeat(void) {
 
     if (timeElapsedNs(gLastHeartbeat, now) < LOR_HEARTBEAT_DELAY_NS) return;
 
-    gLastHeartbeat = timeGetNow();
+    gLastHeartbeat = now;
 
     serialWriteHeartbeat();
 }
