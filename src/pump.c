@@ -31,7 +31,7 @@ static void framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
     const unsigned long framesRead =
             fread(pump->frameData, frameSize, reqFrameCount, f);
 
-    if (framesRead == 0) fatalf(E_FILE_IO, "unexpected end of frame data\n");
+    if (framesRead < 1) fatalf(E_FILE_IO, "unexpected end of frame data\n");
 
     pump->framePos = 0;
     pump->frameEnd = framesRead;
