@@ -54,7 +54,7 @@ static void sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
     struct tf_compression_block_t *compressionBlocks = seq->compressionBlocks =
             mustMalloc(comDataSize);
 
-    fseek(f, 32, SEEK_SET);
+    if (fseek(f, 32, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
 
     if (fread(compressionBlocks, COMPRESSION_BLOCK_SIZE, comBlockCount, f) !=
         comBlockCount)
@@ -70,7 +70,8 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
     const uint16_t varDataSize =
             seq->header.channelDataOffset - seq->header.variableDataOffset;
 
-    fseek(f, seq->header.variableDataOffset, SEEK_SET);
+    if (fseek(f, seq->header.variableDataOffset, SEEK_SET) < 0)
+        fatalf(E_FILE_IO, NULL);
 
     uint8_t b[varDataSize];
 
