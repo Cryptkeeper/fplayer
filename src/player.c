@@ -76,19 +76,11 @@ static bool playerHandleNextFrame(void) {
     return true;
 }
 
-static char *playerGetFirstAudioFile(PlayerOpts opts) {
-    if (opts.audioOverrideFilePath != NULL) {
-        return opts.audioOverrideFilePath;
-    } else if (gPlaying.audioFilePath != NULL) {
-        return gPlaying.audioFilePath;
-    } else {
-        return NULL;
-    }
-}
-
 static void playerPlayFirstAudioFile(PlayerOpts opts) {
-    // select best audio file and play
-    const char *audioFilePath = playerGetFirstAudioFile(opts);
+    // select the override, if set, otherwise fallback to the sequence's hint
+    const char *audioFilePath = opts.audioOverrideFilePath != NULL
+                                        ? opts.audioOverrideFilePath
+                                        : gPlaying.audioFilePath;
 
     if (audioFilePath != NULL) {
         printf("preparing to play %s\n", audioFilePath);
