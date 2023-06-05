@@ -113,7 +113,7 @@ static void playerWaitForConnection(PlayerOpts opts) {
     }
 }
 
-static void playerCheckSkippedFrames(int64_t ns) {
+static void playerOverrunSkipFrames(int64_t ns) {
     const long millis = ns / 1000000;
 
     if (millis <= gPlaying.header.frameStepTimeMillis) return;
@@ -152,7 +152,7 @@ void playerInit(PlayerOpts opts) {
 
     // start sequence timer loop
     sleepTimerLoop(playerHandleNextFrame, gPlaying.header.frameStepTimeMillis,
-                   playerCheckSkippedFrames);
+                   playerOverrunSkipFrames);
 
     // continue blocking until audio is finished
     // playback will continue until sequence and audio are both complete

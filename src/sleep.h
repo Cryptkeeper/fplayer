@@ -8,8 +8,8 @@ void sleepGetDrift(char *b, int c);
 
 typedef bool (*sleep_fn_t)(void);
 
-typedef void (*skip_frame_fn_t)(int64_t ns);
+typedef void (*overrun_fn_t)(int64_t ns);
 
-void sleepTimerLoop(sleep_fn_t sleep, long millis, skip_frame_fn_t skipFrame);
+void sleepTimerLoop(sleep_fn_t sleep, long millis, overrun_fn_t overrun);
 
 #endif//FPLAYER_SLEEP_H

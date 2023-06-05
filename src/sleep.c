@@ -118,7 +118,7 @@ static void sleepTimerTick(int64_t ns) {
     sleepRecordSample(timeElapsedNs(start, end));
 }
 
-void sleepTimerLoop(sleep_fn_t sleep, long millis, skip_frame_fn_t skipFrame) {
+void sleepTimerLoop(sleep_fn_t sleep, long millis, overrun_fn_t overrun) {
     timeInstant start, end;
 
     while (true) {
@@ -135,7 +135,7 @@ void sleepTimerLoop(sleep_fn_t sleep, long millis, skip_frame_fn_t skipFrame) {
         if (remainingTime > 0) {
             sleepTimerTick(remainingTime);
         } else if (remainingTime < 0) {
-            skipFrame(-remainingTime);
+            overrun(-remainingTime);
         }
     }
 }
