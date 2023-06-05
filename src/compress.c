@@ -1,11 +1,14 @@
 #include "compress.h"
 
+#ifdef ENABLE_ZSTD
 #include <string.h>
 
 #include <zstd.h>
 
-#include "err.h"
 #include "mem.h"
+#endif
+
+#include "err.h"
 
 static uint32_t sequenceGetComBlockPos(const Sequence *seq, int comBlockIndex) {
     uint32_t offset = 0;
@@ -17,6 +20,7 @@ static uint32_t sequenceGetComBlockPos(const Sequence *seq, int comBlockIndex) {
     return seq->header.channelDataOffset + offset;
 }
 
+#ifdef ENABLE_ZSTD
 static void decompressBlockZstd(Sequence *seq,
                                 int comBlockIndex,
                                 uint8_t **frameData,
@@ -72,14 +76,24 @@ static void decompressBlockZstd(Sequence *seq,
     freeAndNull(&dIn);
     freeAndNull(&dOut);
 }
+#endif
 
 void decompressBlock(Sequence *seq,
                      int comBlockIndex,
                      uint8_t **frameData,
                      uint32_t *size) {
-    if (seq->header.compressionType != TF_COMPRESSION_ZSTD)
-        fatalf(E_FATAL, "cannot decompress type: %d\n",
-               seq->header.compressionType);
+    switch (seq->header.compressionType) {
+        case TF_COMPRESSION_ZSTD: {
+#ifdef ENABLE_ZSTD
+            decompressBlockZstd(seq, comBlockIndex, frameData, size);
+#else
+            fatalf(E_FATAL, "zstd support disabled at build time\n");
+#endif
+            break;
+        }
 
-    decompressBlockZstd(seq, comBlockIndex, frameData, size);
+        default:
+            fatalf(E_FATAL, "cannot decompress type: %d\n",
+                   seq->header.compressionType);
+    }
 }

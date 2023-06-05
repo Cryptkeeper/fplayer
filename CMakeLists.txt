@@ -21,3 +21,5 @@ if (APPLE)
 endif ()
 
 add_compile_options(-Wall -Wextra -pedantic)
+
+add_compile_definitions(ENABLE_ZSTD)

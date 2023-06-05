@@ -3,7 +3,10 @@
 
 #include <AL/alut.h>
 #include <libserialport.h>
+
+#ifdef ENABLE_ZSTD
 #include <zstd.h>
+#endif
 
 #include "../libtinyfseq/tinyfseq.h"
 
@@ -42,7 +45,12 @@ static void printVersions(void) {
     printf("libtinyfseq %s\n", TINYFSEQ_VERSION);
     printf("libserialport %s\n", SP_PACKAGE_VERSION_STRING);
     printf("OpenAL %s\n", alGetString(AL_VERSION));
+
+#ifdef ENABLE_ZSTD
     printf("zstd %s\n", ZSTD_versionString());
+#else
+    printf("zstd disabled\n");
+#endif
 }
 
 static PlayerOpts gPlayerOpts;
