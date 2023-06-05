@@ -151,6 +151,16 @@ bool sequenceNextFrame(Sequence *seq) {
     return true;
 }
 
+inline uint32_t sequenceGetFrameSize(const Sequence *seq) {
+    // assumes sizeof(uint8_t) is always 1, otherwise this can overflow
+    // and the return type needs promoted to `size_t`
+    return seq->header.channelCount * sizeof(uint8_t);
+}
+
+inline int sequenceGetFPS(const Sequence *seq) {
+    return 1000 / seq->header.frameStepTimeMillis;
+}
+
 void sequenceGetDuration(Sequence *seq, char *b, int c) {
     long framesRemaining = seq->header.frameCount;
     if (seq->currentFrame != -1) framesRemaining -= seq->currentFrame;

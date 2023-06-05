@@ -26,9 +26,9 @@ void sequenceFree(Sequence *seq);
 
 bool sequenceNextFrame(Sequence *seq);
 
-#define sequenceGetFrameSize(seq) ((seq)->header.channelCount * sizeof(uint8_t))
+uint32_t sequenceGetFrameSize(const Sequence *seq);
 
-#define sequenceGetFPS(seq) (1000 / (seq)->header.frameStepTimeMillis)
+int sequenceGetFPS(const Sequence *seq);
 
 void sequenceGetDuration(Sequence *seq, char *b, int c);
 
