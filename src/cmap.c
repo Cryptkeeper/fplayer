@@ -17,9 +17,7 @@ static bool channelRangeIsMappable(const ChannelRange range) {
     const int rcircuit = range.ecircuit - range.scircuit;
     if (rcircuit < 0) return false;
 
-    if (rid != rcircuit) return false;
-
-    return true;
+    return rid == rcircuit;
 }
 
 static void channelMapPut(ChannelRange channelRange, int line) {

@@ -20,14 +20,14 @@ static inline void alutPrintError(const char *msg) {
     fprintf(stderr, "%s\n", msg);
 }
 
-static ALuint alSource;
-static ALuint alBuffer = AL_NONE;
+static ALuint gSource;
+static ALuint gCurrentBuffer = AL_NONE;
 
 void audioInit(int *argc, char **argv) {
     alutInit(argc, argv);
     alutPrintError("error while initializing ALUT");
 
-    alGenSources(1, &alSource);
+    alGenSources(1, &gSource);
     alPrintError("error generating default audio source");
 }
 
@@ -40,40 +40,36 @@ void audioExit(void) {
 
 bool audioCheckPlaying(void) {
     ALint state;
-    alGetSourcei(alSource, AL_SOURCE_STATE, &state);
+    alGetSourcei(gSource, AL_SOURCE_STATE, &state);
     alPrintError("error checking audio source state");
 
-    if (state != AL_PLAYING) {
-        audioStop();
+    if (state != AL_PLAYING) audioStop();
 
-        return false;
-    } else {
-        return true;
-    }
+    return state == AL_PLAYING;
 }
 
 void audioPlayFile(const char *filepath) {
-    alBuffer = alutCreateBufferFromFile(filepath);
+    gCurrentBuffer = alutCreateBufferFromFile(filepath);
     alutPrintError("error decoding file into buffer");
 
-    alSourcei(alSource, AL_BUFFER, (ALint) alBuffer);
+    alSourcei(gSource, AL_BUFFER, (ALint) gCurrentBuffer);
     alPrintError("error assigning source buffer");
 
-    alSourcePlay(alSource);
+    alSourcePlay(gSource);
     alPrintError("error starting audio source playback");
 }
 
 void audioStop(void) {
-    alSourceStop(alSource);
+    alSourceStop(gSource);
     alPrintError("error stopping audio source playback");
 
-    if (alBuffer != AL_NONE) {
-        alSourceUnqueueBuffers(alSource, 1, &alBuffer);
-        alPrintError("error dequeuing audio buffer from source");
+    if (gCurrentBuffer == AL_NONE) return;
 
-        alDeleteBuffers(1, &alBuffer);
-        alPrintError("error deleting audio buffer");
+    alSourceUnqueueBuffers(gSource, 1, &gCurrentBuffer);
+    alPrintError("error dequeuing audio buffer from source");
 
-        alBuffer = AL_NONE;
-    }
+    alDeleteBuffers(1, &gCurrentBuffer);
+    alPrintError("error deleting audio buffer");
+
+    gCurrentBuffer = AL_NONE;
 }
