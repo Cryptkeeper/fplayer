@@ -134,7 +134,7 @@ static void playerOverrunSkipFrames(int64_t ns) {
     printf("warning: skipping %d frames\n", skippedFrames);
 }
 
-void playerInit(PlayerOpts opts) {
+void playerRun(PlayerOpts opts) {
     playerWaitForConnection(opts);
 
     // read and parse sequence file data

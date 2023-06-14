@@ -13,6 +13,6 @@ typedef struct player_opts_t {
 
 void playerOptsFree(PlayerOpts *opts);
 
-void playerInit(PlayerOpts opts);
+void playerRun(PlayerOpts opts);
 
 #endif//FPLAYER_PLAYER_H

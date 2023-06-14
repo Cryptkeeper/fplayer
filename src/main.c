@@ -123,17 +123,17 @@ int main(int argc, char **argv) {
     argc -= optind;
     argv += optind;
 
+    // initialize core subsystems and load configs
     audioInit(&argc, argv);
-
     channelMapInit(gPlayerOpts.channelMapFilePath);
-
     serialInit(gSerialOpts);
-    playerInit(gPlayerOpts);
 
+    // start the player as configured, this will start playback automatically
+    playerRun(gPlayerOpts);
+
+    // teardown in reverse order
     serialExit();
-
     channelMapFree();
-
     audioExit();
 
     serialOptsFree(&gSerialOpts);
