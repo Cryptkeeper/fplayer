@@ -59,26 +59,21 @@ static SerialOpts gSerialOpts = {
         .baudRate = 19200,
 };
 
-int main(int argc, char **argv) {
+#define cReturnOK  0 /* early return, 0 */
+#define cReturnErr 1 /* early return, 1 */
+#define cContinue  2 /* no return */
+
+static int parseOpts(int argc, char **argv) {
     int c;
     while ((c = getopt(argc, argv, ":hvf:c:a:r:w:d:b:")) != -1) {
         switch (c) {
             case 'h':
                 printUsage();
-                return 0;
+                return cReturnOK;
 
             case 'v':
                 printVersions();
-                return 0;
-
-            case ':':
-                fprintf(stderr, "option is missing argument: %c\n", optopt);
-                return 1;
-
-            case '?':
-            default:
-                fprintf(stderr, "unknown option: %c\n", optopt);
-                return 1;
+                return cReturnOK;
 
             case 'f':
                 gPlayerOpts.sequenceFilePath = mustStrdup(optarg);
@@ -111,13 +106,32 @@ int main(int argc, char **argv) {
                 parseLong(optarg, &gSerialOpts.baudRate,
                           sizeof(gSerialOpts.baudRate), 0, UINT32_MAX);
                 break;
+
+            case ':':
+                fprintf(stderr, "option is missing argument: %c\n", optopt);
+                return cReturnErr;
+
+            case '?':
+            default:
+                fprintf(stderr, "unknown option: %c\n", optopt);
+                return cReturnErr;
         }
     }
 
     if (gPlayerOpts.sequenceFilePath == NULL) {
         printUsage();
+        return cReturnErr;
+    }
 
-        return 1;
+    return cContinue;
+}
+
+int main(int argc, char **argv) {
+    switch (parseOpts(argc, argv)) {
+        case cReturnOK:
+            return 0;
+        case cReturnErr:
+            return 1;
     }
 
     argc -= optind;
