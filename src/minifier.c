@@ -5,6 +5,8 @@
 #include <lightorama/easy.h>
 #include <lightorama/lightorama.h>
 
+#include "lor.h"
+
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << i))
 
 static uint16_t minifyGetMatches(int nCircuits,
@@ -20,10 +22,6 @@ static uint16_t minifyGetMatches(int nCircuits,
 
     return matches;
 }
-
-// guidance size for a stack-based Light-O-Rama packet encoding buffer
-// no LOR packet emitted by this code should exceed half this size
-#define LOR_PACKET_BUFFER 32
 
 static void minifySetSingle(uint8_t unit,
                             int circuit,

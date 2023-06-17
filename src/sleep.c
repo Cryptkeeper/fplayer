@@ -48,12 +48,12 @@ static int64_t sleepEstimatedNs(int64_t ns) {
         // a one millisecond #nanosleep call
         start = timeGetNow();
 
-        static const struct timespec timeOneMs = {
+        const struct timespec *timeOneMs = &(const struct timespec){
                 .tv_sec = 0,
                 .tv_nsec = 1000000,
         };
 
-        nanosleep(&timeOneMs, NULL);
+        nanosleep(timeOneMs, NULL);
 
         end = timeGetNow();
 

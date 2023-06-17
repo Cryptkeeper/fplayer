@@ -8,6 +8,7 @@
 
 #include "cmap.h"
 #include "err.h"
+#include "lor.h"
 #include "mem.h"
 #include "time.h"
 
@@ -58,33 +59,32 @@ void serialInit(SerialOpts opts) {
     if (opts.devName != NULL) serialOpenPort(opts);
 }
 
-static uint8_t gEncodeBuffer[64];
-
 static void serialWriteChannelData(uint32_t id, uint8_t newIntensity) {
-    static struct lor_effect_setintensity_t gSetEffect;
-
-    gSetEffect.intensity =
-            lor_intensity_curve_vendor((float) (newIntensity / 255.0));
-
     uint8_t unit;
     uint16_t circuit;
     if (!channelMapFind(id, &unit, &circuit)) return;
 
-    const int written =
-            lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY, &gSetEffect,
-                                     circuit - 1, unit, gEncodeBuffer);
+    const struct lor_effect_setintensity_t setEffect = {
+            .intensity =
+                    lor_intensity_curve_vendor((float) (newIntensity / 255.0)),
+    };
 
-    if (written > 0) {
-        spTry(sp_nonblocking_write(gPort, gEncodeBuffer, written));
-    }
+    lorInitBuffer(encodeBuf);
+
+    const int written = lor_write_channel_effect(
+            LOR_EFFECT_SET_INTENSITY, &setEffect, circuit - 1, unit, encodeBuf);
+
+    if (written > 0) spTry(sp_nonblocking_write(gPort, encodeBuf, written));
 }
 
 void serialWriteHeartbeat(void) {
     if (gPort == NULL) return;
 
-    const int written = lor_write_heartbeat(gEncodeBuffer);
+    lorInitBuffer(encodeBuf);
 
-    spTry(sp_nonblocking_write(gPort, gEncodeBuffer, written));
+    const int written = lor_write_heartbeat(encodeBuf);
+
+    spTry(sp_nonblocking_write(gPort, encodeBuf, written));
 }
 
 static void serialWriteThrottledHeartbeat(void) {
