@@ -69,7 +69,7 @@ static void serialWriteChannelData(uint32_t id, uint8_t newIntensity) {
                     lor_intensity_curve_vendor((float) (newIntensity / 255.0)),
     };
 
-    lorInitBuffer(encodeBuf);
+    uint8_t encodeBuf[LOR_PACKET_BUFFER] = {0};
 
     const int written = lor_write_channel_effect(
             LOR_EFFECT_SET_INTENSITY, &setEffect, circuit - 1, unit, encodeBuf);
@@ -80,7 +80,7 @@ static void serialWriteChannelData(uint32_t id, uint8_t newIntensity) {
 void serialWriteHeartbeat(void) {
     if (gPort == NULL) return;
 
-    lorInitBuffer(encodeBuf);
+    uint8_t encodeBuf[LOR_PACKET_BUFFER] = {0};
 
     const int written = lor_write_heartbeat(encodeBuf);
 

@@ -5,6 +5,7 @@
 #include <lightorama/easy.h>
 #include <lightorama/lightorama.h>
 
+#include "cmap.h"
 #include "lor.h"
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << i))
@@ -67,11 +68,11 @@ static void minifySetMask(uint8_t unit,
     write(encodeBuf, written);
 }
 
-void minifyStream(uint8_t unit,
-                  uint8_t groupOffset,
-                  uint8_t nCircuits,
-                  const uint8_t frameData[16],
-                  minify_write_fn_t write) {
+static void minifyStreamChunk(uint8_t unit,
+                              uint8_t groupOffset,
+                              uint8_t nCircuits,
+                              const uint8_t frameData[16],
+                              minify_write_fn_t write) {
     assert(nCircuits > 0 && nCircuits <= 16);
 
     uint16_t consumed = 0;
@@ -107,4 +108,58 @@ void minifyStream(uint8_t unit,
         // detect when all circuits are handled and break early
         if (consumed == 0xFFFFu) break;
     }
+}
+
+static void minifyFlushChunk(uint8_t unit,
+                             int *nStack,
+                             uint8_t circuitStack[16],
+                             uint8_t powerStack[16]) {
+    // TODO
+
+    *nStack = 0;
+}
+
+void minifyStream(const uint8_t *frameData,
+                  uint32_t size,
+                  minify_write_fn_t write) {
+    uint8_t circuitStack[16] = {0};
+    uint8_t powerStack[16] = {0};
+
+    int nStack = 0;
+
+    uint8_t prevUnit = 0;
+
+    for (uint32_t id = 0; id < size; id++) {
+        uint8_t unit;
+        uint16_t circuit;
+
+        if (!channelMapFind(id, &unit, &circuit)) continue;
+
+        if (prevUnit > 0 && prevUnit != unit)
+            minifyFlushChunk(unit, &nStack, circuitStack, powerStack);
+
+        prevUnit = unit;
+
+        // make sure circuit values are sequential
+        if (nStack > 0 && circuitStack[nStack - 1] != circuit - 1)
+            minifyFlushChunk(unit, &nStack, circuitStack, powerStack);
+
+        // push the circuit+output value onto a minifier stack
+        // this is the pending flush queue for sequential circuits
+        circuitStack[nStack] = circuit;
+        powerStack[nStack] = frameData[id];
+
+        nStack++;
+
+        if (nStack == 16) {
+            minifyFlushChunk(unit, &nStack, circuitStack, powerStack);
+
+            // reset to avoid wasteful false trip when next chunk arrives
+            prevUnit = 0;
+        }
+    }
+
+    // flush any pending data from the last iteration
+    if (nStack > 0)
+        minifyFlushChunk(prevUnit, &nStack, circuitStack, powerStack);
 }

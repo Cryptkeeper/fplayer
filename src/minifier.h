@@ -5,10 +5,8 @@
 
 typedef void (*minify_write_fn_t)(const uint8_t *b, int size);
 
-void minifyStream(uint8_t unit,
-                  uint8_t groupOffset,
-                  uint8_t nCircuits,
-                  const uint8_t frameData[16],
+void minifyStream(const uint8_t *frameData,
+                  uint32_t size,
                   minify_write_fn_t write);
 
 #endif//FPLAYER_MINIFIER_H
