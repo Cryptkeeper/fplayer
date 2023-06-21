@@ -12,7 +12,7 @@ add_executable(fplayer src/main.c src/audio.c src/audio.h src/seq.c src/seq.h sr
 
 add_subdirectory(liblightorama)
 
-target_link_libraries(fplayer lightorama alut serialport zstd)
+target_link_libraries(fplayer lightorama m alut serialport zstd)
 
 if (APPLE)
     target_link_libraries(fplayer "-framework OpenAL")
