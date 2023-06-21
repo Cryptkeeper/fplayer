@@ -12,6 +12,8 @@ file(GLOB_RECURSE SRC_FILES "src/*.[ch]")
 
 add_executable(fplayer ${SRC_FILES})
 
+enable_testing()
+
 add_subdirectory(liblightorama)
 
 target_link_libraries(fplayer lightorama m alut serialport zstd)
