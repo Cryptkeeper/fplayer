@@ -43,6 +43,7 @@ static void minifySetSingle(uint8_t unit,
 }
 
 static void minifySetMask(uint8_t unit,
+                          uint8_t groupOffset,
                           uint16_t circuits,
                           uint8_t intensity,
                           minify_write_fn_t write) {
@@ -53,13 +54,10 @@ static void minifySetMask(uint8_t unit,
                     lor_intensity_curve_vendor((float) (intensity / 255.0)),
     };
 
-    // TODO: this needs to support base offsets (i.e. 0-15 relative to n) for
-    // expanded channel ranges. I know LOR supports this, but I think the lib is
-    // missing support. Need to dig into old research.
     const int written =
             lor_write_channelset_effect(LOR_EFFECT_SET_INTENSITY, &setEffect,
                                         (lor_channelset_t){
-                                                .offset = 0,
+                                                .offset = groupOffset,
                                                 .channels = circuits,
                                         },
                                         unit, encodeBuf);
@@ -70,6 +68,7 @@ static void minifySetMask(uint8_t unit,
 }
 
 void minifyStream(uint8_t unit,
+                  uint8_t groupOffset,
                   uint8_t nCircuits,
                   const uint8_t frameData[16],
                   minify_write_fn_t write) {
@@ -94,9 +93,16 @@ void minifyStream(uint8_t unit,
 
         // use individual encode operations (optimizes bandwidth usage) depending
         // on the amount of matched circuits being updated via popcount
-        if (popcount == 1) minifySetSingle(unit, circuit, intensity, write);
-        else
-            minifySetMask(unit, matches, intensity, write);
+        if (popcount == 1) {
+            // drop offset and calculate absolute circuit ID
+            // minifyStream operates on 16 byte chunks to better align with the
+            // window size for how LOR addresses circuit groups
+            const int absoluteCircuit = (groupOffset * 16) + circuit;
+
+            minifySetSingle(unit, absoluteCircuit, intensity, write);
+        } else {
+            minifySetMask(unit, groupOffset, matches, intensity, write);
+        }
 
         // detect when all circuits are handled and break early
         if (consumed == 0xFFFFu) break;
