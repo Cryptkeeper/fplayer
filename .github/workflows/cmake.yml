@@ -15,7 +15,11 @@ jobs:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
 
     steps:
     - name: Install libraries
@@ -45,5 +49,5 @@ jobs:
 
     - uses: actions/upload-artifact@v3
       with:
-        name: fplayer-ubuntu
-        path: /home/runner/work/fplayer/fplayer/build/fplayer
+        name: fplayer-${{ matrix.os }}
+        path: build/fplayer
