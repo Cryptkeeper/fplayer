@@ -17,7 +17,7 @@ void *mustMalloc(size_t size) {
 }
 
 void *mustRealloc(void *p, size_t size) {
-    void *r = reallocf(p, size);
+    void *r = realloc(p, size);
     if (r == NULL)
         fatalf(E_ALLOC_FAIL, "error re-allocating %ull bytes\n", size);
     return r;
