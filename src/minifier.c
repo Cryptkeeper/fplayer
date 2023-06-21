@@ -1,6 +1,7 @@
 #include "minifier.h"
 
 #include <assert.h>
+#include <string.h>
 
 #include <lightorama/easy.h>
 #include <lightorama/lightorama.h>
@@ -112,9 +113,32 @@ static void minifyStreamChunk(uint8_t unit,
 
 static void minifyFlushChunk(uint8_t unit,
                              int *nStack,
-                             uint8_t circuitStack[16],
-                             uint8_t powerStack[16]) {
-    // TODO
+                             const uint8_t circuitStack[16],
+                             const uint8_t powerStack[16],
+                             minify_write_fn_t write) {
+    int firstCircuit = circuitStack[0] - 1;
+
+    const uint8_t groupOffset = firstCircuit / 16;
+
+    firstCircuit %= 16;
+
+    if (firstCircuit == 0) {
+        minifyStreamChunk(unit, groupOffset, *nStack, powerStack, write);
+    } else {
+        // circuits aren't boundary aligned
+        // manually construct up to two frames to re-align the data within
+        uint8_t doubleChunk[32] = {0};
+
+        memcpy(&doubleChunk[firstCircuit], powerStack, *nStack);
+
+        if (firstCircuit < 16)
+            minifyStreamChunk(unit, groupOffset, 16,
+                              (uint8_t *) &doubleChunk[0], write);
+
+        if (firstCircuit + *nStack >= 16)
+            minifyStreamChunk(unit, groupOffset, 16,
+                              (uint8_t *) &doubleChunk[16], write);
+    }
 
     *nStack = 0;
 }
@@ -136,13 +160,13 @@ void minifyStream(const uint8_t *frameData,
         if (!channelMapFind(id, &unit, &circuit)) continue;
 
         if (prevUnit > 0 && prevUnit != unit)
-            minifyFlushChunk(unit, &nStack, circuitStack, powerStack);
+            minifyFlushChunk(unit, &nStack, circuitStack, powerStack, write);
 
         prevUnit = unit;
 
         // make sure circuit values are sequential
         if (nStack > 0 && circuitStack[nStack - 1] != circuit - 1)
-            minifyFlushChunk(unit, &nStack, circuitStack, powerStack);
+            minifyFlushChunk(unit, &nStack, circuitStack, powerStack, write);
 
         // push the circuit+output value onto a minifier stack
         // this is the pending flush queue for sequential circuits
@@ -152,7 +176,7 @@ void minifyStream(const uint8_t *frameData,
         nStack++;
 
         if (nStack == 16) {
-            minifyFlushChunk(unit, &nStack, circuitStack, powerStack);
+            minifyFlushChunk(unit, &nStack, circuitStack, powerStack, write);
 
             // reset to avoid wasteful false trip when next chunk arrives
             prevUnit = 0;
@@ -161,5 +185,5 @@ void minifyStream(const uint8_t *frameData,
 
     // flush any pending data from the last iteration
     if (nStack > 0)
-        minifyFlushChunk(prevUnit, &nStack, circuitStack, powerStack);
+        minifyFlushChunk(prevUnit, &nStack, circuitStack, powerStack, write);
 }
