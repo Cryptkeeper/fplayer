@@ -18,6 +18,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Install libalut-dev
+      run: sudo apt-get install -y libalut-dev
+    
     - uses: actions/checkout@v3
       with:
         submodules: true
