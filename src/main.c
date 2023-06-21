@@ -18,13 +18,13 @@
 #include "serial.h"
 
 static void printUsage(void) {
-    printf("Usage: fplayer -f=FILE [options] ...\n");
+    printf("Usage: fplayer -f=FILE -c=FILE [options] ...\n");
 
     printf("\nOptions:\n");
 
     printf("\n[Playback]\n");
     printf("\t-f <file>\t\tFSEQ v2 sequence file path (required)\n");
-    printf("\t-c <file>\t\tNetwork channel map file path\n");
+    printf("\t-c <file>\t\tNetwork channel map file path (required)\n");
     printf("\t-d <device name>\tDevice name for serial port connection\n");
     printf("\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n");
 
@@ -118,8 +118,10 @@ static int parseOpts(int argc, char **argv) {
         }
     }
 
-    if (gPlayerOpts.sequenceFilePath == NULL) {
+    if (gPlayerOpts.sequenceFilePath == NULL ||
+        gPlayerOpts.channelMapFilePath == NULL) {
         printUsage();
+
         return cReturnErr;
     }
 
