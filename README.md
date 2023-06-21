@@ -63,11 +63,11 @@ Each channel map is saved in a `.csv` file (comma-seperated values) with 5 value
 | FSEQ Start Channel | FSEQ End Channel | LOR Unit | LOR Start Channel | LOR End Channel |
 | --- | --- | --- | --- | --- |
 | 0 | 15 | 1 | 1 | 16 |
-| 4 | 7 | 2 | 1 | 4 |
+| 16 | 19 | 2 | 1 | 4 |
 
 This maps the first 16 FSEQ channels (0-15, remember the data is 0-indexed) to channels 1-16 (LOR channels are 1-indexed) on unit 1. In order to correctly map between the two ranges, the number of channels on each "side" must match. There are no restrictions on values besides basic limits checking, you are responsible for ensuring your values are correct.
 
-The second row maps FSEQ channels `4, 5, 6 & 7` to the first four channels of another unit, 2.
+The second row maps the next four FSEQ channels `16, 17, 18 & 19` to the first four channels of another unit, 2. These two rows have mapped a combined 20 channels. The fact they were defined sequentially, and without gaps, doesn't matter.
 
 You are free to add as many mapping rows as you need to fully map the FSEQ channel space. Any channels that are not mapped will not have any data written to them at runtime, so you don't have to worry about deleting/blank the unused channels.
 

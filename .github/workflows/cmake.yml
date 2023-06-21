@@ -19,7 +19,9 @@ jobs:
 
     steps:
       - name: Install libraries
-        run: sudo apt-get install -y libopenal-dev libalut-dev libserialport-dev libzstd-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopenal-dev libalut-dev libserialport-dev libzstd-dev
 
       - uses: actions/checkout@v3
         with:
@@ -52,12 +54,10 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Set up Homebrew
-        id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
-
       - name: Install libraries
-        run: brew install libserialport freealut zstd
+        run: |
+          brew update
+          brew install libserialport freealut zstd
 
       - uses: actions/checkout@v3
         with:
