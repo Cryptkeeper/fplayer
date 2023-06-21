@@ -27,4 +27,6 @@ add_compile_options(-Wall -Wextra -pedantic)
 add_compile_definitions(ENABLE_ZSTD)
 
 # silence macOS OpenAL deprecation warning messages
-add_compile_definitions(OPENAL_DEPRECATED=)
+if (APPLE)
+    add_compile_definitions(OPENAL_DEPRECATED=)
+endif ()
