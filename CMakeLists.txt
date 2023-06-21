@@ -9,8 +9,9 @@ if (APPLE)
 endif ()
 
 file(GLOB_RECURSE SRC_FILES "src/*.[ch]")
+file(GLOB_RECURSE TEST_FILES "test/*.c")
 
-add_executable(fplayer ${SRC_FILES})
+add_executable(fplayer ${SRC_FILES} ${TEST_FILES})
 
 enable_testing()
 
