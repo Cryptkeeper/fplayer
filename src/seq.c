@@ -66,7 +66,7 @@ static void sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
     sequenceTrimCompressionBlockCount(seq);
 }
 
-#define VAR_HEADER_SIZE 4
+#define VAR_HEADER_SIZE    4
 #define MAX_VAR_VALUE_SIZE 256
 
 static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
@@ -100,7 +100,11 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
         if (varHeader.id[0] == 'm' && varHeader.id[1] == 'f') {
             char *fp = seq->audioFilePath = mustMalloc((size_t) varHeader.size);
 
-            strlcpy(fp, (const char *) &varString[0], varHeader.size);
+            memcpy(fp, (const char *) &varString[0], varHeader.size);
+
+            // the value is most likely a string, ensure it is terminated
+            // (files "should" be encoded with the NULL byte included)
+            fp[varHeader.size - 1] = '\0';
 
             goto free_and_return;
         }
