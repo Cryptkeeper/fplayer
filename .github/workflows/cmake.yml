@@ -40,7 +40,10 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest -C ${{env.BUILD_TYPE}}
 
+    - name: pwd
+      run: pwd
+
     - uses: actions/upload-artifact@v3
       with:
         name: fplayer-ubuntu
-        path: fplayer
+        path: /home/runner/work/fplayer/fplayer/build/fplayer
