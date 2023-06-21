@@ -18,8 +18,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install libalut-dev
-      run: sudo apt-get install -y libalut-dev
+    - name: Install libraries
+      run: sudo apt-get install -y libalut-dev libserialport-dev
     
     - uses: actions/checkout@v3
       with:
