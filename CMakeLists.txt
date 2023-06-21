@@ -16,6 +16,8 @@ target_link_libraries(fplayer lightorama m alut serialport zstd)
 
 if (APPLE)
     target_link_libraries(fplayer "-framework OpenAL")
+else ()
+    target_link_libraries(fplayer openal)
 endif ()
 
 add_compile_options(-Wall -Wextra -pedantic)
