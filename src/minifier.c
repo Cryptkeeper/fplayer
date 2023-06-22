@@ -9,8 +9,6 @@
 #include "cmap.h"
 #include "lor.h"
 
-#define CIRCUIT_BIT(i) ((uint16_t) (1 << i))
-
 // this magic value is captured here to make its usage more obvious.
 //
 // it is derived from the 16-bit channel masks the LOR hardware protocol uses,
@@ -20,19 +18,6 @@
 // this value doesn't change without LOR protocol support for increased channel bitmask sizes
 // and adjusting the uint16_t based bitmask logic to match the new width.
 #define N 16
-
-static inline uint16_t
-minifyGetMatches(int nCircuits, const uint8_t frameData[N], uint8_t intensity) {
-    assert(nCircuits > 0 && nCircuits <= N);
-
-    uint16_t matches = 0;
-
-    for (int i = 0; i < nCircuits; i++) {
-        if (frameData[i] == intensity) matches |= CIRCUIT_BIT(i);
-    }
-
-    return matches;
-}
 
 typedef struct encoding_ctx_t {
     minify_write_fn_t write;
@@ -77,6 +62,21 @@ minifyWriteMultiUpdate(Ctx *ctx, uint16_t circuits, uint8_t intensity) {
     assert(written <= LOR_PACKET_BUFFER);
 
     ctx->write(encodeBuf, written);
+}
+
+#define CIRCUIT_BIT(i) ((uint16_t) (1 << i))
+
+static inline uint16_t
+minifyGetMatches(int nCircuits, const uint8_t frameData[N], uint8_t intensity) {
+    assert(nCircuits > 0 && nCircuits <= N);
+
+    uint16_t matches = 0;
+
+    for (int i = 0; i < nCircuits; i++) {
+        if (frameData[i] == intensity) matches |= CIRCUIT_BIT(i);
+    }
+
+    return matches;
 }
 
 // "explodes" a series of up to 16 brightness values (uint8_t) into a series of
