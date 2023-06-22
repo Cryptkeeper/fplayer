@@ -31,7 +31,7 @@ typedef struct encoding_ctx_t {
     uint8_t groupOffset;
 } Ctx;
 
-static void minifyWriteUpdate(Ctx *ctx, int circuit, uint8_t intensity) {
+static void minifyWriteUpdate(Ctx *ctx, uint16_t circuit, uint8_t intensity) {
     uint8_t encodeBuf[LOR_PACKET_BUFFER];
 
     const struct lor_effect_setintensity_t setEffect = {
@@ -100,7 +100,8 @@ minifyWrite16Aligned(Ctx *ctx, uint8_t nCircuits, const uint8_t frameData[16]) {
             // drop offset and calculate absolute circuit ID
             // minifyStream operates on 16 byte chunks to better align with the
             // window size for how LOR addresses circuit groups
-            const int absoluteCircuit = (ctx->groupOffset * 16) + circuit + 1;
+            const uint16_t absoluteCircuit =
+                    (ctx->groupOffset * 16) + circuit + 1;
 
             minifyWriteUpdate(ctx, absoluteCircuit, intensity);
         } else {
