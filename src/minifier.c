@@ -11,10 +11,19 @@
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << i))
 
-static inline uint16_t minifyGetMatches(int nCircuits,
-                                        const uint8_t frameData[16],
-                                        uint8_t intensity) {
-    assert(nCircuits > 0 && nCircuits <= 16);
+// this magic value is captured here to make its usage more obvious.
+//
+// it is derived from the 16-bit channel masks the LOR hardware protocol uses,
+// 16-bit masks corresponds to 16 individual channels, each with its own 1-byte
+// intensity state.
+//
+// this value doesn't change without LOR protocol support for increased channel bitmask sizes
+// and adjusting the uint16_t based bitmask logic to match the new width.
+#define N 16
+
+static inline uint16_t
+minifyGetMatches(int nCircuits, const uint8_t frameData[N], uint8_t intensity) {
+    assert(nCircuits > 0 && nCircuits <= N);
 
     uint16_t matches = 0;
 
@@ -74,8 +83,8 @@ minifyWriteMultiUpdate(Ctx *ctx, uint16_t circuits, uint8_t intensity) {
 // update packets (either as individual channels, multichannel bitmasks, or a mixture
 // of both) via the ctx->write function
 static void
-minifyWrite16Aligned(Ctx *ctx, uint8_t nCircuits, const uint8_t frameData[16]) {
-    assert(nCircuits > 0 && nCircuits <= 16);
+minifyWrite16Aligned(Ctx *ctx, uint8_t nCircuits, const uint8_t frameData[N]) {
+    assert(nCircuits > 0 && nCircuits <= N);
 
     uint16_t consumed = 0;
 
@@ -101,7 +110,7 @@ minifyWrite16Aligned(Ctx *ctx, uint8_t nCircuits, const uint8_t frameData[16]) {
             // minifyStream operates on 16 byte chunks to better align with the
             // window size for how LOR addresses circuit groups
             const uint16_t absoluteCircuit =
-                    (ctx->groupOffset * 16) + circuit + 1;
+                    (ctx->groupOffset * N) + circuit + 1;
 
             minifyWriteUpdate(ctx, absoluteCircuit, intensity);
         } else {
@@ -114,21 +123,21 @@ minifyWrite16Aligned(Ctx *ctx, uint8_t nCircuits, const uint8_t frameData[16]) {
 }
 
 typedef struct encoding_stack_t {
-    uint8_t circuits[16];
-    uint8_t intensities[16];
+    uint8_t circuits[N];
+    uint8_t intensities[N];
     uint8_t size;
 } Stack;
 
 static bool stackPush(Stack *stack, uint8_t circuit, uint8_t intensity) {
     const int idx = stack->size++;
 
-    assert(idx >= 0 && idx < 16);
+    assert(idx >= 0 && idx < N);
 
     stack->circuits[idx] = circuit;
     stack->intensities[idx] = intensity;
 
     // return true when stack is full and should be written
-    return stack->size >= 16;
+    return stack->size >= N;
 }
 
 // map each circuit stack value to its intensity stack value
@@ -137,25 +146,25 @@ static bool stackPush(Stack *stack, uint8_t circuit, uint8_t intensity) {
 static void stackFlush(Stack *stack, Ctx *ctx) {
     const int firstCircuit = stack->circuits[0] - 1;
 
-    ctx->groupOffset = firstCircuit / 16;
+    ctx->groupOffset = firstCircuit / N;
 
-    const int alignOffset = firstCircuit % 16;
+    const int alignOffset = firstCircuit % N;
 
     if (alignOffset == 0) {
         minifyWrite16Aligned(ctx, stack->size, stack->intensities);
     } else {
         // circuits aren't boundary aligned
         // manually construct up to two frames to re-align the data within
-        uint8_t doubleChunk[32] = {0};
+        uint8_t doubleChunk[N * 2] = {0};
 
         memcpy(&doubleChunk[alignOffset], (const uint8_t *) stack->intensities,
                stack->size);
 
-        minifyWrite16Aligned(ctx, 16, &doubleChunk[0]);
+        minifyWrite16Aligned(ctx, N, &doubleChunk[0]);
 
         const int chunkSize = alignOffset + stack->size;
 
-        if (chunkSize > 16) minifyWrite16Aligned(ctx, 16, &doubleChunk[16]);
+        if (chunkSize > N) minifyWrite16Aligned(ctx, N, &doubleChunk[N]);
     }
 
     stack->size = 0;
@@ -186,7 +195,7 @@ void minifyStream(const uint8_t *frameData,
         // test if circuits are too far apart for minifying
         // flush the previous stack and process the request in the reset stack
         const bool outOfRange =
-                stack.size > 0 && circuit >= stack.circuits[0] + 16;
+                stack.size > 0 && circuit >= stack.circuits[0] + N;
 
         if (outOfRange) stackFlush(&stack, ctx);
 
