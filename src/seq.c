@@ -66,8 +66,9 @@ static void sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
     sequenceTrimCompressionBlockCount(seq);
 }
 
+// 4 is the packed sizeof(struct tf_var_header_t)
 #define VAR_HEADER_SIZE    4
-#define MAX_VAR_VALUE_SIZE 256
+#define MAX_VAR_VALUE_SIZE 512
 
 static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
     const uint16_t varDataSize =
@@ -78,41 +79,36 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
 
     uint8_t *varTable = mustMalloc(varDataSize);
 
-    if (fread(varTable, 1, varDataSize, f) != varDataSize) goto free_and_return;
+    if (fread(varTable, 1, varDataSize, f) != varDataSize)
+        fatalf(E_FILE_IO, NULL);
 
     struct tf_var_header_t varHeader;
     enum tf_err_t err;
 
     uint8_t *readIdx = &varTable[0];
 
-    uint8_t *varString = mustMalloc(MAX_VAR_VALUE_SIZE);
+    char *varString = mustMalloc(MAX_VAR_VALUE_SIZE);
 
-    // 4 is the packed sizeof(struct tf_var_header_t)
-    for (uint16_t remaining = varDataSize; remaining > VAR_HEADER_SIZE;) {
-        if ((err = tf_read_var_header(readIdx, remaining, &varHeader, varString,
-                                      MAX_VAR_VALUE_SIZE, &readIdx)) != TF_OK) {
+    for (int remaining = varDataSize; remaining > VAR_HEADER_SIZE;) {
+        if ((err = tf_read_var_header(readIdx, remaining, &varHeader,
+                                      (uint8_t *) varString, MAX_VAR_VALUE_SIZE,
+                                      &readIdx)) != TF_OK)
             fatalf(E_FATAL, "error parsing sequence variable: %s\n",
                    tf_err_str(err));
 
-            goto free_and_return;
-        }
+        // ensure the variable string value is null terminated
+        // size includes 4-byte structure, manually offset
+        varString[varHeader.size - 1 - VAR_HEADER_SIZE] = '\0';
 
-        if (varHeader.id[0] == 'm' && varHeader.id[1] == 'f') {
-            char *fp = seq->audioFilePath = mustMalloc((size_t) varHeader.size);
+        printf("var '%c%c': %s\n", varHeader.id[0], varHeader.id[1], varString);
 
-            memcpy(fp, (const char *) &varString[0], varHeader.size);
-
-            // the value is most likely a string, ensure it is terminated
-            // (files "should" be encoded with the NULL byte included)
-            fp[varHeader.size - 1] = '\0';
-
-            goto free_and_return;
-        }
+        // mf = Media File variable, contains audio filepath
+        if (varHeader.id[0] == 'm' && varHeader.id[1] == 'f')
+            seq->audioFilePath = mustStrdup(varString);
 
         remaining -= varHeader.size;
     }
 
-free_and_return:
     freeAndNull((void **) &varTable);
     freeAndNull((void **) &varString);
 }
