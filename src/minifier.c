@@ -99,7 +99,7 @@ static void minifyStreamChunk(uint8_t unit,
             // drop offset and calculate absolute circuit ID
             // minifyStream operates on 16 byte chunks to better align with the
             // window size for how LOR addresses circuit groups
-            const int absoluteCircuit = (groupOffset * 16) + circuit;
+            const int absoluteCircuit = (groupOffset * 16) + circuit + 1;
 
             minifySetSingle(unit, absoluteCircuit, intensity, write);
         } else {
@@ -114,28 +114,30 @@ static void minifyStreamChunk(uint8_t unit,
 static void minifyFlushChunk(uint8_t unit,
                              int *nStack,
                              const uint8_t circuitStack[16],
-                             const uint8_t powerStack[16],
+                             const uint8_t intensityStack[16],
                              minify_write_fn_t write) {
-    int firstCircuit = circuitStack[0] - 1;
+    // TODO: optimize route to single set behavior
+
+    const int firstCircuit = circuitStack[0] - 1;
 
     const uint8_t groupOffset = firstCircuit / 16;
+    const int alignOffset = firstCircuit % 16;
 
-    firstCircuit %= 16;
-
-    if (firstCircuit == 0) {
-        minifyStreamChunk(unit, groupOffset, *nStack, powerStack, write);
+    if (alignOffset == 0) {
+        minifyStreamChunk(unit, groupOffset, *nStack, intensityStack, write);
     } else {
         // circuits aren't boundary aligned
         // manually construct up to two frames to re-align the data within
         uint8_t doubleChunk[32] = {0};
 
-        memcpy(&doubleChunk[firstCircuit], powerStack, *nStack);
+        memcpy(&doubleChunk[alignOffset], intensityStack, *nStack);
 
-        if (firstCircuit < 16)
-            minifyStreamChunk(unit, groupOffset, 16,
-                              (uint8_t *) &doubleChunk[0], write);
+        minifyStreamChunk(unit, groupOffset, 16, (uint8_t *) &doubleChunk[0],
+                          write);
 
-        if (firstCircuit + *nStack >= 16)
+        const int chunkSize = alignOffset + *nStack;
+
+        if (chunkSize > 16)
             minifyStreamChunk(unit, groupOffset, 16,
                               (uint8_t *) &doubleChunk[16], write);
     }
@@ -147,7 +149,7 @@ void minifyStream(const uint8_t *frameData,
                   uint32_t size,
                   minify_write_fn_t write) {
     uint8_t circuitStack[16] = {0};
-    uint8_t powerStack[16] = {0};
+    uint8_t intensityStack[16] = {0};
 
     int nStack = 0;
 
@@ -160,23 +162,24 @@ void minifyStream(const uint8_t *frameData,
         if (!channelMapFind(id, &unit, &circuit)) continue;
 
         if (prevUnit > 0 && prevUnit != unit)
-            minifyFlushChunk(unit, &nStack, circuitStack, powerStack, write);
+            minifyFlushChunk(unit, &nStack, circuitStack, intensityStack,
+                             write);
 
         prevUnit = unit;
 
         // make sure circuit values are sequential
         if (nStack > 0 && circuitStack[nStack - 1] != circuit - 1)
-            minifyFlushChunk(unit, &nStack, circuitStack, powerStack, write);
+            minifyFlushChunk(unit, &nStack, circuitStack, intensityStack,
+                             write);
 
         // push the circuit+output value onto a minifier stack
         // this is the pending flush queue for sequential circuits
         circuitStack[nStack] = circuit;
-        powerStack[nStack] = frameData[id];
+        intensityStack[nStack] = frameData[id];
 
-        nStack++;
-
-        if (nStack == 16) {
-            minifyFlushChunk(unit, &nStack, circuitStack, powerStack, write);
+        if (++nStack == 16) {
+            minifyFlushChunk(unit, &nStack, circuitStack, intensityStack,
+                             write);
 
             // reset to avoid wasteful false trip when next chunk arrives
             prevUnit = 0;
@@ -185,5 +188,6 @@ void minifyStream(const uint8_t *frameData,
 
     // flush any pending data from the last iteration
     if (nStack > 0)
-        minifyFlushChunk(prevUnit, &nStack, circuitStack, powerStack, write);
+        minifyFlushChunk(prevUnit, &nStack, circuitStack, intensityStack,
+                         write);
 }

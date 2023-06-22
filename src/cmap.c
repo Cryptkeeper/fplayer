@@ -17,6 +17,9 @@ static bool channelRangeIsMappable(const ChannelRange range) {
     const int rcircuit = range.ecircuit - range.scircuit;
     if (rcircuit < 0) return false;
 
+    // LOR values should be 1-indexed
+    if (range.unit == 0 || range.scircuit == 0) return false;
+
     return rid == rcircuit;
 }
 
