@@ -1,8 +1,8 @@
 #include "cmap.h"
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+
+#include <sds.h>
 
 #include "err.h"
 #include "mem.h"
@@ -39,73 +39,72 @@ static void channelMapPut(ChannelRange channelRange, int line) {
     gDefaultChannelMap.ranges[index] = channelRange;
 }
 
-typedef enum channel_map_field_t {
-    F_SID,
-    F_EID,
-    F_UNIT,
-    F_SCIRCUIT,
-    F_ECIRCUIT,
-} CMapField;
+static void channelMapParseCSV(const char *b) {
+    sds buf = sdsnew(b);
 
-#define F_COUNT 5
+    int nRows = 0;
+    sds *rows = sdssplitlen(buf, sdslen(buf), "\n", 1, &nRows);
 
-static void channelMapParseCSV(char *b) {
-    char *lStart = NULL;
-    char *lEnd = b;
+    sdsfree(buf);
 
-    int lineAt = 0;
+    int loaded = 0;
 
-    while ((lStart = strsep(&lEnd, "\n")) != NULL) {
+    for (int i = 0; i < nRows; i++) {
+        sds row = rows[i];
+
         // ignoring empty new lines
-        if (strlen(lStart) == 0) continue;
+        if (sdslen(row) == 0) continue;
 
         // ignore comment lines beginning with '#'
-        if (lStart[0] == '#') continue;
+        if (row[0] == '#') continue;
 
-        char *sStart = NULL;
-        char *sEnd = lStart;
+        int nCols = 0;
+        sds *cols = sdssplitlen(row, sdslen(row), ",", 1, &nCols);
 
-        ChannelRange newChannelRange;
+        if (nCols != 5) {
+            fprintf(stderr,
+                    "invalid channel map entry: `%s`, requires 5 columns\n",
+                    row);
 
-        for (CMapField f = F_SID; f < F_COUNT; f++) {
-            sStart = strsep(&sEnd, ",");
+            goto continue_free;
+        }
 
-            // ensure all fields are set and read
-            // removing this enables fields to be unexpectedly empty
-            // since the parse loop won't otherwise break
-            if (sStart == NULL || strlen(sStart) == 0)
-                fatalf(E_FATAL, "error parsing channel map: L%d\n", lineAt);
+        for (int j = 0; j < nCols; j++) {
+            if (sdslen(cols[j]) == 0) {
+                fprintf(stderr, "empty channel map entry column: %d\n", j);
 
-            switch (f) {
-                case F_SID:
-                    parseLong(sStart, &newChannelRange.sid,
-                              sizeof(newChannelRange.sid), 0, UINT32_MAX);
-                    break;
-                case F_EID:
-                    parseLong(sStart, &newChannelRange.eid,
-                              sizeof(newChannelRange.eid), 0, UINT32_MAX);
-                    break;
-                case F_UNIT:
-                    parseLong(sStart, &newChannelRange.unit,
-                              sizeof(newChannelRange.unit), 0, UINT8_MAX);
-                    break;
-                case F_SCIRCUIT:
-                    parseLong(sStart, &newChannelRange.scircuit,
-                              sizeof(newChannelRange.scircuit), 0, UINT16_MAX);
-                    break;
-                case F_ECIRCUIT:
-                    parseLong(sStart, &newChannelRange.ecircuit,
-                              sizeof(newChannelRange.ecircuit), 0, UINT16_MAX);
-                    break;
+                goto continue_free;
             }
         }
 
-        channelMapPut(newChannelRange, lineAt);
+        ChannelRange newChannelRange;
 
-        lineAt += 1;
+        parseLong(cols[0], &newChannelRange.sid, sizeof(newChannelRange.sid), 0,
+                  UINT32_MAX);
+
+        parseLong(cols[1], &newChannelRange.eid, sizeof(newChannelRange.eid), 0,
+                  UINT32_MAX);
+
+        parseLong(cols[2], &newChannelRange.unit, sizeof(newChannelRange.unit),
+                  0, UINT8_MAX);
+
+        parseLong(cols[3], &newChannelRange.scircuit,
+                  sizeof(newChannelRange.scircuit), 0, UINT16_MAX);
+
+        parseLong(cols[4], &newChannelRange.ecircuit,
+                  sizeof(newChannelRange.ecircuit), 0, UINT16_MAX);
+
+        channelMapPut(newChannelRange, i);
+
+        loaded++;
+
+    continue_free:
+        sdsfreesplitres(cols, nCols);
     }
 
-    printf("loaded %d channel map(s)\n", lineAt);
+    sdsfreesplitres(rows, nRows);
+
+    printf("loaded %d channel map(s)\n", loaded);
 }
 
 void channelMapInit(const char *filepath) {
@@ -130,7 +129,7 @@ void channelMapInit(const char *filepath) {
     channelMapParseCSV(b);
 
     // cleanup local resources in same scope as allocation
-    free(b);
+    freeAndNull((void **) &b);
 }
 
 bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit) {
