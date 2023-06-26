@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <sds.h>
+
 #include "../libtinyfseq/tinyfseq.h"
 
 typedef struct sequence_t {
@@ -30,6 +32,6 @@ uint32_t sequenceGetFrameSize(const Sequence *seq);
 
 int sequenceGetFPS(const Sequence *seq);
 
-void sequenceGetDuration(Sequence *seq, char *b, int c);
+sds sequenceGetRemaining(const Sequence *seq);
 
 #endif//FPLAYER_SEQ_H

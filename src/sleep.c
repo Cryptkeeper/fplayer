@@ -11,7 +11,7 @@
 static int64_t gSampleNs[gSampleCount];
 static int gLastSampleIdx;
 
-void sleepGetDrift(char *b, int c) {
+sds sleepGetStatus(void) {
     double avg = 0;
     int n = 1;
 
@@ -25,7 +25,7 @@ void sleepGetDrift(char *b, int c) {
     const double ms = avg / 1e6;
     const double fps = ms > 0 ? 1000 / ms : 0;
 
-    snprintf(b, c, "%.4fms (%.2f fps)", ms, fps);
+    return sdscatprintf(sdsempty(), "%.4fms (%.2f fps)", ms, fps);
 }
 
 // The original `preciseSleep` function operates using double representation of

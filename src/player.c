@@ -32,14 +32,14 @@ static void playerLogStatus(void) {
 
     gLastLog = now;
 
-    static char bDuration[64];
-    sequenceGetDuration(&gPlaying, bDuration, sizeof(bDuration));
+    sds remaining = sequenceGetRemaining(&gPlaying);
+    sds sleep = sleepGetStatus();
 
-    static char bDrift[64];
-    sleepGetDrift(bDrift, sizeof(bDrift));
-
-    printf("remaining: %s\t\tdt: %s\t\tpump: %4d\n", bDuration, bDrift,
+    printf("remaining: %s\tdt: %s\tpump: %4d\n", remaining, sleep,
            gFramePump.frameEnd - gFramePump.framePos);
+
+    sdsfree(remaining);
+    sdsfree(sleep);
 }
 
 static uint8_t *gLastFrameData;

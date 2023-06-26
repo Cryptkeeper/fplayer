@@ -161,11 +161,12 @@ inline int sequenceGetFPS(const Sequence *seq) {
     return 1000 / seq->header.frameStepTimeMillis;
 }
 
-void sequenceGetDuration(Sequence *seq, char *b, int c) {
+sds sequenceGetRemaining(const Sequence *seq) {
     long framesRemaining = seq->header.frameCount;
     if (seq->currentFrame != -1) framesRemaining -= seq->currentFrame;
 
     const long seconds = framesRemaining / sequenceGetFPS(seq);
 
-    snprintf(b, c, "%02ldm %02lds", seconds / 60, seconds % 60);
+    return sdscatprintf(sdsempty(), "%02ldm %02lds", seconds / 60,
+                        seconds % 60);
 }

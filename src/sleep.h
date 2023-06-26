@@ -4,7 +4,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-void sleepGetDrift(char *b, int c);
+#include <sds.h>
+
+sds sleepGetStatus(void);
 
 typedef bool (*sleep_fn_t)(void);
 
