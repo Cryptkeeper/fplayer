@@ -1,5 +1,6 @@
 #include "cmap.h"
 
+#include <assert.h>
 #include <stdio.h>
 
 #include <sds.h>
@@ -23,11 +24,7 @@ static bool channelRangeIsMappable(const ChannelRange range) {
     return rid == rcircuit;
 }
 
-static void channelMapPut(ChannelRange channelRange, int line) {
-    if (!channelRangeIsMappable(channelRange))
-        fatalf(E_FATAL, "error registering unmappable channel range: L%d\n",
-               line);
-
+static void channelMapAppend(ChannelRange channelRange) {
     // append to ChannelMap array
     const int index = gDefaultChannelMap.size;
 
@@ -39,15 +36,27 @@ static void channelMapPut(ChannelRange channelRange, int line) {
     gDefaultChannelMap.ranges[index] = channelRange;
 }
 
-static void channelMapParseCSV(const char *b) {
+static ChannelRange channelRangeParseColumns(sds *cols, int nCols) {
+    ChannelRange cr;
+
+    assert(nCols == 5);
+
+    parseLong(cols[0], &cr.sid, sizeof(cr.sid), 0, UINT32_MAX);
+    parseLong(cols[1], &cr.eid, sizeof(cr.eid), 0, UINT32_MAX);
+    parseLong(cols[2], &cr.unit, sizeof(cr.unit), 0, UINT8_MAX);
+    parseLong(cols[3], &cr.scircuit, sizeof(cr.scircuit), 0, UINT16_MAX);
+    parseLong(cols[4], &cr.ecircuit, sizeof(cr.ecircuit), 0, UINT16_MAX);
+
+    return cr;
+}
+
+static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
     sds buf = sdsnew(b);
 
     int nRows = 0;
     sds *rows = sdssplitlen(buf, sdslen(buf), "\n", 1, &nRows);
 
     sdsfree(buf);
-
-    int loaded = 0;
 
     for (int i = 0; i < nRows; i++) {
         sds row = rows[i];
@@ -66,6 +75,8 @@ static void channelMapParseCSV(const char *b) {
                     "invalid channel map entry: `%s`, requires 5 columns\n",
                     row);
 
+            *cmapParseErrs = true;
+
             goto continue_free;
         }
 
@@ -73,30 +84,24 @@ static void channelMapParseCSV(const char *b) {
             if (sdslen(cols[j]) == 0) {
                 fprintf(stderr, "empty channel map entry column: %d\n", j);
 
+                *cmapParseErrs = true;
+
                 goto continue_free;
             }
         }
 
-        ChannelRange newChannelRange;
+        const ChannelRange channelRange = channelRangeParseColumns(cols, nCols);
 
-        parseLong(cols[0], &newChannelRange.sid, sizeof(newChannelRange.sid), 0,
-                  UINT32_MAX);
+        if (!channelRangeIsMappable(channelRange)) {
+            fatalf(E_FATAL, "error registering unmappable channel range: L%d\n",
+                   i);
 
-        parseLong(cols[1], &newChannelRange.eid, sizeof(newChannelRange.eid), 0,
-                  UINT32_MAX);
+            *cmapParseErrs = true;
 
-        parseLong(cols[2], &newChannelRange.unit, sizeof(newChannelRange.unit),
-                  0, UINT8_MAX);
+            goto continue_free;
+        }
 
-        parseLong(cols[3], &newChannelRange.scircuit,
-                  sizeof(newChannelRange.scircuit), 0, UINT16_MAX);
-
-        parseLong(cols[4], &newChannelRange.ecircuit,
-                  sizeof(newChannelRange.ecircuit), 0, UINT16_MAX);
-
-        channelMapPut(newChannelRange, i);
-
-        loaded++;
+        channelMapAppend(channelRange);
 
     continue_free:
         sdsfreesplitres(cols, nCols);
@@ -104,10 +109,10 @@ static void channelMapParseCSV(const char *b) {
 
     sdsfreesplitres(rows, nRows);
 
-    printf("loaded %d channel map(s)\n", loaded);
+    printf("configured %d channel map entries(s)\n", gDefaultChannelMap.size);
 }
 
-void channelMapInit(const char *filepath) {
+void channelMapInit(const char *filepath, bool *cmapParseErrs) {
     FILE *f = fopen(filepath, "rb");
 
     if (f == NULL)
@@ -126,7 +131,7 @@ void channelMapInit(const char *filepath) {
 
     fclose(f);
 
-    channelMapParseCSV(b);
+    channelMapParseCSV(b, cmapParseErrs);
 
     // cleanup local resources in same scope as allocation
     freeAndNull((void **) &b);

@@ -65,12 +65,13 @@ static SerialOpts gSerialOpts = {
 #define cContinue  2 /* no return */
 
 static int testConfigurations(const char *filepath) {
-    channelMapInit(filepath);
+    bool parseErrs = false;
+
+    channelMapInit(filepath, &parseErrs);
 
     channelMapFree();
 
-    // FIXME: return error state if parsing error output happens
-    return cReturnOK;
+    return parseErrs ? cReturnErr : cReturnOK;
 }
 
 static int parseOpts(int argc, char **argv) {
@@ -152,9 +153,16 @@ int main(int argc, char **argv) {
     argc -= optind;
     argv += optind;
 
-    // initialize core subsystems and load configs
+    // load required app context configs
+    bool cmapParseErrs = false;
+
+    channelMapInit(gPlayerOpts.channelMapFilePath, &cmapParseErrs);
+
+    if (cmapParseErrs)
+        fprintf(stderr, "warning: channel map parsing errors detected!\n");
+
+    // initialize core subsystems
     audioInit(&argc, argv);
-    channelMapInit(gPlayerOpts.channelMapFilePath);
     serialInit(gSerialOpts);
 
     // start the player as configured, this will start playback automatically
@@ -162,8 +170,9 @@ int main(int argc, char **argv) {
 
     // teardown in reverse order
     serialExit();
-    channelMapFree();
     audioExit();
+
+    channelMapFree();
 
     serialOptsFree(&gSerialOpts);
     playerOptsFree(&gPlayerOpts);

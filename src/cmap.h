@@ -21,7 +21,7 @@ typedef struct channel_map_t {
     int size;
 } ChannelMap;
 
-void channelMapInit(const char *filepath);
+void channelMapInit(const char *filepath, bool *cmapParseErrs);
 
 bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit);
 
