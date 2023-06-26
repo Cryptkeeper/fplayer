@@ -24,9 +24,9 @@ void parseLong(const char *s, void *i, int n, long min, long max) {
     //     all, however, strtol() stores the original value of str in *endptr."
     if (s == endptr) goto fail;
 
-    // a zero value return may indicate an error if errno is also set
-    // not supported by all platforms
-    if (l == 0 && (errno == EINVAL || errno == ERANGE)) goto fail;
+    // "If an overflow or underflow occurs, errno is set to ERANGE and the
+    //     function return value is clamped according to the following table."
+    if (l == 0 && errno == ERANGE) goto fail;
 
     const long clamped = clampLong(l, min, max);
 
