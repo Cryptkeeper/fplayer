@@ -36,6 +36,7 @@ static void printUsage(void) {
            "setup\n");
 
     printf("\n[CLI]\n");
+    printf("\t-t <file>\t\t\tTest load channel map and exit\n");
     printf("\t-h\t\t\tPrint this message and exit\n");
     printf("\t-v\t\t\tPrint library versions and exit\n");
 }
@@ -63,10 +64,22 @@ static SerialOpts gSerialOpts = {
 #define cReturnErr 1 /* early return, 1 */
 #define cContinue  2 /* no return */
 
+static int testConfigurations(const char *filepath) {
+    channelMapInit(filepath);
+
+    channelMapFree();
+
+    // FIXME: return error state if parsing error output happens
+    return cReturnOK;
+}
+
 static int parseOpts(int argc, char **argv) {
     int c;
-    while ((c = getopt(argc, argv, ":hvf:c:a:r:w:d:b:")) != -1) {
+    while ((c = getopt(argc, argv, ":t:hvf:c:a:r:w:d:b:")) != -1) {
         switch (c) {
+            case 't':
+                return testConfigurations(optarg);
+
             case 'h':
                 printUsage();
                 return cReturnOK;
