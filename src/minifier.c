@@ -64,7 +64,7 @@ minifyWriteMultiUpdate(Ctx *ctx, uint16_t circuits, uint8_t intensity) {
     ctx->write(encodeBuf, written);
 }
 
-#define CIRCUIT_BIT(i) ((uint16_t) (1 << i))
+#define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
 
 static inline uint16_t
 minifyGetMatches(int nCircuits, const uint8_t frameData[N], uint8_t intensity) {
