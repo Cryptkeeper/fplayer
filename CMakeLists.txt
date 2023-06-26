@@ -11,11 +11,15 @@ endif ()
 file(GLOB_RECURSE SRC_FILES "src/*.[ch]")
 file(GLOB_RECURSE TEST_FILES "test/*.c")
 
-add_executable(fplayer ${SRC_FILES} ${TEST_FILES})
+file(GLOB_RECURSE SDS_FILES "sds/*.c")
+
+add_executable(fplayer ${SRC_FILES} ${TEST_FILES} ${SDS_FILES})
 
 enable_testing()
 
 add_subdirectory(liblightorama)
+
+target_include_directories(fplayer PRIVATE sds)
 
 target_link_libraries(fplayer lightorama m alut serialport zstd)
 
