@@ -59,6 +59,10 @@ void serialInit(SerialOpts opts) {
     if (opts.devName != NULL) serialOpenPort(opts);
 }
 
+static void serialWrite(const uint8_t *b, int size) {
+    spTry(sp_nonblocking_write(gPort, b, size));
+}
+
 static void serialWriteChannelData(uint32_t id, uint8_t newIntensity) {
     uint8_t unit;
     uint16_t circuit;
@@ -69,22 +73,18 @@ static void serialWriteChannelData(uint32_t id, uint8_t newIntensity) {
                     lor_intensity_curve_vendor((float) (newIntensity / 255.0)),
     };
 
-    uint8_t encodeBuf[LOR_PACKET_BUFFER] = {0};
+    bufadv(lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY, &setEffect,
+                                    circuit - 1, unit, bufhead()));
 
-    const int written = lor_write_channel_effect(
-            LOR_EFFECT_SET_INTENSITY, &setEffect, circuit - 1, unit, encodeBuf);
-
-    if (written > 0) spTry(sp_nonblocking_write(gPort, encodeBuf, written));
+    bufwrite(false, serialWrite);
 }
 
 void serialWriteHeartbeat(void) {
     if (gPort == NULL) return;
 
-    uint8_t encodeBuf[LOR_PACKET_BUFFER] = {0};
+    bufadv(lor_write_heartbeat(bufhead()));
 
-    const int written = lor_write_heartbeat(encodeBuf);
-
-    spTry(sp_nonblocking_write(gPort, encodeBuf, written));
+    bufwrite(false, serialWrite);
 }
 
 static void serialWriteThrottledHeartbeat(void) {
@@ -113,6 +113,8 @@ void serialWriteFrame(const uint8_t *currentData,
         if (currentData[id] != lastData[id])
             serialWriteChannelData(id, currentData[id]);
     }
+
+    bufwrite(true, serialWrite);
 
     spTry(sp_drain(gPort));
 }

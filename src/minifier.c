@@ -26,42 +26,32 @@ typedef struct encoding_ctx_t {
 } Ctx;
 
 static void minifyWriteUpdate(Ctx *ctx, uint16_t circuit, uint8_t intensity) {
-    uint8_t encodeBuf[LOR_PACKET_BUFFER];
-
     const struct lor_effect_setintensity_t setEffect = {
             .intensity =
                     lor_intensity_curve_vendor((float) (intensity / 255.0)),
     };
 
-    const int written =
-            lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY, &setEffect,
-                                     circuit - 1, ctx->unit, encodeBuf);
+    bufadv(lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY, &setEffect,
+                                    circuit - 1, ctx->unit, bufhead()));
 
-    assert(written <= LOR_PACKET_BUFFER);
-
-    ctx->write(encodeBuf, written);
+    bufwrite(false, ctx->write);
 }
 
 static void
 minifyWriteMultiUpdate(Ctx *ctx, uint16_t circuits, uint8_t intensity) {
-    uint8_t encodeBuf[LOR_PACKET_BUFFER];
-
     const struct lor_effect_setintensity_t setEffect = {
             .intensity =
                     lor_intensity_curve_vendor((float) (intensity / 255.0)),
     };
 
-    const int written =
-            lor_write_channelset_effect(LOR_EFFECT_SET_INTENSITY, &setEffect,
-                                        (lor_channelset_t){
-                                                .offset = ctx->groupOffset,
-                                                .channels = circuits,
-                                        },
-                                        ctx->unit, encodeBuf);
+    bufadv(lor_write_channelset_effect(LOR_EFFECT_SET_INTENSITY, &setEffect,
+                                       (lor_channelset_t){
+                                               .offset = ctx->groupOffset,
+                                               .channels = circuits,
+                                       },
+                                       ctx->unit, bufhead()));
 
-    assert(written <= LOR_PACKET_BUFFER);
-
-    ctx->write(encodeBuf, written);
+    bufwrite(false, ctx->write);
 }
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
@@ -208,4 +198,7 @@ void minifyStream(const uint8_t *frameData,
 
     // flush any pending data from the last iteration
     if (stack.size > 0) stackFlush(&stack, ctx);
+
+    // ensure all LOR protocol data is written
+    bufwrite(true, write);
 }
