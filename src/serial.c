@@ -84,14 +84,14 @@ static void serialWriteThrottledHeartbeat(void) {
     serialWriteHeartbeat();
 }
 
-void serialWriteFrame(const uint8_t *currentData,
-                      const uint8_t *lastData,
+void serialWriteFrame(const uint8_t *frameData,
+                      const uint8_t *lastFrameData,
                       uint32_t size) {
     if (gPort == NULL) return;
 
     serialWriteThrottledHeartbeat();
 
-    minifyStream(currentData, lastData, size, serialWrite);
+    minifyStream(frameData, lastFrameData, size, serialWrite);
 
     // ensure any written LOR packets are flushed
     bufflush(true, serialWrite);

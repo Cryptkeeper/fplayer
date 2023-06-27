@@ -60,16 +60,16 @@ static bool playerHandleNextFrame(void) {
     if (gLastFrameData == NULL) gLastFrameData = mustMalloc(frameSize);
 
     // fetch the current frame data
-    uint8_t *frameDataHead = NULL;
+    uint8_t *frameData = NULL;
 
-    if (!framePumpGet(&gFramePump, &gPlaying, &frameDataHead)) return false;
+    if (!framePumpGet(&gFramePump, &gPlaying, &frameData)) return false;
 
     // copy previous frame to the secondary frame buffer
     // this enables the serial system to diff between the two frames and only
     // write outgoing state changes
-    memcpy(gLastFrameData, frameDataHead, frameSize);
+    memcpy(gLastFrameData, frameData, frameSize);
 
-    serialWriteFrame(frameDataHead, gLastFrameData, frameSize);
+    serialWriteFrame(frameData, gLastFrameData, frameSize);
 
     playerLogStatus();
 

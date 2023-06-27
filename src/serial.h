@@ -14,8 +14,8 @@ void serialInit(SerialOpts opts);
 
 void serialWriteHeartbeat(void);
 
-void serialWriteFrame(const uint8_t *currentData,
-                      const uint8_t *lastData,
+void serialWriteFrame(const uint8_t *frameData,
+                      const uint8_t *lastFrameData,
                       uint32_t size);
 
 void serialExit(void);
