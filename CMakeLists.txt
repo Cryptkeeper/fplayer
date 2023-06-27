@@ -19,7 +19,7 @@ enable_testing()
 
 add_subdirectory(liblightorama)
 
-target_include_directories(fplayer PRIVATE sds)
+target_include_directories(fplayer PRIVATE sds libtinyfseq)
 
 target_link_libraries(fplayer lightorama m alut serialport zstd)
 

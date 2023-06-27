@@ -6,6 +6,7 @@
 typedef void (*minify_write_fn_t)(const uint8_t *b, int size);
 
 void minifyStream(const uint8_t *frameData,
+                  const uint8_t *lastFrameData,
                   uint32_t size,
                   minify_write_fn_t write);
 

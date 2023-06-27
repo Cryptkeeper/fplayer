@@ -25,7 +25,7 @@
  * `bufhead()` to receive a new write pointer.
  *
  *  After each "writing block" (whatever the caller defines as a decent chunk of
- * data having been written), `bufwrite` should be called with `force=true` and
+ * data having been written), `bufflush` should be called with `force=true` and
  * a "transfer" function pointer responsible for receiving the buffered data output.
  *
  *  The transfer function has access to the buffered data via its parameters only
@@ -33,7 +33,7 @@
  * is reset via `bufreset()` and the write head zeroed. Callers should copy
  * the data to their own allocated buffer if they wish to preserve it.
  *
- *  Using `force=false` with `bufwrite` allows the caller to suggest moments where
+ *  Using `force=false` with `bufflush` allows the caller to suggest moments where
  * the buffer may opt to flush its accumulated buffer to the transfer function.
  * `force=true` ensures the buffer is flushed.
  *
@@ -49,6 +49,6 @@ void bufadv(int size);
 
 typedef void (*buf_transfer_t)(const uint8_t *b, int size);
 
-void bufwrite(bool force, buf_transfer_t transfer);
+void bufflush(bool force, buf_transfer_t transfer);
 
 #endif//FPLAYER_LOR_H

@@ -38,7 +38,7 @@ void bufadv(int size) {
     gBuffer.blocks++;
 }
 
-static bool bufflush(bool force) {
+static bool bufchkflush(bool force) {
     // force flush buffer when it contains any writes
     if (force) return gBuffer.blocks > 0;
 
@@ -54,8 +54,8 @@ static void bufreset(void) {
     gBuffer.blocks = 0;
 }
 
-void bufwrite(bool force, buf_transfer_t transfer) {
-    if (!bufflush(force)) return;
+void bufflush(bool force, buf_transfer_t transfer) {
+    if (!bufchkflush(force)) return;
 
     transfer(gBuffer.stack, gBuffer.writeIdx);
 

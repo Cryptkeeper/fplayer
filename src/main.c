@@ -8,7 +8,7 @@
 #include <zstd.h>
 #endif
 
-#include "../libtinyfseq/tinyfseq.h"
+#include <tinyfseq.h>
 
 #include "audio.h"
 #include "cmap.h"

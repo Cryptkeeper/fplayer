@@ -3,7 +3,7 @@
 #include <string.h>
 
 #define TINYFSEQ_IMPLEMENTATION
-#include "../libtinyfseq/tinyfseq.h"
+#include <tinyfseq.h>
 
 #ifdef TINYFSEQ_MEMCPY
 #undef TINYFSEQ_MEMCPY
@@ -152,9 +152,7 @@ bool sequenceNextFrame(Sequence *seq) {
 }
 
 inline uint32_t sequenceGetFrameSize(const Sequence *seq) {
-    // assumes sizeof(uint8_t) is always 1, otherwise this can overflow
-    // and the return type needs promoted to `size_t`
-    return seq->header.channelCount * sizeof(uint8_t);
+    return seq->header.channelCount;
 }
 
 inline int sequenceGetFPS(const Sequence *seq) {

@@ -34,7 +34,7 @@ static void minifyWriteUpdate(Ctx *ctx, uint16_t circuit, uint8_t intensity) {
     bufadv(lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY, &setEffect,
                                     circuit - 1, ctx->unit, bufhead()));
 
-    bufwrite(false, ctx->write);
+    bufflush(false, ctx->write);
 }
 
 static void
@@ -51,18 +51,24 @@ minifyWriteMultiUpdate(Ctx *ctx, uint16_t circuits, uint8_t intensity) {
                                        },
                                        ctx->unit, bufhead()));
 
-    bufwrite(false, ctx->write);
+    bufflush(false, ctx->write);
 }
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
 
-static inline uint16_t
-minifyGetMatches(int nCircuits, const uint8_t frameData[N], uint8_t intensity) {
+static inline uint16_t minifyGetMatches(int nCircuits,
+                                        const uint8_t frameData[N],
+                                        const uint8_t lastFrameData[N],
+                                        uint8_t intensity) {
     assert(nCircuits > 0 && nCircuits <= N);
 
     uint16_t matches = 0;
 
     for (int i = 0; i < nCircuits; i++) {
+        // exclude frames that have not changed intensity
+        // hardware maintains the state, do not need to resend current values
+        if (frameData[i] == lastFrameData[i]) continue;
+
         if (frameData[i] == intensity) matches |= CIRCUIT_BIT(i);
     }
 
@@ -72,8 +78,10 @@ minifyGetMatches(int nCircuits, const uint8_t frameData[N], uint8_t intensity) {
 // "explodes" a series of up to 16 brightness values (uint8_t) into a series of
 // update packets (either as individual channels, multichannel bitmasks, or a mixture
 // of both) via the ctx->write function
-static void
-minifyWrite16Aligned(Ctx *ctx, uint8_t nCircuits, const uint8_t frameData[N]) {
+static void minifyWrite16Aligned(Ctx *ctx,
+                                 uint8_t nCircuits,
+                                 const uint8_t frameData[N],
+                                 const uint8_t lastFrameData[N]) {
     assert(nCircuits > 0 && nCircuits <= N);
 
     uint16_t consumed = 0;
@@ -85,8 +93,13 @@ minifyWrite16Aligned(Ctx *ctx, uint8_t nCircuits, const uint8_t frameData[N]) {
 
         const uint8_t intensity = frameData[circuit];
 
-        const uint16_t matches =
-                minifyGetMatches(nCircuits, frameData, intensity);
+        const uint16_t matches = minifyGetMatches(nCircuits, frameData,
+                                                  lastFrameData, intensity);
+
+        // zero matches (i.e. circuit intensity doesn't match itself) indicates
+        // the intensity did not change between the two frames and should be
+        // ignored from the grouping mechanism
+        if (matches == 0) continue;
 
         // mark all matched circuits as consumed for a bulk update
         consumed |= matches;
@@ -115,16 +128,21 @@ minifyWrite16Aligned(Ctx *ctx, uint8_t nCircuits, const uint8_t frameData[N]) {
 typedef struct encoding_stack_t {
     uint8_t circuits[N];
     uint8_t intensities[N];
+    uint8_t lastIntensities[N];
     uint8_t size;
 } Stack;
 
-static bool stackPush(Stack *stack, uint8_t circuit, uint8_t intensity) {
+static bool stackPush(Stack *stack,
+                      uint8_t circuit,
+                      uint8_t intensity,
+                      uint8_t lastIntensity) {
     const int idx = stack->size++;
 
     assert(idx >= 0 && idx < N);
 
     stack->circuits[idx] = circuit;
     stack->intensities[idx] = intensity;
+    stack->lastIntensities[idx] = lastIntensity;
 
     // return true when stack is full and should be written
     return stack->size >= N;
@@ -141,26 +159,36 @@ static void stackFlush(Stack *stack, Ctx *ctx) {
     const int alignOffset = firstCircuit % N;
 
     if (alignOffset == 0) {
-        minifyWrite16Aligned(ctx, stack->size, stack->intensities);
+        minifyWrite16Aligned(ctx, stack->size, stack->intensities,
+                             stack->lastIntensities);
     } else {
         // circuits aren't boundary aligned
         // manually construct up to two frames to re-align the data within
-        uint8_t doubleChunk[N * 2] = {0};
+        static uint8_t frameData[N * 2];
+        static uint8_t lastFrameData[N * 2];
 
-        memcpy(&doubleChunk[alignOffset], (const uint8_t *) stack->intensities,
+        memcpy(&frameData[alignOffset], (const uint8_t *) stack->intensities,
                stack->size);
 
-        minifyWrite16Aligned(ctx, N, &doubleChunk[0]);
+        memcpy(&lastFrameData[alignOffset],
+               (const uint8_t *) stack->lastIntensities, stack->size);
 
+        // always write the lower N half of frameData
+        // anything == N is already boundary aligned, so this should always contain data
+        minifyWrite16Aligned(ctx, N, frameData, lastFrameData);
+
+        // write the upper N half of frameData if anything was written to it
         const int chunkSize = alignOffset + stack->size;
 
-        if (chunkSize > N) minifyWrite16Aligned(ctx, N, &doubleChunk[N]);
+        if (chunkSize > N)
+            minifyWrite16Aligned(ctx, N, &frameData[N], &lastFrameData[N]);
     }
 
     stack->size = 0;
 }
 
 void minifyStream(const uint8_t *frameData,
+                  const uint8_t *lastFrameData,
                   uint32_t size,
                   minify_write_fn_t write) {
     Ctx *ctx = &(Ctx){
@@ -191,14 +219,12 @@ void minifyStream(const uint8_t *frameData,
 
         // record values onto (possibly fresh) stack
         // flush when stack is full
-        const bool stackFull = stackPush(&stack, circuit, frameData[id]);
+        const bool stackFull =
+                stackPush(&stack, circuit, frameData[id], lastFrameData[id]);
 
         if (stackFull) stackFlush(&stack, ctx);
     }
 
     // flush any pending data from the last iteration
     if (stack.size > 0) stackFlush(&stack, ctx);
-
-    // ensure all LOR protocol data is written
-    bufwrite(true, write);
 }

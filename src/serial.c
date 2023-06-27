@@ -3,13 +3,12 @@
 #include <stdio.h>
 
 #include <libserialport.h>
-#include <lightorama/easy.h>
 #include <lightorama/lightorama.h>
 
-#include "cmap.h"
 #include "err.h"
 #include "lor.h"
 #include "mem.h"
+#include "minifier.h"
 #include "time.h"
 
 static inline void spPrintError(enum sp_return err) {
@@ -63,28 +62,12 @@ static void serialWrite(const uint8_t *b, int size) {
     spTry(sp_nonblocking_write(gPort, b, size));
 }
 
-static void serialWriteChannelData(uint32_t id, uint8_t newIntensity) {
-    uint8_t unit;
-    uint16_t circuit;
-    if (!channelMapFind(id, &unit, &circuit)) return;
-
-    const struct lor_effect_setintensity_t setEffect = {
-            .intensity =
-                    lor_intensity_curve_vendor((float) (newIntensity / 255.0)),
-    };
-
-    bufadv(lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY, &setEffect,
-                                    circuit - 1, unit, bufhead()));
-
-    bufwrite(false, serialWrite);
-}
-
 void serialWriteHeartbeat(void) {
     if (gPort == NULL) return;
 
     bufadv(lor_write_heartbeat(bufhead()));
 
-    bufwrite(false, serialWrite);
+    bufflush(false, serialWrite);
 }
 
 static void serialWriteThrottledHeartbeat(void) {
@@ -108,13 +91,10 @@ void serialWriteFrame(const uint8_t *currentData,
 
     serialWriteThrottledHeartbeat();
 
-    for (uint32_t id = 0; id < size; id++) {
-        // avoid duplicate writes of the same intensity value
-        if (currentData[id] != lastData[id])
-            serialWriteChannelData(id, currentData[id]);
-    }
+    minifyStream(currentData, lastData, size, serialWrite);
 
-    bufwrite(true, serialWrite);
+    // ensure any written LOR packets are flushed
+    bufflush(true, serialWrite);
 
     spTry(sp_drain(gPort));
 }

@@ -7,7 +7,7 @@
 
 #include <sds.h>
 
-#include "../libtinyfseq/tinyfseq.h"
+#include <tinyfseq.h>
 
 typedef struct sequence_t {
     FILE *openFile;
