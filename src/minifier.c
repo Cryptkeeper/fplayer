@@ -149,15 +149,11 @@ static void stackFlush(uint8_t unit, Stack *stack, minify_write_fn_t write) {
     stack->size = 0;
 }
 
-static inline uint16_t stackGetMatches(Stack *stack, uint8_t intensity) {
+static inline uint16_t stackGetMatches(const Stack *stack, uint8_t intensity) {
     uint16_t matches = 0;
 
     for (int i = 0; i < stack->size; i++) {
         const struct encoding_change_t change = stack->changes[i];
-
-        // exclude frames that have not changed intensity
-        // hardware maintains the state, do not need to resend current values
-        if (change.newIntensity == change.oldIntensity) continue;
 
         if (change.newIntensity == intensity) matches |= CIRCUIT_BIT(i);
     }
@@ -183,12 +179,12 @@ static void minifyWrite16Aligned(uint8_t unit,
 
         const struct encoding_change_t change = stack->changes[i];
 
-        const uint16_t matches = stackGetMatches(stack, change.newIntensity);
+        // the intensity did not change, do not attempt to create a bulk update
+        // another circuit with the same intensity will still be updated, with
+        // itself as the root circuit
+        if (change.newIntensity == change.oldIntensity) continue;
 
-        // zero matches (i.e. circuit intensity doesn't match itself) indicates
-        // the intensity did not change between the two frames and should be
-        // ignored from the grouping mechanism
-        if (matches == 0) continue;
+        const uint16_t matches = stackGetMatches(stack, change.newIntensity);
 
         // mark all matched circuits as consumed for a bulk update
         consumed |= matches;

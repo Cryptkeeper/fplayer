@@ -25,7 +25,8 @@ static void printUsage(void) {
     printf("\n[Playback]\n");
     printf("\t-f <file>\t\tFSEQ v2 sequence file path (required)\n");
     printf("\t-c <file>\t\tNetwork channel map file path (required)\n");
-    printf("\t-d <device name>\tDevice name for serial port connection\n");
+    printf("\t-d <device name|stdout>\tDevice name for serial port "
+           "connection\n");
     printf("\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n");
 
     printf("\n[Controls]\n");
@@ -36,7 +37,7 @@ static void printUsage(void) {
            "setup\n");
 
     printf("\n[CLI]\n");
-    printf("\t-t <file>\t\t\tTest load channel map and exit\n");
+    printf("\t-t <file>\t\tTest load channel map and exit\n");
     printf("\t-h\t\t\tPrint this message and exit\n");
     printf("\t-v\t\t\tPrint library versions and exit\n");
 }

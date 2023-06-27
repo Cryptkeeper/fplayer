@@ -67,7 +67,7 @@ static void serialOpenPort(SerialOpts opts) {
 void serialInit(SerialOpts opts) {
     if (opts.devName == NULL || strcasecmp(opts.devName, "null") == 0) {
         gSrc = SERIAL_NULL;
-    } else if (strcasecmp(opts.devName, "stdio") == 0) {
+    } else if (strcasecmp(opts.devName, "stdout") == 0) {
         gSrc = SERIAL_STDIO;
     } else {
         gSrc = SERIAL_PORT;
