@@ -57,19 +57,24 @@ static bool playerHandleNextFrame(void) {
     // maintain a copy of the previous frame to use for detecting differences
     const uint32_t frameSize = sequenceGetFrameSize(&gPlaying);
 
-    if (gLastFrameData == NULL) gLastFrameData = mustMalloc(frameSize);
+    if (gLastFrameData == NULL) {
+        gLastFrameData = mustMalloc(frameSize);
+
+        // zero out the array to represent all existing intensity values as off
+        memset(gLastFrameData, 0, frameSize);
+    }
 
     // fetch the current frame data
     uint8_t *frameData = NULL;
 
     if (!framePumpGet(&gFramePump, &gPlaying, &frameData)) return false;
 
+    serialWriteFrame(frameData, gLastFrameData, frameSize);
+
     // copy previous frame to the secondary frame buffer
     // this enables the serial system to diff between the two frames and only
     // write outgoing state changes
     memcpy(gLastFrameData, frameData, frameSize);
-
-    serialWriteFrame(frameData, gLastFrameData, frameSize);
 
     playerLogStatus();
 
