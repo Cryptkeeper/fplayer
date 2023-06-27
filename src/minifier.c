@@ -67,62 +67,6 @@ typedef struct encoding_stack_t {
     uint8_t size;
 } Stack;
 
-static inline uint16_t minifyGetMatches(Stack *stack, uint8_t intensity) {
-    uint16_t matches = 0;
-
-    for (int i = 0; i < stack->size; i++) {
-        const struct encoding_entry_t entry = stack->entries[i];
-
-        // exclude frames that have not changed intensity
-        // hardware maintains the state, do not need to resend current values
-        if (entry.newIntensity == entry.oldIntensity) continue;
-
-        if (entry.newIntensity == intensity) matches |= CIRCUIT_BIT(i);
-    }
-
-    return matches;
-}
-
-// "explodes" a series of up to 16 brightness values (uint8_t) into a series of
-// update packets (either as individual channels, multichannel bitmasks, or a mixture
-// of both) via the ctx->write function
-static void minifyWrite16Aligned(Ctx *ctx, Stack *stack) {
-    assert(stack->size > 0 && stack->size <= N);
-
-    uint16_t consumed = 0;
-
-    for (uint8_t i = 0; i < stack->size; i++) {
-        // check if circuit has already been accounted for
-        // i.e. the intensity value matched another and the update was bulked
-        if (consumed & CIRCUIT_BIT(i)) continue;
-
-        const struct encoding_entry_t entry = stack->entries[i];
-
-        const uint16_t matches = minifyGetMatches(stack, entry.newIntensity);
-
-        // zero matches (i.e. circuit intensity doesn't match itself) indicates
-        // the intensity did not change between the two frames and should be
-        // ignored from the grouping mechanism
-        if (matches == 0) continue;
-
-        // mark all matched circuits as consumed for a bulk update
-        consumed |= matches;
-
-        const int popcount = __builtin_popcount(matches);
-
-        // use individual encode operations (optimizes bandwidth usage) depending
-        // on the amount of matched circuits being updated via popcount
-        if (popcount == 1) {
-            minifyWriteUpdate(ctx, entry.circuit, entry.newIntensity);
-        } else {
-            minifyWriteMultiUpdate(ctx, matches, entry.newIntensity);
-        }
-
-        // detect when all circuits are handled and break early
-        if (consumed == 0xFFFFu) break;
-    }
-}
-
 static bool stackPush(Stack *stack, struct encoding_entry_t entry) {
     const int idx = stack->size++;
 
@@ -169,6 +113,8 @@ static void stackAlign(const Stack *src, int offset, Stack *low, Stack *high) {
     high->size = hc;
 }
 
+static void minifyWrite16Aligned(Ctx *ctx, Stack *stack);
+
 // map each circuit stack value to its intensity stack value
 // if the map result is not a multiple of 16 (i.e. not aligned to the 16-bit LOR protocol window),
 // it is written into a double-sized buffer, and each half is written individually as needed
@@ -196,6 +142,62 @@ static void stackFlush(Stack *stack, Ctx *ctx) {
     }
 
     stack->size = 0;
+}
+
+static inline uint16_t stackGetMatches(Stack *stack, uint8_t intensity) {
+    uint16_t matches = 0;
+
+    for (int i = 0; i < stack->size; i++) {
+        const struct encoding_entry_t entry = stack->entries[i];
+
+        // exclude frames that have not changed intensity
+        // hardware maintains the state, do not need to resend current values
+        if (entry.newIntensity == entry.oldIntensity) continue;
+
+        if (entry.newIntensity == intensity) matches |= CIRCUIT_BIT(i);
+    }
+
+    return matches;
+}
+
+// "explodes" a series of up to 16 brightness values (uint8_t) into a series of
+// update packets (either as individual channels, multichannel bitmasks, or a mixture
+// of both) via the ctx->write function
+static void minifyWrite16Aligned(Ctx *ctx, Stack *stack) {
+    assert(stack->size > 0 && stack->size <= N);
+
+    uint16_t consumed = 0;
+
+    for (uint8_t i = 0; i < stack->size; i++) {
+        // check if circuit has already been accounted for
+        // i.e. the intensity value matched another and the update was bulked
+        if (consumed & CIRCUIT_BIT(i)) continue;
+
+        const struct encoding_entry_t entry = stack->entries[i];
+
+        const uint16_t matches = stackGetMatches(stack, entry.newIntensity);
+
+        // zero matches (i.e. circuit intensity doesn't match itself) indicates
+        // the intensity did not change between the two frames and should be
+        // ignored from the grouping mechanism
+        if (matches == 0) continue;
+
+        // mark all matched circuits as consumed for a bulk update
+        consumed |= matches;
+
+        const int popcount = __builtin_popcount(matches);
+
+        // use individual encode operations (optimizes bandwidth usage) depending
+        // on the amount of matched circuits being updated via popcount
+        if (popcount == 1) {
+            minifyWriteUpdate(ctx, entry.circuit, entry.newIntensity);
+        } else {
+            minifyWriteMultiUpdate(ctx, matches, entry.newIntensity);
+        }
+
+        // detect when all circuits are handled and break early
+        if (consumed == 0xFFFFu) break;
+    }
 }
 
 void minifyStream(const uint8_t *frameData,
