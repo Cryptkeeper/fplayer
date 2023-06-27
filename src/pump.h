@@ -8,14 +8,14 @@
 
 typedef struct frame_pump_t {
     uint8_t *frameData;
-    uint32_t framePos;
-    uint32_t frameEnd;
+    uint32_t readIdx;
+    uint32_t size;
     int16_t comBlockIndex;
 } FramePump;
 
 void framePumpInit(FramePump *pump);
 
-bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead);
+bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameData);
 
 void framePumpFree(FramePump *pump);
 

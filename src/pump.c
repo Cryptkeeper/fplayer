@@ -33,8 +33,8 @@ static void framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
 
     if (framesRead < 1) fatalf(E_FILE_IO, "unexpected end of frame data\n");
 
-    pump->framePos = 0;
-    pump->frameEnd = framesRead;
+    pump->readIdx = 0;
+    pump->size = framesRead * frameSize;
 }
 
 static bool framePumpChargeCompressionBlock(FramePump *pump, Sequence *seq) {
@@ -61,17 +61,19 @@ static bool framePumpChargeCompressionBlock(FramePump *pump, Sequence *seq) {
     free(pump->frameData);
 
     pump->frameData = frameData;
-    pump->framePos = 0;
-    pump->frameEnd = size / frameSize;
+    pump->readIdx = 0;
+    pump->size = size;
 
     return false;
 }
 
 static bool framePumpIsEmpty(const FramePump *pump) {
-    return pump->framePos >= pump->frameEnd;
+    return pump->readIdx >= pump->size;
 }
 
-bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead) {
+bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameData) {
+    const uint32_t frameSize = sequenceGetFrameSize(seq);
+
     if (framePumpIsEmpty(pump)) {
         const timeInstant start = timeGetNow();
 
@@ -94,12 +96,13 @@ bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameDataHead) {
         const double chargeTimeMs =
                 (double) timeElapsedNs(start, timeGetNow()) / 1000000.0;
 
-        printf("loaded %d frames in %.4fms\n", pump->frameEnd, chargeTimeMs);
+        printf("loaded %d frames in %.4fms\n", pump->size / frameSize,
+               chargeTimeMs);
     }
 
-    *frameDataHead = &pump->frameData[pump->framePos];
+    *frameData = &pump->frameData[pump->readIdx];
 
-    pump->framePos += 1;
+    pump->readIdx += frameSize;
 
     return true;
 }

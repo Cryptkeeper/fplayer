@@ -35,8 +35,10 @@ static void playerLogStatus(void) {
     sds remaining = sequenceGetRemaining(&gPlaying);
     sds sleep = sleepGetStatus();
 
+    const uint32_t frameSize = sequenceGetFrameSize(&gPlaying);
+
     printf("remaining: %s\tdt: %s\tpump: %4d\n", remaining, sleep,
-           gFramePump.frameEnd - gFramePump.framePos);
+           (gFramePump.size - gFramePump.readIdx) / frameSize);
 
     sdsfree(remaining);
     sdsfree(sleep);
