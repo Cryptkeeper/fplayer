@@ -38,7 +38,14 @@ void serialOptsFree(SerialOpts *opts) {
 }
 
 static struct sp_port *gPort;
-static bool gStdio;
+
+enum serial_src_t {
+    SERIAL_PORT,
+    SERIAL_STDIO,
+    SERIAL_NULL,
+};
+
+static enum serial_src_t gSrc;
 
 static void serialOpenPort(SerialOpts opts) {
     spTry(sp_get_port_by_name(opts.devName, &gPort));
@@ -58,47 +65,44 @@ static void serialOpenPort(SerialOpts opts) {
 }
 
 void serialInit(SerialOpts opts) {
-    if (opts.devName == NULL) return;
+    if (opts.devName == NULL || strcasecmp(opts.devName, "null") == 0) {
+        gSrc = SERIAL_NULL;
+    } else if (strcasecmp(opts.devName, "stdio") == 0) {
+        gSrc = SERIAL_STDIO;
+    } else {
+        gSrc = SERIAL_PORT;
 
-    if (strcmp(opts.devName, "stdio") == 0) {
-        gStdio = true;
-
-        printf("warning: using stdio for LOR protocol output\n");
-    } else
         serialOpenPort(opts);
-}
-
-static bool serialEnabled(void) {
-    return gPort != NULL || gStdio;
+    }
 }
 
 static void serialWrite(const uint8_t *b, int size) {
-    assert(serialEnabled());
+    switch (gSrc) {
+        case SERIAL_NULL:
+            return;
 
-    if (gStdio) {
-        for (int i = 0; i < size; i++) {
-            const uint8_t c = b[i];
+        case SERIAL_PORT:
+            spTry(sp_nonblocking_write(gPort, b, size));
+            break;
 
-            if (c == '\0') printf("\n");
-            else
-                printf("0x%02X ", c);
-        }
-    } else {
-        spTry(sp_nonblocking_write(gPort, b, size));
+        case SERIAL_STDIO:
+            for (int i = 0; i < size; i++) {
+                const uint8_t c = b[i];
+
+                if (c == '\0') printf("\n");
+                else
+                    printf("0x%02X ", c);
+            }
     }
 }
 
 void serialWriteHeartbeat(void) {
-    if (!serialEnabled()) return;
-
     bufadv(lor_write_heartbeat(bufhead()));
 
     bufflush(false, serialWrite);
 }
 
 static void serialWriteThrottledHeartbeat(void) {
-    if (!serialEnabled()) return;
-
     static timeInstant gLastHeartbeat;
 
     // each frame will request a heartbeat be sent
@@ -115,8 +119,6 @@ static void serialWriteThrottledHeartbeat(void) {
 void serialWriteFrame(const uint8_t *frameData,
                       const uint8_t *lastFrameData,
                       uint32_t size) {
-    if (!serialEnabled()) return;
-
     serialWriteThrottledHeartbeat();
 
     minifyStream(frameData, lastFrameData, size, serialWrite);
