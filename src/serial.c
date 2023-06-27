@@ -1,6 +1,8 @@
 #include "serial.h"
 
+#include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <libserialport.h>
 #include <lightorama/lightorama.h>
@@ -36,6 +38,7 @@ void serialOptsFree(SerialOpts *opts) {
 }
 
 static struct sp_port *gPort;
+static bool gStdio;
 
 static void serialOpenPort(SerialOpts opts) {
     spTry(sp_get_port_by_name(opts.devName, &gPort));
@@ -55,15 +58,38 @@ static void serialOpenPort(SerialOpts opts) {
 }
 
 void serialInit(SerialOpts opts) {
-    if (opts.devName != NULL) serialOpenPort(opts);
+    if (opts.devName == NULL) return;
+
+    if (strcmp(opts.devName, "stdio") == 0) {
+        gStdio = true;
+
+        printf("warning: using stdio for LOR protocol output\n");
+    } else
+        serialOpenPort(opts);
+}
+
+static bool serialEnabled(void) {
+    return gPort != NULL || gStdio;
 }
 
 static void serialWrite(const uint8_t *b, int size) {
-    spTry(sp_nonblocking_write(gPort, b, size));
+    assert(serialEnabled());
+
+    if (gStdio) {
+        for (int i = 0; i < size; i++) {
+            const uint8_t c = b[i];
+
+            if (c == '\0') printf("\n");
+            else
+                printf("0x%02X ", c);
+        }
+    } else {
+        spTry(sp_nonblocking_write(gPort, b, size));
+    }
 }
 
 void serialWriteHeartbeat(void) {
-    if (gPort == NULL) return;
+    if (!serialEnabled()) return;
 
     bufadv(lor_write_heartbeat(bufhead()));
 
@@ -71,6 +97,8 @@ void serialWriteHeartbeat(void) {
 }
 
 static void serialWriteThrottledHeartbeat(void) {
+    if (!serialEnabled()) return;
+
     static timeInstant gLastHeartbeat;
 
     // each frame will request a heartbeat be sent
@@ -87,7 +115,7 @@ static void serialWriteThrottledHeartbeat(void) {
 void serialWriteFrame(const uint8_t *frameData,
                       const uint8_t *lastFrameData,
                       uint32_t size) {
-    if (gPort == NULL) return;
+    if (!serialEnabled()) return;
 
     serialWriteThrottledHeartbeat();
 
@@ -96,7 +124,7 @@ void serialWriteFrame(const uint8_t *frameData,
     // ensure any written LOR packets are flushed
     bufflush(true, serialWrite);
 
-    spTry(sp_drain(gPort));
+    if (gPort != NULL) spTry(sp_drain(gPort));
 }
 
 static void serialPortFree(struct sp_port *port) {
