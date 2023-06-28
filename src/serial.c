@@ -98,6 +98,7 @@ static void serialWrite(const uint8_t *b, int size) {
                 else
                     printf("0x%02X ", c);
             }
+            break;
     }
 }
 
