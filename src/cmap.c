@@ -168,7 +168,7 @@ static bool channelMapContainsUid(const uint8_t *set, int size, uint8_t value) {
 
 uint8_t *channelMapGetUids(int *count) {
     // allocate for worst case (i.e. one unique unit ID per range)
-    uint8_t *const uids = mustMalloc(gDefaultChannelMap.size);
+    uint8_t *uids = mustMalloc(gDefaultChannelMap.size);
 
     memset(uids, 0, gDefaultChannelMap.size);
 
@@ -180,6 +180,9 @@ uint8_t *channelMapGetUids(int *count) {
         if (!channelMapContainsUid(uids, nUids, range.unit))
             uids[nUids++] = range.unit;
     }
+
+    // shrink the backing allocation to what is needed for the unique IDs only
+    if (nUids < gDefaultChannelMap.size) uids = mustRealloc(uids, nUids);
 
     *count = nUids;
 
