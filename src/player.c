@@ -8,6 +8,7 @@
 
 #include "audio.h"
 #include "mem.h"
+#include "netstats.h"
 #include "pump.h"
 #include "seq.h"
 #include "serial.h"
@@ -34,14 +35,16 @@ static void playerLogStatus(void) {
 
     sds remaining = sequenceGetRemaining(&gPlaying);
     sds sleep = sleepGetStatus();
+    sds netstats = nsGetStatus();
 
     const uint32_t frameSize = sequenceGetFrameSize(&gPlaying);
 
-    printf("remaining: %s\tdt: %s\tpump: %4d\n", remaining, sleep,
-           (gFramePump.size - gFramePump.readIdx) / frameSize);
+    printf("remaining: %s\tdt: %s\tpump: %4d\t%s\n", remaining, sleep,
+           (gFramePump.size - gFramePump.readIdx) / frameSize, netstats);
 
     sdsfree(remaining);
     sdsfree(sleep);
+    sdsfree(netstats);
 }
 
 static uint8_t *gLastFrameData;
@@ -167,6 +170,9 @@ void playerRun(PlayerOpts opts) {
         ;
 
     printf("end of sequence!\n");
+
+    // print closing remarks
+    nsPrintSummary();
 
     // cleanup resources
     audioStop();

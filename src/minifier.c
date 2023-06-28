@@ -8,6 +8,7 @@
 
 #include "cmap.h"
 #include "lor.h"
+#include "netstats.h"
 
 // this magic value is captured here to make its usage more obvious.
 //
@@ -39,6 +40,10 @@ static void minifyEncodeRequest(struct encoding_request_t request,
                     (float) (request.intensity / 255.0)),
     };
 
+    struct netstats_update_t update = {
+            .packets = 1,
+    };
+
     if (request.nCircuits == 1) {
         assert(request.groupOffset == 0);
 
@@ -46,14 +51,22 @@ static void minifyEncodeRequest(struct encoding_request_t request,
                                         request.circuits - 1, request.unit,
                                         bufhead()));
     } else {
-        bufadv(lor_write_channelset_effect(
+        const int size = lor_write_channelset_effect(
                 LOR_EFFECT_SET_INTENSITY, &setEffect,
                 (lor_channelset_t){
                         .offset = request.groupOffset,
                         .channels = request.circuits,
                 },
-                request.unit, bufhead()));
+                request.unit, bufhead());
+
+        bufadv(size);
+
+        // 4 bytes per individual set normally + 2 bytes padding each
+        // +2 to written size since it doesn't include padding yet
+        update.saved = (request.nCircuits * 6) - (size + 2);
     }
+
+    nsRecord(update);
 
     bufflush(false, write);
 }
@@ -117,7 +130,7 @@ static void stackAlign(const Stack *src, int offset, Stack *low, Stack *high) {
 
 static void minifyWrite16Aligned(uint8_t unit,
                                  uint8_t groupOffset,
-                                 Stack *stack,
+                                 const Stack *stack,
                                  minify_write_fn_t write);
 
 // map each circuit stack value to its intensity stack value
@@ -166,7 +179,7 @@ static inline uint16_t stackGetMatches(const Stack *stack, uint8_t intensity) {
 // of both) via the `write` function
 static void minifyWrite16Aligned(uint8_t unit,
                                  uint8_t groupOffset,
-                                 Stack *stack,
+                                 const Stack *stack,
                                  minify_write_fn_t write) {
     assert(stack->size > 0 && stack->size <= N);
 

@@ -1,6 +1,5 @@
 #include "serial.h"
 
-#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -11,6 +10,7 @@
 #include "lor.h"
 #include "mem.h"
 #include "minifier.h"
+#include "netstats.h"
 #include "time.h"
 
 static inline void spPrintError(enum sp_return err) {
@@ -77,6 +77,10 @@ void serialInit(SerialOpts opts) {
 }
 
 static void serialWrite(const uint8_t *b, int size) {
+    nsRecord((struct netstats_update_t){
+            .size = size,
+    });
+
     switch (gSrc) {
         case SERIAL_NULL:
             return;
@@ -100,6 +104,10 @@ void serialWriteHeartbeat(void) {
     bufadv(lor_write_heartbeat(bufhead()));
 
     bufflush(false, serialWrite);
+
+    nsRecord((struct netstats_update_t){
+            .packets = 1,
+    });
 }
 
 static void serialWriteThrottledHeartbeat(void) {
