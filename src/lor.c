@@ -13,24 +13,23 @@ struct lor_buffer_t {
     int blocks;
 };
 
-static struct lor_buffer_t gBuffer = {
-        .stack = {0},
-        .writeIdx = 1,// add initial empty stop byte for LOR protocol
-        .blocks = 0,
-};
+static struct lor_buffer_t gBuffer;
 
 uint8_t *bufhead(void) {
     // general bounds checking before returning pointer
-    assert(gBuffer.writeIdx >= 0 && gBuffer.writeIdx < STACK_SIZE);
+    // increment `writeIdx` to add a padding stop byte prefix
+    // `bufadv` appends trailing stop byte and offsets the final size
+    assert(gBuffer.writeIdx >= 0 && gBuffer.writeIdx + 1 < STACK_SIZE);
 
-    return &gBuffer.stack[gBuffer.writeIdx];
+    return &gBuffer.stack[gBuffer.writeIdx + 1];
 }
 
 void bufadv(int size) {
     assert(size > 0);
 
-    // increment size to add a trailing stop byte
-    size++;
+    // increment size to add a trailing stop byte and offset prefix stop byte
+    // see `bufhead`
+    size += 2;
 
     assert(gBuffer.writeIdx + size <= STACK_SIZE);
 
@@ -48,10 +47,7 @@ static bool bufchkflush(bool force) {
 }
 
 static void bufreset(void) {
-    memset(gBuffer.stack, 0, STACK_SIZE);
-
-    gBuffer.writeIdx = 1;// add initial empty stop byte for LOR protocol
-    gBuffer.blocks = 0;
+    memset(&gBuffer, 0, sizeof(gBuffer));
 }
 
 void bufflush(bool force, buf_transfer_t transfer) {
