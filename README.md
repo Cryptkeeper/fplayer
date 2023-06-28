@@ -12,7 +12,7 @@ Options:
 [Playback]
 	-f <file>		FSEQ v2 sequence file path (required)
 	-c <file>		Network channel map file path (required)
-	-d <device name>	Device name for serial port connection
+	-d <device name|stdout>	Device name for serial port connection
 	-b <baud rate>		Serial port baud rate (defaults to 19200)
 
 [Controls]
@@ -21,6 +21,7 @@ Options:
 	-w <seconds>		Playback start delay to allow connection setup
 
 [CLI]
+	-t <file>		Test load channel map and exit
 	-h			Print this message and exit
 	-v			Print library versions and exit
 ```
