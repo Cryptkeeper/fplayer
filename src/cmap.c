@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <sds.h>
 
@@ -153,6 +154,36 @@ bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit) {
     }
 
     return false;
+}
+
+static bool channelMapContainsUid(const uint8_t *set, int size, uint8_t value) {
+    if (size == 0) return false;
+
+    for (int i = 0; i < size; i++) {
+        if (set[i] == value) return true;
+    }
+
+    return false;
+}
+
+uint8_t *channelMapGetUids(int *count) {
+    // allocate for worst case (i.e. one unique unit ID per range)
+    uint8_t *const uids = mustMalloc(gDefaultChannelMap.size);
+
+    memset(uids, 0, gDefaultChannelMap.size);
+
+    int nUids = 0;
+
+    for (int i = 0; i < gDefaultChannelMap.size; i++) {
+        const ChannelRange range = gDefaultChannelMap.ranges[i];
+
+        if (!channelMapContainsUid(uids, nUids, range.unit))
+            uids[nUids++] = range.unit;
+    }
+
+    *count = nUids;
+
+    return uids;
 }
 
 void channelMapFree(void) {

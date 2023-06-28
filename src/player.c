@@ -164,6 +164,10 @@ void playerRun(PlayerOpts opts) {
     sleepTimerLoop(playerHandleNextFrame, gPlaying.header.frameStepTimeMillis,
                    playerOverrunSkipFrames);
 
+    printf("turning off lights, waiting for end of audio...\n");
+
+    serialWriteAllOff();
+
     // continue blocking until audio is finished
     // playback will continue until sequence and audio are both complete
     while (audioCheckPlaying())

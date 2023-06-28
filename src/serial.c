@@ -6,6 +6,7 @@
 #include <libserialport.h>
 #include <lightorama/lightorama.h>
 
+#include "cmap.h"
 #include "err.h"
 #include "lor.h"
 #include "mem.h"
@@ -122,6 +123,24 @@ static void serialWriteThrottledHeartbeat(void) {
     gLastHeartbeat = now;
 
     serialWriteHeartbeat();
+}
+
+void serialWriteAllOff(void) {
+    int count;
+    uint8_t *uids = channelMapGetUids(&count);
+
+    for (int i = 0; i < count; i++) {
+        bufadv(lor_write_unit_effect(LOR_EFFECT_SET_OFF, NULL, uids[i],
+                                     bufhead()));
+    }
+
+    freeAndNull((void **) &uids);
+
+    bufflush(true, serialWrite);
+
+    nsRecord((struct netstats_update_t){
+            .packets = count,
+    });
 }
 
 void serialWriteFrame(const uint8_t *frameData,
