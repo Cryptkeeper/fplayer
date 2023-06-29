@@ -146,10 +146,11 @@ void serialWriteAllOff(void) {
 
 void serialWriteFrame(const uint8_t *frameData,
                       const uint8_t *lastFrameData,
-                      uint32_t size) {
+                      uint32_t size,
+                      uint32_t frame) {
     serialWriteThrottledHeartbeat();
 
-    minifyStream(frameData, lastFrameData, size, serialWrite);
+    minifyStream(frameData, lastFrameData, size, frame, serialWrite);
 
     // ensure any written LOR packets are flushed
     bufflush(true, serialWrite);

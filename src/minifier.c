@@ -197,10 +197,11 @@ static void minifyWriteUnaligned(const uint8_t unit,
     stack->nChanges = 0;
 }
 
-void minifyStream(const uint8_t *frameData,
-                  const uint8_t *lastFrameData,
-                  uint32_t size,
-                  minify_write_fn_t write) {
+void minifyStream(const uint8_t *const frameData,
+                  const uint8_t *const lastFrameData,
+                  const uint32_t size,
+                  const uint32_t frame,
+                  const minify_write_fn_t write) {
     uint8_t prevUnit = 0;
 
     static EncodeStack gStack;
@@ -229,9 +230,10 @@ void minifyStream(const uint8_t *frameData,
         const uint8_t oldIntensity = lastFrameData[id];
         const uint8_t newIntensity = frameData[id];
 
-        // fade module tracks intensity history and if a consistent slope is found,
-        // may opt to enable LOR hardware fading instead of setting the intensity directly
-        const bool fade = fadeApplySmoothing(id, oldIntensity, newIntensity);
+        Fade *fadeStarted;
+        bool fadeFinishing;
+
+        fadeGetStatus(frame, id, &fadeStarted, &fadeFinishing);
 
         // record values onto (possibly fresh) stack
         // flush when stack is full
@@ -239,7 +241,8 @@ void minifyStream(const uint8_t *frameData,
                                          .circuit = circuit,
                                          .oldIntensity = oldIntensity,
                                          .newIntensity = newIntensity,
-                                         .fade = fade,
+                                         .fadeStarted = fadeStarted,
+                                         .fadeFinishing = fadeFinishing,
                                  });
 
         if (encodeStackFull(&gStack))
@@ -248,4 +251,7 @@ void minifyStream(const uint8_t *frameData,
 
     // flush any pending data from the last iteration
     if (gStack.nChanges > 0) minifyWriteUnaligned(prevUnit, &gStack, write);
+
+    // allow fade data to be progressively freed
+    fadeFrameFree(frame);
 }

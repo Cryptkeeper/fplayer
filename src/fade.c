@@ -1,60 +1,142 @@
 #include "fade.h"
 
+#include <assert.h>
+#include <string.h>
+
 #include "mem.h"
 
-struct intensity_history_t {
-    uint32_t id;
-    int frames;
-    int slope;
+struct frame_fades_t {
+    uint32_t frame;
+    Fade **fades;
+    int nFades;
 };
 
-static struct intensity_history_t *gHistories;
-static int gSize;
+static struct frame_fades_t *gFrameFades;
+static int gFrames;
 
-static struct intensity_history_t *fadeGetHistory(uint32_t id) {
-    for (int i = 0; i < gSize; i++)
-        if (gHistories[i].id == id) return &gHistories[i];
+static struct frame_fades_t *fadeGetFrame(const uint32_t frame,
+                                          const bool insert) {
+    for (int i = 0; i < gFrames; i++)
+        if (gFrameFades[i].frame == frame) return &gFrameFades[i];
 
-    // expand allocation and insert new record
-    // TODO: hashmap options? larger array reallocs?
-    const int newIdx = gSize;
+    if (!insert) return NULL;
 
-    gHistories = mustRealloc(gHistories,
-                             sizeof(struct intensity_history_t) * ++gSize);
+    // realloc and insert new struct
+    // TODO: optimize realloc behavior/hashmap opts?
+    const int newIdx = gFrames++;
 
-    gHistories[newIdx] = (struct intensity_history_t){
-            .id = id,
-            .frames = 0,
-            .slope = 0,
+    gFrameFades =
+            mustRealloc(gFrameFades, sizeof(struct frame_fades_t) * gFrames);
+
+    gFrameFades[newIdx] = (struct frame_fades_t){
+            .frame = frame,
+            .fades = NULL,
+            .nFades = 0,
     };
 
-    return &gHistories[newIdx];
+    return &gFrameFades[newIdx];
 }
 
-static void fadeResetHistory(struct intensity_history_t *history) {
-    history->frames = 0;
-    history->slope = 0;
+void fadePush(uint32_t startFrame, Fade fade) {
+    // multiple frames may store a pointer to a single Fade struct
+    // alloc a central copy of the parameter
+    Fade *const newFade = mustMalloc(sizeof(Fade));
+
+    memcpy(newFade, &fade, sizeof(Fade));
+
+    for (uint32_t frame = startFrame; frame < startFrame + fade.frames;
+         frame++) {
+        struct frame_fades_t *const fades = fadeGetFrame(frame, true);
+
+        // re-alloc its pointer list and insert the new central value
+        const int newIdx = fades->nFades++;
+
+        fades->fades = mustRealloc(
+                fades->fades, sizeof(struct frame_fades_t *) * fades->nFades);
+
+        fades->fades[newIdx] = newFade;
+
+        // increment reference counter
+        // used by `fadeFrameFree` to know when all references to a fade are
+        // unused and it can be freed
+        newFade->rc++;
+    }
 }
 
-bool fadeApplySmoothing(uint32_t id,
-                        uint8_t oldIntensity,
-                        uint8_t newIntensity) {
-    struct intensity_history_t *history = fadeGetHistory(id);
+void fadeFrameFree(uint32_t frame) {
+    struct frame_fades_t *const fades = fadeGetFrame(frame, false);
 
-    const int dt = (int) newIntensity - (int) oldIntensity;
+    if (fades == NULL) return;
 
-    bool fade = false;
+    for (int i = 0; i < fades->nFades; i++) {
+        Fade *fade = fades->fades[i];
 
-    if (history->frames > 0) {
-        if (history->slope == dt) {
-            fade = true;
-        } else {
-            fadeResetHistory(history);
+        // previously freed reference
+        // pointer entry is NULL'd to avoid realloc'ing the pointer list
+        if (fade == NULL) continue;
+
+        // see `fadePush` for matching reference counter increment
+        const int rc = --fade->rc;
+
+        assert(rc >= 0);
+
+        if (rc == 0) {
+            freeAndNull((void **) &fade);
+
+            // freeAndNull only NULLs the local `fade` variable
+            fades->fades[i] = NULL;
         }
     }
 
-    history->frames++;
-    history->slope = dt;
+    freeAndNull((void **) &fades->fades);
 
-    return fade;
+    fades->nFades = 0;
+}
+
+static const Fade *fadeGetCurrent(uint32_t frame, uint32_t id) {
+    struct frame_fades_t *const fades = fadeGetFrame(frame, false);
+
+    if (fades == NULL) return NULL;
+
+    for (int i = 0; i < fades->nFades; i++) {
+        const Fade *const match = fades->fades[i];
+
+        if (match->id == id) return match;
+    }
+
+    return false;
+}
+
+void fadeGetStatus(uint32_t frame,
+                   uint32_t id,
+                   Fade **started,
+                   bool *const finishing) {
+    *finishing = false;
+
+    struct frame_fades_t *const fades = fadeGetFrame(frame, false);
+
+    if (fades == NULL) {
+        *started = NULL;
+
+        return;
+    }
+
+    for (int i = 0; i < fades->nFades; i++) {
+        Fade *const match = fades->fades[i];
+
+        if (match->id != id) continue;
+
+        // a newly started effect was found, pass a copy to the caller
+        const bool startedNew = match != NULL && match->startFrame == frame;
+
+        if (startedNew) {
+            *started = match;
+            *finishing = false;
+
+            break;
+        }
+
+        // a fade effect is active, but may not have been started this frame (i.e. a fade tail)
+        *finishing = true;
+    }
 }

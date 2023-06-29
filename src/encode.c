@@ -62,14 +62,19 @@ uint16_t encodeStackGetMatches(const EncodeStack *const stack,
     for (int i = 0; i < stack->nChanges; i++) {
         const EncodeChange change = stack->changes[i];
 
-        if (compare.fade) {
-            if (change.oldIntensity == compare.oldIntensity &&
-                change.newIntensity == compare.newIntensity && change.fade)
-                matches |= CIRCUIT_BIT(i);
+        // actively fading state is controlled by LOR hardware
+        // nothing can therefore match it, avoiding interruptions to the effect
+        if (change.fadeFinishing) continue;
+
+        bool match = false;
+
+        if (compare.fadeStarted != NULL) {
+            match = change.fadeStarted == compare.fadeStarted;
         } else {
-            if (change.newIntensity == compare.newIntensity)
-                matches |= CIRCUIT_BIT(i);
+            match = change.newIntensity == compare.newIntensity;
         }
+
+        if (match) matches |= CIRCUIT_BIT(i);
     }
 
     return matches;

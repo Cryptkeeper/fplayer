@@ -4,8 +4,22 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-bool fadeApplySmoothing(uint32_t id,
-                        uint8_t oldIntensity,
-                        uint8_t newIntensity);
+typedef struct fade_t {
+    uint32_t id;
+    uint8_t from;
+    uint8_t to;
+    uint32_t startFrame;
+    int frames;
+    int rc;// reference counter for garbage collection
+} Fade;
+
+void fadePush(uint32_t startFrame, Fade fade);
+
+void fadeFrameFree(uint32_t frame);
+
+void fadeGetStatus(uint32_t frame,
+                   uint32_t id,
+                   Fade **started,
+                   bool *finishing);
 
 #endif//FPLAYER_FADE_H

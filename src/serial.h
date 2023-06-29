@@ -18,7 +18,8 @@ void serialWriteAllOff(void);
 
 void serialWriteFrame(const uint8_t *frameData,
                       const uint8_t *lastFrameData,
-                      uint32_t size);
+                      uint32_t size,
+                      uint32_t frame);
 
 void serialExit(void);
 

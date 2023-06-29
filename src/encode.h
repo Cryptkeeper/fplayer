@@ -4,11 +4,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "fade.h"
+
 typedef struct encode_change_t {
     uint16_t circuit;
     uint8_t oldIntensity;
     uint8_t newIntensity;
-    bool fade;
+    bool fadeFinishing;
+    Fade *fadeStarted;
 } EncodeChange;
 
 #define encodeStackCapacity() 16
