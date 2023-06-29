@@ -124,8 +124,10 @@ static uint16_t minifyWriteStack(const uint8_t unit,
             request.effect = LOR_EFFECT_FADE;
             request.effectData = (union lor_effect_any_t){
                     .fade = {
-                            .startIntensity = change.oldIntensity,
-                            .endIntensity = change.newIntensity,
+                            .startIntensity =
+                                    minifyEncodeIntensity(change.oldIntensity),
+                            .endIntensity =
+                                    minifyEncodeIntensity(change.newIntensity),
                             .duration = minifyGetFrameTime(),
                     }};
         } else {
