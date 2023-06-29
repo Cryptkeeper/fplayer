@@ -90,12 +90,11 @@ static void minifyWrite16Aligned(const uint8_t unit,
 
         const EncodeChange change = stack->changes[i];
 
-        // XOR to avoid matches including any previously consumed circuits
-        // this ensures all data is unique updates and not a reset of a previous state
+        // filter matches to only matches that have not yet been consumed
         // bonus: minifier can compress the 16-bit channel set if either 8-bit block
-        //  is unused, so we benefit from minimizing the active bits
+        //  is unused, so we benefit more later from minimizing the active bits
         const uint16_t bits = encodeStackGetMatches(stack, change);
-        const uint16_t matches = (consumed ^ bits) & bits;
+        const uint16_t matches = ~consumed & bits;
 
         if (matches == 0) continue;
 
