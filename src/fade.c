@@ -97,15 +97,12 @@ void fadeGetStatus(uint32_t frame,
                    uint32_t id,
                    Fade **started,
                    bool *const finishing) {
+    *started = NULL;
     *finishing = false;
 
     struct frame_fades_t *const fades = fadeGetFrame(frame, false);
 
-    if (fades == NULL) {
-        *started = NULL;
-
-        return;
-    }
+    if (fades == NULL) return;
 
     for (int i = 0; i < fades->nFades; i++) {
         Fade *const match = fades->fades[i];
