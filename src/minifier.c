@@ -26,6 +26,7 @@ struct encoding_request_t {
     uint8_t nCircuits;
     lor_effect_t effect;
     union lor_effect_any_t effectData;
+    int nFrames;
 };
 
 static void minifyEncodeRequest(struct encoding_request_t request,
@@ -41,9 +42,17 @@ static void minifyEncodeRequest(struct encoding_request_t request,
     if (request.nCircuits == 1) {
         assert(request.groupOffset == 0);
 
-        bufadv(lor_write_channel_effect(request.effect, &request.effectData,
-                                        request.circuits - 1, request.unit,
-                                        bufhead()));
+        const int size = lor_write_channel_effect(
+                request.effect, &request.effectData, request.circuits - 1,
+                request.unit, bufhead());
+
+        bufadv(size);
+
+        if (request.effect == LOR_EFFECT_FADE) {
+            // 4 bytes per individual set normally + 2 bytes padding each
+            // +2 to written size since it doesn't include padding yet
+            update.saved = request.nFrames * 6 - (size + 2);
+        }
     } else {
         const int size = lor_write_channelset_effect(
                 request.effect, &request.effectData,
@@ -57,7 +66,7 @@ static void minifyEncodeRequest(struct encoding_request_t request,
 
         // 4 bytes per individual set normally + 2 bytes padding each
         // +2 to written size since it doesn't include padding yet
-        update.saved = (request.nCircuits * 6) - (size + 2);
+        update.saved = (request.nFrames * request.nCircuits * 6) - (size + 2);
     }
 
     nsRecord(update);
@@ -134,6 +143,9 @@ static void minifyWrite16Aligned(const uint8_t unit,
                                     minifyEncodeIntensity(change.newIntensity),
                     }};
         }
+
+        request.nFrames =
+                change.fadeStarted != NULL ? change.fadeStarted->frames : 1;
 
         minifyEncodeRequest(request, write);
 
