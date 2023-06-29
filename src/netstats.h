@@ -5,6 +5,7 @@
 
 struct netstats_update_t {
     int packets;
+    int fades;
     int saved;
     int size;
 };

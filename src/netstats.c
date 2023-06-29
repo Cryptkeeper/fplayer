@@ -9,6 +9,7 @@ static struct netstats_update_t gSum;
 static inline void nsUpdateAdd(struct netstats_update_t *a,
                                struct netstats_update_t b) {
     a->packets += b.packets;
+    a->fades += b.fades;
     a->saved += b.saved;
     a->size += b.size;
 }
@@ -25,10 +26,13 @@ static float nsGetCompressionRatio(const struct netstats_update_t *src) {
 }
 
 sds nsGetStatus(void) {
+    const float kb = (float) gLastSecond.size / 1024.0F;
+
     const float cr = nsGetCompressionRatio(&gLastSecond);
 
-    sds str = sdscatprintf(sdsempty(), "%dB/s\tpackets: %d\tcompressed: %.02f",
-                           gLastSecond.size, gLastSecond.packets, cr);
+    sds str = sdscatprintf(
+            sdsempty(), "%.03f KB/s\tfades: %d\tpackets: %d\tcompressed: %.02f",
+            kb, gLastSecond.fades, gLastSecond.packets, cr);
 
     memset(&gLastSecond, 0, sizeof(gLastSecond));
 

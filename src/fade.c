@@ -5,15 +5,15 @@
 #include "mem.h"
 
 struct intensity_history_t {
-    uint16_t id;
+    uint32_t id;
     int frames;
-    float slope;
+    int slope;
 };
 
 static struct intensity_history_t *gHistories;
 static int gSize;
 
-static struct intensity_history_t *fadeGetCircuitHistory(uint16_t id) {
+static struct intensity_history_t *fadeGetHistory(uint32_t id) {
     for (int i = 0; i < gSize; i++)
         if (gHistories[i].id == id) return &gHistories[i];
 
@@ -33,14 +33,30 @@ static struct intensity_history_t *fadeGetCircuitHistory(uint16_t id) {
     return &gHistories[newIdx];
 }
 
-static bool fadeFollowsSlope(const struct intensity_history_t *history,
-                             uint8_t prev,
-                             uint8_t new) {
-    const float dt = (float) new - (float) prev;
-    const float allowance = 0.1F;
-
-    return dt >= history->slope * (1 - allowance) &&
-           dt <= history->slope * (1 + allowance);
+static void fadeResetHistory(struct intensity_history_t *history) {
+    history->frames = 0;
+    history->slope = 0;
 }
 
-static bool fadeApplySmoothing(uint16_t circuit, );
+bool fadeApplySmoothing(uint32_t id,
+                        uint8_t oldIntensity,
+                        uint8_t newIntensity) {
+    struct intensity_history_t *history = fadeGetHistory(id);
+
+    const int dt = (int) newIntensity - (int) oldIntensity;
+
+    bool fade = false;
+
+    if (history->frames > 0) {
+        if (history->slope == dt) {
+            fade = true;
+        } else {
+            fadeResetHistory(history);
+        }
+    }
+
+    history->frames++;
+    history->slope = dt;
+
+    return fade;
+}

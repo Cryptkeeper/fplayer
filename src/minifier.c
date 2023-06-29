@@ -7,6 +7,7 @@
 #include <lightorama/lightorama.h>
 
 #include "cmap.h"
+#include "fade.h"
 #include "lor.h"
 #include "netstats.h"
 
@@ -22,12 +23,17 @@
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
 
+static inline lor_intensity_t minifyEncodeIntensity(uint8_t abs) {
+    return lor_intensity_curve_vendor((float) (abs / 255.0));
+}
+
 struct encoding_request_t {
     uint8_t unit;
     uint8_t groupOffset;
     uint16_t circuits;
     uint8_t nCircuits;
-    uint8_t intensity;
+    lor_effect_t effect;
+    union lor_effect_any_t effectData;
 };
 
 static void minifyEncodeRequest(struct encoding_request_t request,
@@ -35,24 +41,20 @@ static void minifyEncodeRequest(struct encoding_request_t request,
     assert(request.circuits > 0);
     assert(request.nCircuits > 0);
 
-    const struct lor_effect_setintensity_t setEffect = {
-            .intensity = lor_intensity_curve_vendor(
-                    (float) (request.intensity / 255.0)),
-    };
-
     struct netstats_update_t update = {
             .packets = 1,
+            .fades = request.effect == LOR_EFFECT_FADE,
     };
 
     if (request.nCircuits == 1) {
         assert(request.groupOffset == 0);
 
-        bufadv(lor_write_channel_effect(LOR_EFFECT_SET_INTENSITY, &setEffect,
+        bufadv(lor_write_channel_effect(request.effect, &request.effectData,
                                         request.circuits - 1, request.unit,
                                         bufhead()));
     } else {
         const int size = lor_write_channelset_effect(
-                LOR_EFFECT_SET_INTENSITY, &setEffect,
+                request.effect, &request.effectData,
                 (lor_channelset_t){
                         .offset = request.groupOffset,
                         .channels = request.circuits,
@@ -73,8 +75,9 @@ static void minifyEncodeRequest(struct encoding_request_t request,
 
 struct encoding_change_t {
     uint16_t circuit;
-    uint8_t newIntensity;
     uint8_t oldIntensity;
+    uint8_t newIntensity;
+    bool fade;
 };
 
 typedef struct encoding_stack_t {
@@ -162,13 +165,22 @@ static void stackFlush(uint8_t unit, Stack *stack, minify_write_fn_t write) {
     stack->size = 0;
 }
 
-static inline uint16_t stackGetMatches(const Stack *stack, uint8_t intensity) {
+static inline uint16_t stackGetMatches(const Stack *stack,
+                                       uint8_t oldIntensity,
+                                       uint8_t newIntensity,
+                                       bool fade) {
     uint16_t matches = 0;
 
     for (int i = 0; i < stack->size; i++) {
         const struct encoding_change_t change = stack->changes[i];
 
-        if (change.newIntensity == intensity) matches |= CIRCUIT_BIT(i);
+        if (fade) {
+            if (change.oldIntensity == oldIntensity &&
+                change.newIntensity == newIntensity && change.fade)
+                matches |= CIRCUIT_BIT(i);
+        } else {
+            if (change.newIntensity == newIntensity) matches |= CIRCUIT_BIT(i);
+        }
     }
 
     return matches;
@@ -177,13 +189,13 @@ static inline uint16_t stackGetMatches(const Stack *stack, uint8_t intensity) {
 // "explodes" a series of up to 16 brightness values (uint8_t) into a series of
 // update packets (either as individual channels, multichannel bitmasks, or a mixture
 // of both) via the `write` function
-static void minifyWrite16Aligned(uint8_t unit,
+static uint16_t minifyWriteStack(uint8_t unit,
                                  uint8_t groupOffset,
+                                 bool fade,
                                  const Stack *stack,
+                                 uint16_t consumed,
                                  minify_write_fn_t write) {
     assert(stack->size > 0 && stack->size <= N);
-
-    uint16_t consumed = 0;
 
     for (uint8_t i = 0; i < stack->size; i++) {
         // check if circuit has already been accounted for
@@ -202,26 +214,69 @@ static void minifyWrite16Aligned(uint8_t unit,
         // bonus: minifier can compress the 16-bit channel set if either 8-bit block
         //  is unused, so we benefit from minimizing the active bits
         const uint16_t matches =
-                consumed ^ stackGetMatches(stack, change.newIntensity);
+                consumed ^ stackGetMatches(stack, change.oldIntensity,
+                                           change.newIntensity, fade);
+
+        if (matches == 0) continue;
 
         // mark all matched circuits as consumed for a bulk update
         consumed |= matches;
 
         const int popcount = __builtin_popcount(matches);
 
-        minifyEncodeRequest(
-                (struct encoding_request_t){
-                        .unit = unit,
-                        .groupOffset = popcount == 1 ? 0 : groupOffset,
-                        .circuits = popcount == 1 ? change.circuit : matches,
-                        .nCircuits = popcount,
-                        .intensity = change.newIntensity,
-                },
-                write);
+        // build encoding request
+        // this serves as a generic layer specifying the intended data,
+        // which is processed by the encoder and written as LOR protocol data
+        struct encoding_request_t request;
+
+        memset(&request, 0, sizeof(request));
+
+        request.unit = unit;
+        request.groupOffset = popcount == 1 ? 0 : groupOffset;
+        request.circuits = popcount == 1 ? change.circuit : matches;
+        request.nCircuits = popcount;
+
+        if (fade) {
+            request.effect = LOR_EFFECT_FADE;
+            request.effectData = (union lor_effect_any_t){
+                    .fade = {
+                            .startIntensity = change.oldIntensity,
+                            .endIntensity = change.newIntensity,
+                            .duration = lor_seconds_to_time(
+                                    0.02F),// TODO: use real value
+                    }};
+        } else {
+            request.effect = LOR_EFFECT_SET_INTENSITY;
+            request.effectData = (union lor_effect_any_t){
+                    .setIntensity = {
+                            .intensity =
+                                    minifyEncodeIntensity(change.newIntensity),
+                    }};
+        }
+
+        minifyEncodeRequest(request, write);
 
         // detect when all circuits are handled and break early
         if (consumed == 0xFFFFu) break;
     }
+
+    return consumed;
+}
+
+static void minifyWrite16Aligned(uint8_t unit,
+                                 uint8_t groupOffset,
+                                 const Stack *stack,
+                                 minify_write_fn_t write) {
+    uint16_t consumed = 0;
+
+    // first pass, attempt matching changing in intensities as fade effects
+    // consumed is a bitset for the circuits in the stack that were "updated"
+    // anything left over should be handled as "set" updates, and grouped if possible
+    consumed =
+            minifyWriteStack(unit, groupOffset, true, stack, consumed, write);
+
+    if (consumed < 0xFFFFu)
+        minifyWriteStack(unit, groupOffset, false, stack, consumed, write);
 }
 
 void minifyStream(const uint8_t *frameData,
@@ -252,13 +307,21 @@ void minifyStream(const uint8_t *frameData,
 
         if (outOfRange) stackFlush(unit, &stack, write);
 
+        const uint8_t oldIntensity = lastFrameData[id];
+        const uint8_t newIntensity = frameData[id];
+
+        // fade module tracks intensity history and if a consistent slope is found,
+        // may opt to enable LOR hardware fading instead of setting the intensity directly
+        const bool fade = fadeApplySmoothing(id, oldIntensity, newIntensity);
+
         // record values onto (possibly fresh) stack
         // flush when stack is full
         const bool stackFull =
                 stackPush(&stack, (struct encoding_change_t){
                                           .circuit = circuit,
-                                          .newIntensity = frameData[id],
-                                          .oldIntensity = lastFrameData[id],
+                                          .oldIntensity = oldIntensity,
+                                          .newIntensity = newIntensity,
+                                          .fade = fade,
                                   });
 
         if (stackFull) stackFlush(unit, &stack, write);
