@@ -64,9 +64,14 @@ static void minifyEncodeRequest(struct encoding_request_t request,
 
         bufadv(size);
 
-        // 4 bytes per individual set normally + 2 bytes padding each
+        // N bytes per individual set/fade normally + 2 bytes padding each
+        const int ungroupedSize =
+                (request.effect == LOR_EFFECT_FADE ? 7 : 4) + 2;
+
+        // if the effect is sent once, mark the individual step frames as saved
         // +2 to written size since it doesn't include padding yet
-        update.saved = (request.nFrames * request.nCircuits * 6) - (size + 2);
+        update.saved = (request.nFrames * request.nCircuits * ungroupedSize) -
+                       (size + 2);
     }
 
     nsRecord(update);
