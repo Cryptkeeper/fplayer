@@ -187,3 +187,7 @@ void playerRun(PlayerOpts opts) {
 
     playerFree();
 }
+
+Sequence *playerGetPlaying(void) {
+    return &gPlaying;
+}

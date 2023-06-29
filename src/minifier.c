@@ -10,6 +10,8 @@
 #include "fade.h"
 #include "lor.h"
 #include "netstats.h"
+#include "player.h"
+#include "seq.h"
 
 // this magic value is captured here to make its usage more obvious.
 //
@@ -186,6 +188,12 @@ static inline uint16_t stackGetMatches(const Stack *stack,
     return matches;
 }
 
+static lor_time_t minifyGetFrameTime(void) {
+    const float ms = (float) playerGetPlaying()->header.frameStepTimeMillis;
+
+    return lor_seconds_to_time(ms / 1000.0F);
+}
+
 // "explodes" a series of up to 16 brightness values (uint8_t) into a series of
 // update packets (either as individual channels, multichannel bitmasks, or a mixture
 // of both) via the `write` function
@@ -242,8 +250,7 @@ static uint16_t minifyWriteStack(uint8_t unit,
                     .fade = {
                             .startIntensity = change.oldIntensity,
                             .endIntensity = change.newIntensity,
-                            .duration = lor_seconds_to_time(
-                                    0.02F),// TODO: use real value
+                            .duration = minifyGetFrameTime(),
                     }};
         } else {
             request.effect = LOR_EFFECT_SET_INTENSITY;

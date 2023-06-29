@@ -1,7 +1,5 @@
 #include "fade.h"
 
-#include <string.h>
-
 #include "mem.h"
 
 struct intensity_history_t {

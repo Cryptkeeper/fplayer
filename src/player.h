@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "seq.h"
+
 typedef struct player_opts_t {
     char *sequenceFilePath;
     char *audioOverrideFilePath;
@@ -14,5 +16,7 @@ typedef struct player_opts_t {
 void playerOptsFree(PlayerOpts *opts);
 
 void playerRun(PlayerOpts opts);
+
+Sequence *playerGetPlaying(void);
 
 #endif//FPLAYER_PLAYER_H
