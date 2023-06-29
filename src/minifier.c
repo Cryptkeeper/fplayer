@@ -94,8 +94,8 @@ static void minifyWrite16Aligned(const uint8_t unit,
         // this ensures all data is unique updates and not a reset of a previous state
         // bonus: minifier can compress the 16-bit channel set if either 8-bit block
         //  is unused, so we benefit from minimizing the active bits
-        const uint16_t matches =
-                consumed ^ encodeStackGetMatches(stack, change);
+        const uint16_t bits = encodeStackGetMatches(stack, change);
+        const uint16_t matches = (consumed ^ bits) & bits;
 
         if (matches == 0) continue;
 
