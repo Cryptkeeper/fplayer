@@ -72,7 +72,7 @@ static void minifyEncodeRequest(struct encoding_request_t request,
 }
 
 struct encoding_change_t {
-    uint8_t circuit;
+    uint16_t circuit;
     uint8_t newIntensity;
     uint8_t oldIntensity;
 };
