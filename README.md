@@ -14,6 +14,7 @@ Options:
 	-c <file>		Network channel map file path (required)
 	-d <device name|stdout>	Device name for serial port connection
 	-b <baud rate>		Serial port baud rate (defaults to 19200)
+	-p			Precompute fades for smoother playback and reduced bandwidth (experimental)
 
 [Controls]
 	-a <file>		Override audio with specified filepath

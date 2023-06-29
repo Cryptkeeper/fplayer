@@ -28,6 +28,8 @@ static void printUsage(void) {
     printf("\t-d <device name|stdout>\tDevice name for serial port "
            "connection\n");
     printf("\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n");
+    printf("\t-p\t\t\tPrecompute fades for smoother playback and reduced "
+           "bandwidth (experimental)\n");
 
     printf("\n[Controls]\n");
     printf("\t-a <file>\t\tOverride audio with specified filepath\n");
