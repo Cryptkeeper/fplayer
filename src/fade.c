@@ -123,27 +123,3 @@ void fadeGetStatus(uint32_t frame,
         *finishing = true;
     }
 }
-
-#include <stdio.h>
-
-void fadeDump(void) {
-    for (int i = 0; i < gFrames; i++) {
-        const struct frame_fades_t *const fades = &gFrameFades[i];
-
-        bool printed = false;
-
-        for (int j = 0; j < fades->nFades; j++) {
-            const Fade *const fade = fades->fades[j];
-
-            if (fade->startFrame == fades->frame) {
-                if (!printed) {
-                    printed = true;
-                    printf("frame %d\n", fades->frame);
-                }
-
-                printf("\t%d: %d -> %d over %d\n", fade->id, fade->from,
-                       fade->to, fade->frames);
-            }
-        }
-    }
-}

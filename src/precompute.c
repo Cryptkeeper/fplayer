@@ -193,8 +193,6 @@ void precomputeStart(FramePump *const pump, Sequence *const seq) {
 
     precomputeFree();
 
-    fadeDump();
-
     // reset playback state, see `sequenceInit`
     seq->currentFrame = -1;
 
