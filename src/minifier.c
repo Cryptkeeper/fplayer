@@ -65,22 +65,23 @@ static void minifyEncodeRequest(struct encoding_request_t request,
     bufflush(false, write);
 }
 
-static lor_time_t minifyGetFrameTime(void) {
-    const float ms = (float) playerGetPlaying()->header.frameStepTimeMillis;
+static inline lor_time_t minifyGetFadeDuration(const Fade *const fade) {
+    const int ms =
+            playerGetPlaying()->header.frameStepTimeMillis * fade->frames;
 
-    return lor_seconds_to_time(ms / 1000.0F);
+    return lor_seconds_to_time((float) ms / 1000.0F);
 }
 
 // "explodes" a series of up to 16 brightness values (uint8_t) into a series of
 // update packets (either as individual channels, multichannel bitmasks, or a mixture
 // of both) via the `write` function
-static uint16_t minifyWriteStack(const uint8_t unit,
+static void minifyWrite16Aligned(const uint8_t unit,
                                  const uint8_t groupOffset,
-                                 const bool fade,
                                  const EncodeStack *const stack,
-                                 uint16_t consumed,
                                  const minify_write_fn_t write) {
     assert(stack->nChanges > 0 && stack->nChanges <= encodeStackCapacity());
+
+    uint16_t consumed = 0;
 
     for (uint8_t i = 0; i < stack->nChanges; i++) {
         // check if circuit has already been accounted for
@@ -88,11 +89,6 @@ static uint16_t minifyWriteStack(const uint8_t unit,
         if (consumed & CIRCUIT_BIT(i)) continue;
 
         const EncodeChange change = stack->changes[i];
-
-        // the intensity did not change, do not attempt to create a bulk update
-        // another circuit with the same intensity will still be updated, with
-        // itself as the root circuit
-        if (change.newIntensity == change.oldIntensity) continue;
 
         // XOR to avoid matches including any previously consumed circuits
         // this ensures all data is unique updates and not a reset of a previous state
@@ -120,15 +116,16 @@ static uint16_t minifyWriteStack(const uint8_t unit,
         request.circuits = popcount == 1 ? change.circuit : matches;
         request.nCircuits = popcount;
 
-        if (fade) {
+        if (change.fadeStarted != NULL) {
             request.effect = LOR_EFFECT_FADE;
             request.effectData = (union lor_effect_any_t){
                     .fade = {
-                            .startIntensity =
-                                    minifyEncodeIntensity(change.oldIntensity),
-                            .endIntensity =
-                                    minifyEncodeIntensity(change.newIntensity),
-                            .duration = minifyGetFrameTime(),
+                            .startIntensity = minifyEncodeIntensity(
+                                    change.fadeStarted->from),
+                            .endIntensity = minifyEncodeIntensity(
+                                    change.fadeStarted->to),
+                            .duration =
+                                    minifyGetFadeDuration(change.fadeStarted),
                     }};
         } else {
             request.effect = LOR_EFFECT_SET_INTENSITY;
@@ -144,24 +141,6 @@ static uint16_t minifyWriteStack(const uint8_t unit,
         // detect when all circuits are handled and break early
         if (consumed == 0xFFFFu) break;
     }
-
-    return consumed;
-}
-
-static void minifyWrite16Aligned(uint8_t unit,
-                                 uint8_t groupOffset,
-                                 const EncodeStack *const stack,
-                                 minify_write_fn_t write) {
-    uint16_t consumed = 0;
-
-    // first pass, attempt matching changing in intensities as fade effects
-    // consumed is a bitset for the circuits in the stack that were "updated"
-    // anything left over should be handled as "set" updates, and grouped if possible
-    consumed =
-            minifyWriteStack(unit, groupOffset, true, stack, consumed, write);
-
-    if (consumed < 0xFFFFu)
-        minifyWriteStack(unit, groupOffset, false, stack, consumed, write);
 }
 
 // map each circuit stack value to its intensity stack value

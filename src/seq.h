@@ -30,6 +30,8 @@ bool sequenceNextFrame(Sequence *seq);
 
 uint32_t sequenceGetFrameSize(const Sequence *seq);
 
+uint32_t sequenceGetFrame(const Sequence *seq);
+
 int sequenceGetFPS(const Sequence *seq);
 
 sds sequenceGetRemaining(const Sequence *seq);

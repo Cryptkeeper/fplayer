@@ -1,6 +1,7 @@
 #ifndef FPLAYER_PLAYER_H
 #define FPLAYER_PLAYER_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "seq.h"
@@ -11,6 +12,7 @@ typedef struct player_opts_t {
     uint8_t frameStepTimeOverrideMs;
     char *channelMapFilePath;
     uint8_t connectionWaitS;
+    bool precomputeFades;
 } PlayerOpts;
 
 void playerOptsFree(PlayerOpts *opts);

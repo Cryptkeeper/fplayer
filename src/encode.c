@@ -62,6 +62,11 @@ uint16_t encodeStackGetMatches(const EncodeStack *const stack,
     for (int i = 0; i < stack->nChanges; i++) {
         const EncodeChange change = stack->changes[i];
 
+        // the intensity did not change, do not attempt to create a bulk update
+        // another circuit with the same intensity will still be updated, with
+        // itself as the root circuit
+        if (change.newIntensity == change.oldIntensity) continue;
+
         // actively fading state is controlled by LOR hardware
         // nothing can therefore match it, avoiding interruptions to the effect
         if (change.fadeFinishing) continue;

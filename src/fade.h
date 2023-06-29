@@ -22,4 +22,6 @@ void fadeGetStatus(uint32_t frame,
                    Fade **started,
                    bool *finishing);
 
+void fadeDump(void);
+
 #endif//FPLAYER_FADE_H

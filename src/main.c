@@ -77,7 +77,7 @@ static int testConfigurations(const char *filepath) {
 
 static int parseOpts(int argc, char **argv) {
     int c;
-    while ((c = getopt(argc, argv, ":t:hvf:c:a:r:w:d:b:")) != -1) {
+    while ((c = getopt(argc, argv, ":t:hvf:c:a:r:w:pd:b:")) != -1) {
         switch (c) {
             case 't':
                 return testConfigurations(optarg);
@@ -111,6 +111,10 @@ static int parseOpts(int argc, char **argv) {
             case 'w':
                 parseLong(optarg, &gPlayerOpts.connectionWaitS,
                           sizeof(gPlayerOpts.connectionWaitS), 0, UINT8_MAX);
+                break;
+
+            case 'p':
+                gPlayerOpts.precomputeFades = true;
                 break;
 
             case 'd':

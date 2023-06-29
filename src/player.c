@@ -9,6 +9,7 @@
 #include "audio.h"
 #include "mem.h"
 #include "netstats.h"
+#include "precompute.h"
 #include "pump.h"
 #include "seq.h"
 #include "serial.h"
@@ -74,7 +75,9 @@ static bool playerHandleNextFrame(void) {
 
     if (!framePumpGet(&gFramePump, &gPlaying, &frameData)) return false;
 
-    serialWriteFrame(frameData, gLastFrameData, frameSize);
+    const uint32_t frame = sequenceGetFrame(&gPlaying);
+
+    serialWriteFrame(frameData, gLastFrameData, frameSize, frame);
 
     // copy previous frame to the secondary frame buffer
     // this enables the serial system to diff between the two frames and only
@@ -144,16 +147,7 @@ static void playerOverrunSkipFrames(int64_t ns) {
     printf("warning: skipping %d frames\n", skippedFrames);
 }
 
-void playerRun(PlayerOpts opts) {
-    playerWaitForConnection(opts);
-
-    // read and parse sequence file data
-    sequenceInit(&gPlaying);
-
-    framePumpInit(&gFramePump);
-
-    sequenceOpen(opts.sequenceFilePath, &gPlaying);
-
+static void playerStartPlayback(PlayerOpts opts) {
     // optionally override the sequence's playback rate with the CLI's value
     if (opts.frameStepTimeOverrideMs > 0)
         gPlaying.header.frameStepTimeMillis = opts.frameStepTimeOverrideMs;
@@ -180,6 +174,21 @@ void playerRun(PlayerOpts opts) {
 
     // cleanup resources
     audioStop();
+}
+
+void playerRun(PlayerOpts opts) {
+    playerWaitForConnection(opts);
+
+    // read and parse sequence file data
+    sequenceInit(&gPlaying);
+
+    framePumpInit(&gFramePump);
+
+    sequenceOpen(opts.sequenceFilePath, &gPlaying);
+
+    if (opts.precomputeFades) precomputeStart(&gFramePump, &gPlaying);
+
+    playerStartPlayback(opts);
 
     sequenceFree(&gPlaying);
 

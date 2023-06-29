@@ -93,20 +93,6 @@ void fadeFrameFree(uint32_t frame) {
     fades->nFades = 0;
 }
 
-static const Fade *fadeGetCurrent(uint32_t frame, uint32_t id) {
-    struct frame_fades_t *const fades = fadeGetFrame(frame, false);
-
-    if (fades == NULL) return NULL;
-
-    for (int i = 0; i < fades->nFades; i++) {
-        const Fade *const match = fades->fades[i];
-
-        if (match->id == id) return match;
-    }
-
-    return false;
-}
-
 void fadeGetStatus(uint32_t frame,
                    uint32_t id,
                    Fade **started,
@@ -138,5 +124,29 @@ void fadeGetStatus(uint32_t frame,
 
         // a fade effect is active, but may not have been started this frame (i.e. a fade tail)
         *finishing = true;
+    }
+}
+
+#include <stdio.h>
+
+void fadeDump(void) {
+    for (int i = 0; i < gFrames; i++) {
+        const struct frame_fades_t *const fades = &gFrameFades[i];
+
+        bool printed = false;
+
+        for (int j = 0; j < fades->nFades; j++) {
+            const Fade *const fade = fades->fades[j];
+
+            if (fade->startFrame == fades->frame) {
+                if (!printed) {
+                    printed = true;
+                    printf("frame %d\n", fades->frame);
+                }
+
+                printf("\t%d: %d -> %d over %d\n", fade->id, fade->from,
+                       fade->to, fade->frames);
+            }
+        }
     }
 }

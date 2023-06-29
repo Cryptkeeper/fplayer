@@ -1,5 +1,6 @@
 #include "seq.h"
 
+#include <assert.h>
 #include <string.h>
 
 #define TINYFSEQ_IMPLEMENTATION
@@ -153,6 +154,15 @@ bool sequenceNextFrame(Sequence *seq) {
 
 inline uint32_t sequenceGetFrameSize(const Sequence *seq) {
     return seq->header.channelCount;
+}
+
+inline uint32_t sequenceGetFrame(const Sequence *const seq) {
+    // `currentFrame` is signed+oversized to enable -1 as a sentinel value
+    // it should never be -1 in this state, and can be downcasted to its
+    // true uint32 value
+    assert(seq->currentFrame >= 0 && seq->currentFrame <= UINT32_MAX);
+
+    return (uint32_t) seq->currentFrame;
 }
 
 inline int sequenceGetFPS(const Sequence *seq) {
