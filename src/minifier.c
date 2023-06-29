@@ -197,7 +197,12 @@ static void minifyWrite16Aligned(uint8_t unit,
         // itself as the root circuit
         if (change.newIntensity == change.oldIntensity) continue;
 
-        const uint16_t matches = stackGetMatches(stack, change.newIntensity);
+        // XOR to avoid matches including any previously consumed circuits
+        // this ensures all data is unique updates and not a reset of a previous state
+        // bonus: minifier can compress the 16-bit channel set if either 8-bit block
+        //  is unused, so we benefit from minimizing the active bits
+        const uint16_t matches =
+                consumed ^ stackGetMatches(stack, change.newIntensity);
 
         // mark all matched circuits as consumed for a bulk update
         consumed |= matches;
