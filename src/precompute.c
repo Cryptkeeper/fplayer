@@ -53,12 +53,7 @@ static void intensityHistoryReset(struct intensity_history_t *const history) {
 }
 
 static void intensityHistoryFlush(const uint32_t id,
-                                  struct intensity_history_t *const history,
-                                  const char *why) {
-    if (history->frames >= 2)
-        printf("%d %d breaking %d: %s\n", history->startFrame, id,
-               history->frames, why);
-
+                                  struct intensity_history_t *const history) {
     // require at least two repeat frames of the slope to be considered a fade
     // otherwise it is a static change between two intensity levels
     if (history->frames >= 2)
@@ -90,19 +85,15 @@ static void intensityHistoryPush(const uint32_t id,
     const int dt = (int) newIntensity - (int) oldIntensity;
 
     if (dt == 0) {
-        intensityHistoryFlush(id, history, "dt == 0");
+        intensityHistoryFlush(id, history);
 
         // early return, no value storing invalid slope data for next iteration
         return;
     }
 
     if (history->frames > 0 &&
-        !intensityHistorySlopeAligned(history->slope, dt)) {
-        sds msg = sdscatprintf(sdsempty(), "slope change: %d -> %d",
-                               history->slope, dt);
-        intensityHistoryFlush(id, history, msg);
-        sdsfree(msg);
-    }
+        !intensityHistorySlopeAligned(history->slope, dt))
+        intensityHistoryFlush(id, history);
 
     history->slope = dt;
     history->lastIntensity = newIntensity;
@@ -182,7 +173,7 @@ void precomputeStart(FramePump *const pump, Sequence *const seq) {
                 intensityHistoryGet(id, false);
 
         if (history != NULL && history->frames >= 2)
-            intensityHistoryFlush(id, history, "EOF");
+            intensityHistoryFlush(id, history);
     }
 
     intensityHistoryFree();
