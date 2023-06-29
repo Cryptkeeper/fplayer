@@ -6,7 +6,7 @@
 void encodeStackPush(EncodeStack *stack, EncodeChange change) {
     const int idx = stack->nChanges++;
 
-    assert(idx > 0 && idx < encodeStackCapacity());
+    assert(idx >= 0 && idx < encodeStackCapacity());
 
     stack->changes[idx] = change;
 }
