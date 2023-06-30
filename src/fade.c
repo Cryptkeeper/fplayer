@@ -4,8 +4,13 @@
 
 #include "mem.h"
 
+struct frame_event_kv_t {
+    uint32_t key;// circuit id
+    int value;   // fade handle
+};
+
 struct frame_data_t {
-    int *handles;
+    struct frame_event_kv_t *events;
 };
 
 struct frame_kv_t {
@@ -15,13 +20,10 @@ struct frame_kv_t {
 
 static struct frame_kv_t *gFrames;
 
-static struct frame_data_t *fadeGetFrameData(const uint32_t frame,
-                                             const bool insert) {
+static struct frame_data_t *fadeGetInsertFrameData(const uint32_t frame) {
     struct frame_kv_t *const existing = hmgetp_null(gFrames, frame);
 
     if (existing != NULL) return &existing->value;
-
-    if (!insert) return NULL;
 
     hmput(gFrames, frame, (struct frame_data_t){0});
 
@@ -37,8 +39,7 @@ static int fadeGetSharedHandle(const Fade fade) {
         const Fade f = gFades[i];
 
         // match to a pre-existing Fade entry
-        // this ignores `rc` with is used for live reference counting
-        if (f.id == fade.id && f.from == fade.from && f.to == fade.to &&
+        if (f.from == fade.from && f.to == fade.to &&
             f.startFrame == fade.startFrame && f.frames == fade.frames)
             return i;
     }
@@ -50,23 +51,28 @@ static int fadeGetSharedHandle(const Fade fade) {
     return idx;
 }
 
-void fadePush(uint32_t startFrame, const Fade fade) {
+void fadePush(const uint32_t startFrame, const uint32_t id, const Fade fade) {
     const int handle = fadeGetSharedHandle(fade);
 
     for (uint32_t frame = startFrame; frame < startFrame + fade.frames;
          frame++) {
-        struct frame_data_t *const data = fadeGetFrameData(frame, true);
+        struct frame_data_t *const data = fadeGetInsertFrameData(frame);
 
-        arrput(data->handles, handle);
+        struct frame_event_kv_t event = (struct frame_event_kv_t){
+                .key = id,
+                .value = handle,
+        };
+
+        hmputs(data->events, event);
     }
 }
 
 void fadeFrameFree(uint32_t frame) {
-    struct frame_data_t *const data = fadeGetFrameData(frame, false);
+    struct frame_kv_t *const kv = hmgetp_null(gFrames, frame);
 
-    if (data == NULL) return;
+    if (kv == NULL) return;
 
-    arrfree(data->handles);
+    hmfree(kv->value.events);
 
     // remove frame from lookup map
     hmdel(gFrames, frame);
@@ -77,35 +83,31 @@ void fadeFree(void) {
     arrfree(gFades);
 }
 
-void fadeGetStatus(uint32_t frame,
-                   uint32_t id,
+void fadeGetStatus(const uint32_t frame,
+                   const uint32_t id,
                    Fade **started,
                    bool *const finishing) {
     *started = NULL;
     *finishing = false;
 
-    struct frame_data_t *const data = fadeGetFrameData(frame, false);
+    struct frame_kv_t *const kv = hmgetp_null(gFrames, frame);
 
-    if (data == NULL) return;
+    if (kv == NULL) return;
 
-    for (int i = 0; i < arrlen(data->handles); i++) {
-        Fade *const fade = &gFades[i];
+    const struct frame_event_kv_t *const event =
+            hmgetp_null(kv->value.events, id);
 
-        if (fade->id != id) continue;
+    if (event == NULL) return;
 
+    Fade *const fade = &gFades[event->value];
+
+    if (fade->startFrame == frame) {
         // a newly started effect was found, pass a copy to the caller
-        const bool startedNew = fade != NULL && fade->startFrame == frame;
-
-        if (startedNew) {
-            *started = fade;
-            *finishing = false;
-
-            break;
-        }
-
-        // a fade effect is active, but may not have been started this frame (i.e. a fade tail)
-        // there's no reason why multiple Fades should be in the same frame with the same circuit ID,
-        // but this loop ensures it selects a newly started fade first, then a finishing fade
+        *started = fade;
+    } else {
+        // a fade effect is active, but was not started this frame
+        // this is distinct to allow fplayer to ignore duplicate updates to circuits
+        // when they are known to be actively fading
         *finishing = true;
     }
 }

@@ -13,7 +13,7 @@ struct intensity_history_t {
     uint32_t startFrame;
     uint8_t firstIntensity;
     uint8_t lastIntensity;
-    int frames;
+    uint16_t frames;
     int slope;
 };
 
@@ -56,13 +56,13 @@ static void intensityHistoryFlush(const uint32_t id,
     // require at least two repeat frames of the slope to be considered a fade
     // otherwise it is a static change between two intensity levels
     if (history->frames >= 2)
-        fadePush(history->startFrame, (Fade){
-                                              .id = id,
-                                              .from = history->firstIntensity,
-                                              .to = history->lastIntensity,
-                                              .startFrame = history->startFrame,
-                                              .frames = history->frames,
-                                      });
+        fadePush(history->startFrame, id,
+                 (Fade){
+                         .from = history->firstIntensity,
+                         .to = history->lastIntensity,
+                         .startFrame = history->startFrame,
+                         .frames = history->frames,
+                 });
 
     intensityHistoryReset(history);
 }

@@ -26,7 +26,7 @@ struct encoding_request_t {
     uint8_t nCircuits;
     lor_effect_t effect;
     union lor_effect_any_t effectData;
-    int nFrames;
+    uint16_t nFrames;
 };
 
 static void minifyEncodeRequest(struct encoding_request_t request,
@@ -80,7 +80,7 @@ static void minifyEncodeRequest(struct encoding_request_t request,
 }
 
 static inline lor_time_t minifyGetFadeDuration(const Fade *const fade) {
-    const int ms =
+    const uint64_t ms =
             playerGetPlaying()->header.frameStepTimeMillis * fade->frames;
 
     return lor_seconds_to_time((float) ms / 1000.0F);
