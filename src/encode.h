@@ -14,22 +14,6 @@ typedef struct encode_change_t {
     Fade *fadeStarted;
 } EncodeChange;
 
-#define encodeStackCapacity() 16
-
-typedef struct encode_stack_t {
-    EncodeChange changes[16];
-    int nChanges;
-} EncodeStack;
-
-void encodeStackPush(EncodeStack *stack, EncodeChange change);
-
-bool encodeStackFull(const EncodeStack *stack);
-
-void encodeStackAlign(const EncodeStack *src,
-                      int offset,
-                      EncodeStack *low,
-                      EncodeStack *high);
-
-uint16_t encodeStackGetMatches(const EncodeStack *stack, EncodeChange compare);
+uint16_t encodeStackGetMatches(const EncodeChange *stack, EncodeChange compare);
 
 #endif//FPLAYER_ENCODE_H

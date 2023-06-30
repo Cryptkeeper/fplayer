@@ -5,6 +5,7 @@
 
 #include <lightorama/easy.h>
 #include <lightorama/lightorama.h>
+#include <stb_ds.h>
 
 #include "cmap.h"
 #include "encode.h"
@@ -86,110 +87,98 @@ static inline lor_time_t minifyGetFadeDuration(const Fade *const fade) {
     return lor_seconds_to_time((float) ms / 1000.0F);
 }
 
-// "explodes" a series of up to 16 brightness values (uint8_t) into a series of
-// update packets (either as individual channels, multichannel bitmasks, or a mixture
-// of both) via the `write` function
-static void minifyWrite16Aligned(const uint8_t unit,
-                                 const uint8_t groupOffset,
-                                 const EncodeStack *const stack,
-                                 const minify_write_fn_t write) {
-    assert(stack->nChanges > 0 && stack->nChanges <= encodeStackCapacity());
+static void minifyEncodeLoopOffset(const uint8_t unit,
+                                   const uint8_t groupOffset,
+                                   uint8_t alignOffset,
+                                   EncodeChange *const stack,
+                                   const minify_write_fn_t write) {
+    assert(stack->nChanges > 0);
 
-    uint16_t consumed = 0;
+    do {
+        uint16_t consumed = 0;
 
-    for (uint8_t i = 0; i < stack->nChanges; i++) {
-        // check if circuit has already been accounted for
-        // i.e. the intensity value matched another and the update was bulked
-        if (consumed & CIRCUIT_BIT(i)) continue;
+        const int end = alignOffset + (int) arrlen(stack);
+        const int max = end < 16 ? end : 16;
 
-        const EncodeChange change = stack->changes[i];
+        // consume alignment offset after the first iteration
+        // writing enough data to overflow into multiple chunking iterations
+        // ensures that any >0 iteration starts at a new 16-bit boundary
+        alignOffset = 0;
 
-        // filter matches to only matches that have not yet been consumed
-        // bonus: minifier can compress the 16-bit channel set if either 8-bit block
-        //  is unused, so we benefit more later from minimizing the active bits
-        const uint16_t bits = encodeStackGetMatches(stack, change);
-        const uint16_t matches = ~consumed & bits;
+        for (uint8_t i = alignOffset; i < max; i++) {
+            // check if circuit has already been accounted for
+            // i.e. the intensity value matched another and the update was bulked
+            if (consumed & CIRCUIT_BIT(i)) continue;
 
-        if (matches == 0) continue;
+            const EncodeChange change = stack[i];
 
-        // mark all matched circuits as consumed for a bulk update
-        consumed |= matches;
+            // filter matches to only matches that have not yet been consumed
+            // bonus: minifier can compress the 16-bit channel set if either 8-bit block
+            //  is unused, so we benefit more later from minimizing the active bits
+            const uint16_t bits = encodeStackGetMatches(stack, change);
+            const uint16_t matches = ~consumed & bits;
 
-        const int popcount = __builtin_popcount(matches);
+            if (matches == 0) continue;
 
-        // build encoding request
-        // this serves as a generic layer specifying the intended data,
-        // which is processed by the encoder and written as LOR protocol data
-        struct encoding_request_t request;
+            // mark all matched circuits as consumed for a bulk update
+            consumed |= matches;
 
-        memset(&request, 0, sizeof(request));
+            const int popcount = __builtin_popcount(matches);
 
-        request.unit = unit;
-        request.groupOffset = popcount == 1 ? 0 : groupOffset;
-        request.circuits = popcount == 1 ? change.circuit : matches;
-        request.nCircuits = popcount;
+            // build encoding request
+            // this serves as a generic layer specifying the intended data,
+            // which is processed by the encoder and written as LOR protocol data
+            struct encoding_request_t request;
 
-        if (change.fadeStarted != NULL) {
-            request.effect = LOR_EFFECT_FADE;
-            request.effectData = (union lor_effect_any_t){
-                    .fade = {
-                            .startIntensity = minifyEncodeIntensity(
-                                    change.fadeStarted->from),
-                            .endIntensity = minifyEncodeIntensity(
-                                    change.fadeStarted->to),
-                            .duration =
-                                    minifyGetFadeDuration(change.fadeStarted),
-                    }};
-        } else {
-            request.effect = LOR_EFFECT_SET_INTENSITY;
-            request.effectData = (union lor_effect_any_t){
-                    .setIntensity = {
-                            .intensity =
-                                    minifyEncodeIntensity(change.newIntensity),
-                    }};
+            memset(&request, 0, sizeof(request));
+
+            request.unit = unit;
+            request.groupOffset = popcount == 1 ? 0 : groupOffset;
+            request.circuits = popcount == 1 ? change.circuit : matches;
+            request.nCircuits = popcount;
+
+            if (change.fadeStarted != NULL) {
+                request.effect = LOR_EFFECT_FADE;
+                request.effectData = (union lor_effect_any_t){
+                        .fade = {
+                                .startIntensity = minifyEncodeIntensity(
+                                        change.fadeStarted->from),
+                                .endIntensity = minifyEncodeIntensity(
+                                        change.fadeStarted->to),
+                                .duration = minifyGetFadeDuration(
+                                        change.fadeStarted),
+                        }};
+            } else {
+                request.effect = LOR_EFFECT_SET_INTENSITY;
+                request.effectData = (union lor_effect_any_t){
+                        .setIntensity = {
+                                .intensity = minifyEncodeIntensity(
+                                        change.newIntensity),
+                        }};
+            }
+
+            request.nFrames =
+                    change.fadeStarted != NULL ? change.fadeStarted->frames : 1;
+
+            minifyEncodeRequest(request, write);
+
+            // detect when all circuits are handled and break early
+            if (consumed == 0xFFFFu) break;
         }
 
-        request.nFrames =
-                change.fadeStarted != NULL ? change.fadeStarted->frames : 1;
-
-        minifyEncodeRequest(request, write);
-
-        // detect when all circuits are handled and break early
-        if (consumed == 0xFFFFu) break;
-    }
+        arrdeln(stack, 0, max);
+    } while (arrlen(stack) > 0);
 }
 
-// map each circuit stack value to its intensity stack value
-// if the map result is not a multiple of 16 (i.e. not aligned to the 16-bit LOR protocol window),
-// it is written into a double-sized buffer, and each half is written individually as needed
-static void minifyWriteUnaligned(const uint8_t unit,
-                                 EncodeStack *const stack,
-                                 const minify_write_fn_t write) {
-    const int capacity = encodeStackCapacity();
+static void minifyEncodeLoop(const uint8_t unit,
+                             EncodeChange *const stack,
+                             const minify_write_fn_t write) {
+    const int firstCircuit = stack[0].circuit - 1;
 
-    const EncodeChange change = stack->changes[0];
+    const uint8_t groupOffset = (uint8_t) (firstCircuit / 16);
+    const int alignOffset = firstCircuit % 16;
 
-    const int firstCircuit = change.circuit - 1;
-
-    const uint8_t groupOffset = (uint8_t) (firstCircuit / capacity);
-    const int alignOffset = firstCircuit % capacity;
-
-    if (alignOffset == 0) {
-        minifyWrite16Aligned(unit, groupOffset, stack, write);
-    } else {
-        static EncodeStack gLow, gHigh;
-
-        // first circuit ID isn't boundary aligned
-        // manually construct up to two frames to re-align the data within
-        encodeStackAlign(stack, alignOffset, &gLow, &gHigh);
-
-        minifyWrite16Aligned(unit, groupOffset, &gLow, write);
-
-        if (gHigh.nChanges > 0)
-            minifyWrite16Aligned(unit, groupOffset, &gHigh, write);
-    }
-
-    stack->nChanges = 0;
+    minifyEncodeLoopOffset(unit, groupOffset, alignOffset, stack, write);
 }
 
 void minifyStream(const uint8_t *const frameData,
@@ -199,7 +188,9 @@ void minifyStream(const uint8_t *const frameData,
                   const minify_write_fn_t write) {
     uint8_t prevUnit = 0;
 
-    static EncodeStack gStack;
+    EncodeChange *stack = NULL;
+
+    arrsetcap(stack, 16);
 
     for (uint32_t id = 0; id < size; id++) {
         uint8_t unit;
@@ -207,20 +198,20 @@ void minifyStream(const uint8_t *const frameData,
 
         if (!channelMapFind(id, &unit, &circuit)) continue;
 
-        const bool unitIdChanged = gStack.nChanges > 0 && prevUnit != unit;
+        const bool unitIdChanged = arrlen(stack) > 0 && prevUnit != unit;
 
-        if (unitIdChanged) minifyWriteUnaligned(prevUnit, &gStack, write);
+        if (unitIdChanged) minifyEncodeLoop(prevUnit, stack, write);
 
         // old stack is flushed, update context to use new unit value
         prevUnit = unit;
 
         // test if circuits are too far apart for minifying
         // flush the previous stack and process the request in the reset stack
+        // FIXME: is this still needed?
         const bool outOfRange =
-                gStack.nChanges > 0 &&
-                circuit >= gStack.changes[0].circuit + encodeStackCapacity();
+                arrlen(stack) > 0 && circuit >= stack[0].circuit + 16;
 
-        if (outOfRange) minifyWriteUnaligned(unit, &gStack, write);
+        if (outOfRange) minifyEncodeLoop(unit, stack, write);
 
         const uint8_t oldIntensity = lastFrameData[id];
         const uint8_t newIntensity = frameData[id];
@@ -232,20 +223,21 @@ void minifyStream(const uint8_t *const frameData,
 
         // record values onto (possibly fresh) stack
         // flush when stack is full
-        encodeStackPush(&gStack, (EncodeChange){
-                                         .circuit = circuit,
-                                         .oldIntensity = oldIntensity,
-                                         .newIntensity = newIntensity,
-                                         .fadeStarted = fadeStarted,
-                                         .fadeFinishing = fadeFinishing,
-                                 });
+        EncodeChange change = (EncodeChange){
+                .circuit = circuit,
+                .oldIntensity = oldIntensity,
+                .newIntensity = newIntensity,
+                .fadeStarted = fadeStarted,
+                .fadeFinishing = fadeFinishing,
+        };
 
-        if (encodeStackFull(&gStack))
-            minifyWriteUnaligned(unit, &gStack, write);
+        arrput(stack, change);
+
+        if (arrlen(stack) >= 16) minifyEncodeLoop(unit, stack, write);
     }
 
     // flush any pending data from the last iteration
-    if (gStack.nChanges > 0) minifyWriteUnaligned(prevUnit, &gStack, write);
+    if (arrlen(stack) > 0) minifyEncodeLoop(prevUnit, stack, write);
 
     // allow fade data to be progressively freed
     fadeFrameFree(frame);
