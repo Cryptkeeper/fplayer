@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <string.h>
 
+#include <stb_ds.h>
+
 #include "mem.h"
 
 struct frame_fades_t {
@@ -11,30 +13,29 @@ struct frame_fades_t {
     int nFades;
 };
 
-static struct frame_fades_t *gFrameFades;
-static int gFrames;
+struct frame_kv_t {
+    uint32_t key;
+    struct frame_fades_t value;
+};
+
+static struct frame_kv_t *gFrameKV;
 
 static struct frame_fades_t *fadeGetFrame(const uint32_t frame,
                                           const bool insert) {
-    for (int i = 0; i < gFrames; i++)
-        if (gFrameFades[i].frame == frame) return &gFrameFades[i];
+    struct frame_kv_t *const existing = hmgetp_null(gFrameKV, frame);
+    if (existing != NULL) return &existing->value;
 
     if (!insert) return NULL;
 
-    // realloc and insert new struct
-    // TODO: optimize realloc behavior/hashmap opts?
-    const int newIdx = gFrames++;
-
-    gFrameFades =
-            mustRealloc(gFrameFades, sizeof(struct frame_fades_t) * gFrames);
-
-    gFrameFades[newIdx] = (struct frame_fades_t){
-            .frame = frame,
-            .fades = NULL,
-            .nFades = 0,
+    struct frame_kv_t pair = (struct frame_kv_t){
+            .key = frame,
+            .value = (struct frame_fades_t){0},
     };
 
-    return &gFrameFades[newIdx];
+    hmputs(gFrameKV, pair);
+
+    struct frame_kv_t *const put = hmgetp_null(gFrameKV, frame);
+    return put != NULL ? &put->value : NULL;
 }
 
 void fadePush(uint32_t startFrame, Fade fade) {
