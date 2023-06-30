@@ -211,7 +211,6 @@ void minifyStream(const uint8_t *const frameData,
 
         // test if circuits are too far apart for minifying
         // flush the previous stack and process the request in the reset stack
-        // FIXME: is this still needed?
         const bool outOfRange =
                 arrlen(stack) > 0 && circuit >= stack[0].circuit + 16;
 
