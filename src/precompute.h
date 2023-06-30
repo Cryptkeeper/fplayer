@@ -1,8 +1,6 @@
 #ifndef FPLAYER_PRECOMPUTE_H
 #define FPLAYER_PRECOMPUTE_H
 
-#include <stdint.h>
-
 #include "pump.h"
 #include "seq.h"
 

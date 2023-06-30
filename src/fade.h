@@ -13,6 +13,8 @@ typedef struct fade_t {
 
 void fadePush(uint32_t startFrame, uint32_t id, Fade fade);
 
+int fadeTableSize(void);
+
 void fadeFrameFree(uint32_t frame);
 
 void fadeFree(void);

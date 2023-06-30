@@ -92,6 +92,10 @@ void fadePush(const uint32_t startFrame, const uint32_t id, const Fade fade) {
     }
 }
 
+int fadeTableSize(void) {
+    return (int) hmlen(gFades);
+}
+
 void fadeFrameFree(const uint32_t frame) {
     struct frame_data_kvp_t *const data = hmgetp_null(gFrames, frame);
 

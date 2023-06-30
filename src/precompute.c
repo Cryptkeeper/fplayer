@@ -41,11 +41,15 @@ intensityHistoryReset(struct intensity_history_t *const history) {
     memset(history, 0, sizeof(struct intensity_history_t));
 }
 
+static int gFadesGenerated;
+
 static void intensityHistoryFlush(const uint32_t id,
                                   struct intensity_history_t *const history) {
     // require at least two repeat frames of the slope to be considered a fade
     // otherwise it is a static change between two intensity levels
-    if (history->frames >= 2)
+    if (history->frames >= 2) {
+        gFadesGenerated++;
+
         fadePush(history->startFrame, id,
                  (Fade){
                          .from = history->firstIntensity,
@@ -53,6 +57,7 @@ static void intensityHistoryFlush(const uint32_t id,
                          .startFrame = history->startFrame,
                          .frames = history->frames,
                  });
+    }
 
     intensityHistoryReset(history);
 }
@@ -146,6 +151,16 @@ static bool precomputeHandleNextFrame(FramePump *const pump,
     return true;
 }
 
+static void precomputeFlush(void) {
+    // flush any pending fades that end on the last frame
+    for (int i = 0; i < hmlen(gHistory); i++) {
+        struct intensity_history_kv_t *const kv = &gHistory[i];
+
+        if (kv != NULL && kv->value.frames >= 2)
+            intensityHistoryFlush(kv->key, &kv->value);
+    }
+}
+
 void precomputeStart(FramePump *const pump, Sequence *const seq) {
     printf("precomputing fades...\n");
 
@@ -154,21 +169,15 @@ void precomputeStart(FramePump *const pump, Sequence *const seq) {
     while (precomputeHandleNextFrame(pump, seq))
         ;
 
-    // flush any pending fades that end on the last frame
-    for (int i = 0; i < hmlen(gHistory); i++) {
-        struct intensity_history_kv_t *const kv = &gHistory[i];
-
-        if (kv != NULL && kv->value.frames >= 2)
-            intensityHistoryFlush(kv->key, &kv->value);
-    }
+    precomputeFlush();
+    precomputeFree();
 
     intensityHistoryFree();
 
     const int ms = (int) (timeElapsedNs(now, timeGetNow()) / 1000000);
 
-    printf("took %dms\n", ms);
-
-    precomputeFree();
+    printf("identified %d fade events (%d variants) in %dms\n", gFadesGenerated,
+           fadeTableSize(), ms);
 
     // reset playback state, see `sequenceInit`
     seq->currentFrame = -1;
