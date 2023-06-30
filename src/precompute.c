@@ -9,7 +9,6 @@
 #include "time.h"
 
 struct intensity_history_t {
-    uint32_t id;
     uint32_t startFrame;
     uint8_t firstIntensity;
     uint8_t lastIntensity;
@@ -24,31 +23,22 @@ struct intensity_history_kv_t {
 
 static struct intensity_history_kv_t *gHistory;
 
-static struct intensity_history_t *intensityHistoryGet(const uint32_t id,
-                                                       bool insert) {
+static struct intensity_history_t *
+intensityHistoryGetInsert(const uint32_t id) {
     struct intensity_history_kv_t *const existing = hmgetp_null(gHistory, id);
 
     if (existing != NULL) return &existing->value;
 
-    if (!insert) return NULL;
-
-    struct intensity_history_t history = (struct intensity_history_t){
-            .id = id,
-    };
-
-    hmput(gHistory, id, history);
+    hmput(gHistory, id, (struct intensity_history_t){0});
 
     struct intensity_history_kv_t *const put = hmgetp_null(gHistory, id);
 
     return put != NULL ? &put->value : NULL;
 }
 
-static void intensityHistoryReset(struct intensity_history_t *const history) {
-    history->startFrame = 0;
-    history->firstIntensity = 0;
-    history->lastIntensity = 0;
-    history->frames = 0;
-    history->slope = 0;
+static inline void
+intensityHistoryReset(struct intensity_history_t *const history) {
+    memset(history, 0, sizeof(struct intensity_history_t));
 }
 
 static void intensityHistoryFlush(const uint32_t id,
@@ -67,7 +57,7 @@ static void intensityHistoryFlush(const uint32_t id,
     intensityHistoryReset(history);
 }
 
-static bool intensityHistorySlopeAligned(const int slope, const int dt) {
+static inline bool intensityHistorySlopeAligned(const int slope, const int dt) {
     // returns whether `dt` (a delta between two intensity values) is considered
     // align with a previous delta, `slope`
     // this controls when fading detects "shifts" and interrupts the fade state
@@ -79,7 +69,7 @@ static void intensityHistoryPush(const uint32_t id,
                                  const uint32_t frame,
                                  uint8_t oldIntensity,
                                  uint8_t newIntensity) {
-    struct intensity_history_t *const history = intensityHistoryGet(id, true);
+    struct intensity_history_t *const history = intensityHistoryGetInsert(id);
 
     const int dt = (int) newIntensity - (int) oldIntensity;
 
@@ -165,12 +155,11 @@ void precomputeStart(FramePump *const pump, Sequence *const seq) {
         ;
 
     // flush any pending fades that end on the last frame
-    for (uint32_t id = 0; id < sequenceGetFrameSize(seq); id++) {
-        struct intensity_history_t *const history =
-                intensityHistoryGet(id, false);
+    for (int i = 0; i < hmlen(gHistory); i++) {
+        struct intensity_history_kv_t *const kv = &gHistory[i];
 
-        if (history != NULL && history->frames >= 2)
-            intensityHistoryFlush(id, history);
+        if (kv != NULL && kv->value.frames >= 2)
+            intensityHistoryFlush(kv->key, &kv->value);
     }
 
     intensityHistoryFree();
