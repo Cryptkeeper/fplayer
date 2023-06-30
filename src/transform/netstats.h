@@ -14,6 +14,6 @@ void nsRecord(struct netstats_update_t update);
 
 sds nsGetStatus(void);
 
-void nsPrintSummary(void);
+sds nsGetSummary(void);
 
 #endif//FPLAYER_NETSTATS_H

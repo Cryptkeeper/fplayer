@@ -14,12 +14,12 @@
 #include "std/err.h"
 #include "std/mem.h"
 
-void sequenceInit(Sequence *seq) {
-    memset(seq, 0, sizeof(Sequence));
-
-    // frame 0 is a valid frame id, use -1 as a sentinel value
-    // this requires oversizing currentFrame (int64_t) against frameCount (uint32_t)
-    seq->currentFrame = -1;
+void sequenceInit(Sequence *const seq) {
+    *seq = (Sequence){
+            // frame 0 is a valid frame id, use -1 as a sentinel value
+            // this requires oversizing currentFrame (int64_t) against frameCount (uint32_t)
+            .currentFrame = -1,
+    };
 }
 
 #define COMPRESSION_BLOCK_SIZE 8

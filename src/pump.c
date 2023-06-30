@@ -1,17 +1,14 @@
 #include "pump.h"
 
-#include <stdlib.h>
-#include <string.h>
-
 #include "compress.h"
 #include "std/err.h"
 #include "std/mem.h"
 #include "std/time.h"
 
 void framePumpInit(FramePump *pump) {
-    memset(pump, 0, sizeof(FramePump));
-
-    pump->comBlockIndex = -1;
+    *pump = (FramePump){
+            .comBlockIndex = -1,
+    };
 }
 
 static void framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
@@ -58,7 +55,7 @@ static bool framePumpChargeCompressionBlock(FramePump *pump, Sequence *seq) {
                size, frameSize);
 
     // free previously decompressed block prior to overwriting reference
-    free(pump->frameData);
+    freeAndNull((void **) &pump->frameData);
 
     pump->frameData = frameData;
     pump->readIdx = 0;

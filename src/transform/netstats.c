@@ -1,25 +1,22 @@
 #include "netstats.h"
 
-#include <stdio.h>
-#include <string.h>
-
 static struct netstats_update_t gLastSecond;
 static struct netstats_update_t gSum;
 
-static inline void nsUpdateAdd(struct netstats_update_t *a,
-                               struct netstats_update_t b) {
+static inline void nsUpdateAdd(struct netstats_update_t *const a,
+                               const struct netstats_update_t b) {
     a->packets += b.packets;
     a->fades += b.fades;
     a->saved += b.saved;
     a->size += b.size;
 }
 
-void nsRecord(struct netstats_update_t update) {
+inline void nsRecord(const struct netstats_update_t update) {
     nsUpdateAdd(&gLastSecond, update);
     nsUpdateAdd(&gSum, update);
 }
 
-static float nsGetCompressionRatio(const struct netstats_update_t *src) {
+static float nsGetCompressionRatio(const struct netstats_update_t *const src) {
     const float saved = (float) src->saved;
 
     return saved / (saved + (float) src->size);
@@ -34,14 +31,16 @@ sds nsGetStatus(void) {
             sdsempty(), "%.03f KB/s\tfades: %d\tpackets: %d\tcompressed: %.02f",
             kb, gLastSecond.fades, gLastSecond.packets, cr);
 
-    memset(&gLastSecond, 0, sizeof(gLastSecond));
+    gLastSecond = (struct netstats_update_t){0};
 
     return str;
 }
 
-void nsPrintSummary(void) {
+sds nsGetSummary(void) {
     const float cr = nsGetCompressionRatio(&gSum);
 
-    printf("transferred %d bytes via %d packets, saved %d bytes (%.0f%%)\n",
-           gSum.size, gSum.packets, gSum.saved, cr * 100);
+    return sdscatprintf(
+            sdsempty(),
+            "transferred %d bytes via %d packets, saved %d bytes (%.0f%%)",
+            gSum.size, gSum.packets, gSum.saved, cr * 100);
 }

@@ -126,7 +126,7 @@ bool fadeGet(const int handle, Fade *const fade) {
 
     if (kvp == NULL) return false;
 
-    memcpy(fade, &kvp->value.fade, sizeof(Fade));
+    *fade = kvp->value.fade;
 
     return true;
 }

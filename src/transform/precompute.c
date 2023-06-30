@@ -38,7 +38,7 @@ intensityHistoryGetInsert(const uint32_t id) {
 
 static inline void
 intensityHistoryReset(struct intensity_history_t *const history) {
-    memset(history, 0, sizeof(struct intensity_history_t));
+    *history = (struct intensity_history_t){0};
 }
 
 static int gFadesGenerated;

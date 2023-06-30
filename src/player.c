@@ -53,9 +53,6 @@ static uint8_t *gLastFrameData;
 
 static void playerFree(void) {
     freeAndNull((void **) &gLastFrameData);
-
-    memset(&gPlaying, 0, sizeof(Sequence));
-    memset(&gFramePump, 0, sizeof(FramePump));
 }
 
 static bool playerHandleNextFrame(void) {
@@ -171,7 +168,11 @@ static void playerStartPlayback(PlayerOpts opts) {
     printf("end of sequence!\n");
 
     // print closing remarks
-    nsPrintSummary();
+    sds netstats = nsGetSummary();
+
+    printf("%s\n", netstats);
+
+    sdsfree(netstats);
 
     // cleanup resources
     audioStop();

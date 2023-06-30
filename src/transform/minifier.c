@@ -128,14 +128,12 @@ static void minifyEncodeLoopOffset(const uint8_t unit,
             // build encoding request
             // this serves as a generic layer specifying the intended data,
             // which is processed by the encoder and written as LOR protocol data
-            struct encoding_request_t request;
-
-            memset(&request, 0, sizeof(request));
-
-            request.unit = unit;
-            request.groupOffset = popcount == 1 ? 0 : groupOffset;
-            request.circuits = popcount == 1 ? change.circuit : matches;
-            request.nCircuits = popcount;
+            struct encoding_request_t request = {
+                    .unit = unit,
+                    .groupOffset = popcount == 1 ? 0 : groupOffset,
+                    .circuits = popcount == 1 ? change.circuit : matches,
+                    .nCircuits = popcount,
+            };
 
             Fade fade;
             bool hasFade = false;
