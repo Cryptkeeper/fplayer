@@ -80,9 +80,9 @@ static void minifyEncodeRequest(struct encoding_request_t request,
     bufflush(false, write);
 }
 
-static inline lor_time_t minifyGetFadeDuration(const Fade *const fade) {
+static inline lor_time_t minifyGetFadeDuration(const Fade fade) {
     const uint64_t ms =
-            playerGetPlaying()->header.frameStepTimeMillis * fade->frames;
+            playerGetPlaying()->header.frameStepTimeMillis * fade.frames;
 
     return lor_seconds_to_time((float) ms / 1000.0F);
 }
@@ -137,16 +137,21 @@ static void minifyEncodeLoopOffset(const uint8_t unit,
             request.circuits = popcount == 1 ? change.circuit : matches;
             request.nCircuits = popcount;
 
-            if (change.fadeStarted != NULL) {
+            Fade fade;
+            bool hasFade = false;
+
+            if (change.fadeStarted >= 0) {
+                hasFade = fadeGet(change.fadeStarted, &fade);
+            }
+
+            if (hasFade) {
                 request.effect = LOR_EFFECT_FADE;
                 request.effectData = (union lor_effect_any_t){
                         .fade = {
-                                .startIntensity = minifyEncodeIntensity(
-                                        change.fadeStarted->from),
-                                .endIntensity = minifyEncodeIntensity(
-                                        change.fadeStarted->to),
-                                .duration = minifyGetFadeDuration(
-                                        change.fadeStarted),
+                                .startIntensity =
+                                        minifyEncodeIntensity(fade.from),
+                                .endIntensity = minifyEncodeIntensity(fade.to),
+                                .duration = minifyGetFadeDuration(fade),
                         }};
             } else {
                 request.effect = LOR_EFFECT_SET_INTENSITY;
@@ -157,8 +162,7 @@ static void minifyEncodeLoopOffset(const uint8_t unit,
                         }};
             }
 
-            request.nFrames =
-                    change.fadeStarted != NULL ? change.fadeStarted->frames : 1;
+            request.nFrames = hasFade ? fade.frames : 1;
 
             minifyEncodeRequest(request, write);
 
@@ -213,23 +217,15 @@ void minifyStream(const uint8_t *const frameData,
 
         if (outOfRange) minifyEncodeLoop(unit, stack, write);
 
-        const uint8_t oldIntensity = lastFrameData[id];
-        const uint8_t newIntensity = frameData[id];
-
-        Fade *fadeStarted;
-        bool fadeFinishing;
-
-        fadeGetStatus(frame, id, &fadeStarted, &fadeFinishing);
-
         // record values onto (possibly fresh) stack
         // flush when stack is full
         EncodeChange change = (EncodeChange){
                 .circuit = circuit,
-                .oldIntensity = oldIntensity,
-                .newIntensity = newIntensity,
-                .fadeStarted = fadeStarted,
-                .fadeFinishing = fadeFinishing,
+                .oldIntensity = lastFrameData[id],
+                .newIntensity = frameData[id],
         };
+
+        fadeGetChange(frame, id, &change.fadeStarted, &change.fadeFinishing);
 
         arrput(stack, change);
 

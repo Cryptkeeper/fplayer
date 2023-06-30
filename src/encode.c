@@ -25,7 +25,7 @@ uint16_t encodeStackGetMatches(const EncodeChange *const stack,
 
         bool match = false;
 
-        if (compare.fadeStarted != NULL) {
+        if (compare.fadeStarted >= 0) {
             match = change.fadeStarted == compare.fadeStarted;
         } else {
             match = change.newIntensity == compare.newIntensity;

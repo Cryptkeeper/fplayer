@@ -121,11 +121,21 @@ void fadeFree(void) {
     hmfree(gFades);
 }
 
-void fadeGetStatus(const uint32_t frame,
+bool fadeGet(const int handle, Fade *const fade) {
+    const struct fade_handle_kvp_t *const kvp = hmgetp_null(gFades, handle);
+
+    if (kvp == NULL) return false;
+
+    memcpy(fade, &kvp->value.fade, sizeof(Fade));
+
+    return true;
+}
+
+void fadeGetChange(const uint32_t frame,
                    const uint32_t id,
-                   Fade **started,
+                   int *const started,
                    bool *const finishing) {
-    *started = NULL;
+    *started = -1;
     *finishing = false;
 
     struct frame_data_kvp_t *const data = hmgetp_null(gFrames, frame);
@@ -137,14 +147,12 @@ void fadeGetStatus(const uint32_t frame,
 
     if (fade == NULL) return;
 
-    struct fade_handle_kvp_t *const handle = hmgetp_null(gFades, fade->value);
+    const int key = fade->value;
+    const struct fade_handle_t handle = hmget(gFades, key);
 
-    Fade *const f = &handle->value.fade;
-
-    if (f->startFrame == frame) {
+    if (handle.fade.startFrame == frame) {
         // a newly started effect was found, pass a copy to the caller
-        // FIXME: warning about `f` pointer escaping local var, false positive?
-        *started = f;
+        *started = key;
     } else {
         // a fade effect is active, but was not started this frame
         // this is distinct to allow fplayer to ignore duplicate updates to circuits

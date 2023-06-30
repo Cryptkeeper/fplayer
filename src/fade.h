@@ -19,9 +19,8 @@ void fadeFrameFree(uint32_t frame);
 
 void fadeFree(void);
 
-void fadeGetStatus(uint32_t frame,
-                   uint32_t id,
-                   Fade **started,
-                   bool *finishing);
+bool fadeGet(int handle, Fade *fade);
+
+void fadeGetChange(uint32_t frame, uint32_t id, int *started, bool *finishing);
 
 #endif//FPLAYER_FADE_H
