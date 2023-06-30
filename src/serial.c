@@ -49,7 +49,7 @@ enum serial_src_t {
 
 static enum serial_src_t gSrc;
 
-static void serialOpenPort(SerialOpts opts) {
+static void serialOpenPort(const SerialOpts opts) {
     spTry(sp_get_port_by_name(opts.devName, &gPort));
 
     // NULL indicates a failure to open, which is the only seriously "fatal"
@@ -66,7 +66,7 @@ static void serialOpenPort(SerialOpts opts) {
     spTry(sp_set_stopbits(gPort, 1));
 }
 
-void serialInit(SerialOpts opts) {
+void serialInit(const SerialOpts opts) {
     if (opts.devName == NULL || strcasecmp(opts.devName, "null") == 0) {
         gSrc = SERIAL_NULL;
     } else if (strcasecmp(opts.devName, "stdout") == 0) {
@@ -78,7 +78,7 @@ void serialInit(SerialOpts opts) {
     }
 }
 
-static void serialWrite(const uint8_t *b, int size) {
+static void serialWrite(const uint8_t *const b, const int size) {
     nsRecord((struct netstats_update_t){
             .size = size,
     });
@@ -144,10 +144,10 @@ void serialWriteAllOff(void) {
     });
 }
 
-void serialWriteFrame(const uint8_t *frameData,
-                      const uint8_t *lastFrameData,
-                      uint32_t size,
-                      uint32_t frame) {
+void serialWriteFrame(const uint8_t *const frameData,
+                      const uint8_t *const lastFrameData,
+                      const uint32_t size,
+                      const uint32_t frame) {
     serialWriteThrottledHeartbeat();
 
     minifyStream(frameData, lastFrameData, size, frame, serialWrite);
@@ -158,7 +158,7 @@ void serialWriteFrame(const uint8_t *frameData,
     if (gPort != NULL) spTry(sp_drain(gPort));
 }
 
-static void serialPortFree(struct sp_port *port) {
+static void serialPortFree(struct sp_port *const port) {
     spTry(sp_close(port));
 
     sp_free_port(port);

@@ -24,7 +24,7 @@ void sequenceInit(Sequence *const seq) {
 
 #define COMPRESSION_BLOCK_SIZE 8
 
-static void sequenceTrimCompressionBlockCount(Sequence *seq) {
+static void sequenceTrimCompressionBlockCount(Sequence *const seq) {
     // a fseq file may include multiple empty compression blocks for padding purposes
     // these will appear with a 0 size value, trailing previously valid blocks
     // this function finds the first instance of a zero sized block and adjusts the
