@@ -1,7 +1,5 @@
 #include "fade.h"
 
-#include <assert.h>
-
 #include <stb_ds.h>
 
 #include "mem.h"
@@ -60,11 +58,6 @@ void fadePush(uint32_t startFrame, const Fade fade) {
         struct frame_data_t *const data = fadeGetFrameData(frame, true);
 
         arrput(data->handles, handle);
-
-        // increment reference counter
-        // used by `fadeFrameFree` to know when all references to a fade are
-        // unused and it can be freed
-        (&gFades[handle])->rc++;
     }
 }
 
@@ -72,21 +65,6 @@ void fadeFrameFree(uint32_t frame) {
     struct frame_data_t *const data = fadeGetFrameData(frame, false);
 
     if (data == NULL) return;
-
-    for (int i = 0; i < arrlen(data->handles); i++) {
-        const int handle = data->handles[i];
-
-        Fade *const fade = &gFades[handle];
-
-        // see `fadePush` for matching reference counter increment
-        const int rc = --fade->rc;
-
-        assert(rc >= 0);
-
-        if (rc == 0) {
-            // TODO: free fade? seems like removing from array will cause large mem shift
-        }
-    }
 
     arrfree(data->handles);
 

@@ -10,7 +10,6 @@ typedef struct fade_t {
     uint8_t to;
     uint32_t startFrame;
     int frames;
-    int rc;// reference counter for garbage collection
 } Fade;
 
 void fadePush(uint32_t startFrame, Fade fade);
