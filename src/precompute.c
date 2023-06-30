@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+#include <stb_ds.h>
+
 #include "fade.h"
 #include "mem.h"
 #include "time.h"
@@ -15,33 +17,30 @@ struct intensity_history_t {
     int slope;
 };
 
-static struct intensity_history_t *gHistories;
-static int gSize;
+struct intensity_history_kv_t {
+    uint32_t key;
+    struct intensity_history_t value;
+};
+
+static struct intensity_history_kv_t *gHistory;
 
 static struct intensity_history_t *intensityHistoryGet(const uint32_t id,
                                                        bool insert) {
-    for (int i = 0; i < gSize; i++)
-        if (gHistories[i].id == id) return &gHistories[i];
+    struct intensity_history_kv_t *const existing = hmgetp_null(gHistory, id);
+
+    if (existing != NULL) return &existing->value;
 
     if (!insert) return NULL;
 
-    // expand allocation and insert new record
-    // TODO: hashmap options? larger array reallocs?
-    const int newIdx = gSize;
-
-    gHistories = mustRealloc(gHistories,
-                             sizeof(struct intensity_history_t) * ++gSize);
-
-    gHistories[newIdx] = (struct intensity_history_t){
+    struct intensity_history_t history = (struct intensity_history_t){
             .id = id,
-            .startFrame = 0,
-            .firstIntensity = 0,
-            .lastIntensity = 0,
-            .frames = 0,
-            .slope = 0,
     };
 
-    return &gHistories[newIdx];
+    hmput(gHistory, id, history);
+
+    struct intensity_history_kv_t *const put = hmgetp_null(gHistory, id);
+
+    return put != NULL ? &put->value : NULL;
 }
 
 static void intensityHistoryReset(struct intensity_history_t *const history) {
@@ -106,9 +105,7 @@ static void intensityHistoryPush(const uint32_t id,
 }
 
 static void intensityHistoryFree(void) {
-    freeAndNull((void **) &gHistories);
-
-    gSize = 0;
+    hmfree(gHistory);
 }
 
 static uint8_t *gLastFrameData;
