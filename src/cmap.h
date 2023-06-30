@@ -16,16 +16,11 @@ struct channel_range_t {
     uint16_t ecircuit;
 };
 
-typedef struct channel_map_t {
-    ChannelRange *ranges;
-    int size;
-} ChannelMap;
-
 void channelMapInit(const char *filepath, bool *cmapParseErrs);
 
 bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit);
 
-uint8_t *channelMapGetUids(int *count);
+uint8_t *channelMapGetUids(void);
 
 void channelMapFree(void);
 

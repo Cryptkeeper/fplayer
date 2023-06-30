@@ -5,6 +5,7 @@
 
 #include <libserialport.h>
 #include <lightorama/lightorama.h>
+#include <stb_ds.h>
 
 #include "cmap.h"
 #include "err.h"
@@ -127,20 +128,19 @@ static void serialWriteThrottledHeartbeat(void) {
 }
 
 void serialWriteAllOff(void) {
-    int count;
-    uint8_t *uids = channelMapGetUids(&count);
+    uint8_t *uids = channelMapGetUids();
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < arrlen(uids); i++) {
         bufadv(lor_write_unit_effect(LOR_EFFECT_SET_OFF, NULL, uids[i],
                                      bufhead()));
     }
 
-    freeAndNull((void **) &uids);
+    arrfree(uids);
 
     bufflush(true, serialWrite);
 
     nsRecord((struct netstats_update_t){
-            .packets = count,
+            .packets = arrlen(uids),
     });
 }
 

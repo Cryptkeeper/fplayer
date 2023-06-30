@@ -2,15 +2,17 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include <string.h>
 
 #include <sds.h>
+
+#define STB_DS_IMPLEMENTATION
+#include <stb_ds.h>
 
 #include "err.h"
 #include "mem.h"
 #include "parse.h"
 
-static ChannelMap gDefaultChannelMap;
+static ChannelRange *gRanges;
 
 static bool channelRangeIsMappable(const ChannelRange range) {
     const int64_t rid = range.eid - range.sid;
@@ -23,18 +25,6 @@ static bool channelRangeIsMappable(const ChannelRange range) {
     if (range.unit == 0 || range.scircuit == 0) return false;
 
     return rid == rcircuit;
-}
-
-static void channelMapAppend(ChannelRange channelRange) {
-    // append to ChannelMap array
-    const int index = gDefaultChannelMap.size;
-
-    gDefaultChannelMap.size += 1;
-    gDefaultChannelMap.ranges =
-            mustRealloc(gDefaultChannelMap.ranges,
-                        sizeof(ChannelMap) * gDefaultChannelMap.size);
-
-    gDefaultChannelMap.ranges[index] = channelRange;
 }
 
 static ChannelRange channelRangeParseColumns(sds *cols, int nCols) {
@@ -102,7 +92,7 @@ static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
             goto continue_free;
         }
 
-        channelMapAppend(channelRange);
+        arrput(gRanges, channelRange);
 
     continue_free:
         sdsfreesplitres(cols, nCols);
@@ -110,7 +100,7 @@ static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
 
     sdsfreesplitres(rows, nRows);
 
-    printf("configured %d channel map entries(s)\n", gDefaultChannelMap.size);
+    printf("configured %d channel map entries(s)\n", (int) arrlen(gRanges));
 }
 
 void channelMapInit(const char *filepath, bool *cmapParseErrs) {
@@ -138,9 +128,11 @@ void channelMapInit(const char *filepath, bool *cmapParseErrs) {
     freeAndNull((void **) &b);
 }
 
-bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit) {
-    for (int i = 0; i < gDefaultChannelMap.size; i++) {
-        const ChannelRange range = gDefaultChannelMap.ranges[i];
+bool channelMapFind(const uint32_t id,
+                    uint8_t *const unit,
+                    uint16_t *const circuit) {
+    for (int i = 0; i < arrlen(gRanges); i++) {
+        const ChannelRange range = gRanges[i];
 
         if (id >= range.sid && id <= range.eid) {
             *unit = range.unit;
@@ -156,7 +148,9 @@ bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit) {
     return false;
 }
 
-static bool channelMapContainsUid(const uint8_t *set, int size, uint8_t value) {
+static inline bool channelMapContainsUid(const uint8_t *set, uint8_t value) {
+    const int size = arrlen(set);
+
     if (size == 0) return false;
 
     for (int i = 0; i < size; i++) {
@@ -166,31 +160,18 @@ static bool channelMapContainsUid(const uint8_t *set, int size, uint8_t value) {
     return false;
 }
 
-uint8_t *channelMapGetUids(int *count) {
-    // allocate for worst case (i.e. one unique unit ID per range)
-    uint8_t *uids = mustMalloc(gDefaultChannelMap.size);
+uint8_t *channelMapGetUids(void) {
+    uint8_t *uids = NULL;
 
-    memset(uids, 0, gDefaultChannelMap.size);
+    for (int i = 0; i < arrlen(gRanges); i++) {
+        const ChannelRange range = gRanges[i];
 
-    int nUids = 0;
-
-    for (int i = 0; i < gDefaultChannelMap.size; i++) {
-        const ChannelRange range = gDefaultChannelMap.ranges[i];
-
-        if (!channelMapContainsUid(uids, nUids, range.unit))
-            uids[nUids++] = range.unit;
+        if (!channelMapContainsUid(uids, range.unit)) arrput(uids, range.unit);
     }
-
-    // shrink the backing allocation to what is needed for the unique IDs only
-    if (nUids < gDefaultChannelMap.size) uids = mustRealloc(uids, nUids);
-
-    *count = nUids;
 
     return uids;
 }
 
 void channelMapFree(void) {
-    freeAndNull((void **) &gDefaultChannelMap.ranges);
-
-    gDefaultChannelMap.size = 0;
+    arrfree(gRanges);
 }
