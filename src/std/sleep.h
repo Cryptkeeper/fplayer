@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <sds.h>
+#include "sds.h"
 
 sds sleepGetStatus(void);
 

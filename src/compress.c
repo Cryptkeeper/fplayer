@@ -5,10 +5,10 @@
 
 #include <zstd.h>
 
-#include "mem.h"
+#include "std/mem.h"
 #endif
 
-#include "err.h"
+#include "std/err.h"
 
 static uint32_t sequenceGetComBlockPos(const Sequence *seq, int comBlockIndex) {
     uint32_t offset = 0;

@@ -2,11 +2,11 @@
 
 #include <string.h>
 
-#include <stb_ds.h>
+#include "stb_ds.h"
 
+#include "../std/mem.h"
+#include "../std/time.h"
 #include "fade.h"
-#include "mem.h"
-#include "time.h"
 
 struct intensity_history_t {
     uint32_t startFrame;

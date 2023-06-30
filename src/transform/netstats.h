@@ -1,7 +1,7 @@
 #ifndef FPLAYER_NETSTATS_H
 #define FPLAYER_NETSTATS_H
 
-#include <sds.h>
+#include "sds.h"
 
 struct netstats_update_t {
     int packets;

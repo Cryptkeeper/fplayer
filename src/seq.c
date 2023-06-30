@@ -11,8 +11,8 @@
 #endif
 #define TINYFSEQ_MEMCPY memcpy
 
-#include "err.h"
-#include "mem.h"
+#include "std/err.h"
+#include "std/mem.h"
 
 void sequenceInit(Sequence *seq) {
     memset(seq, 0, sizeof(Sequence));

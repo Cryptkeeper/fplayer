@@ -7,15 +7,15 @@
 #include <lightorama/heartbeat.h>
 
 #include "audio.h"
-#include "fade.h"
-#include "mem.h"
-#include "netstats.h"
-#include "precompute.h"
 #include "pump.h"
 #include "seq.h"
 #include "serial.h"
-#include "sleep.h"
-#include "time.h"
+#include "std/mem.h"
+#include "std/sleep.h"
+#include "std/time.h"
+#include "transform/fade.h"
+#include "transform/netstats.h"
+#include "transform/precompute.h"
 
 void playerOptsFree(PlayerOpts *opts) {
     freeAndNull((void **) &opts->sequenceFilePath);

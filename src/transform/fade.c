@@ -1,8 +1,8 @@
 #include "fade.h"
 
-#include <stb_ds.h>
+#include "stb_ds.h"
 
-#include "mem.h"
+#include "../std/mem.h"
 
 struct frame_fade_kvp_t {
     uint32_t key;// circuit id

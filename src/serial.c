@@ -8,12 +8,12 @@
 #include <stb_ds.h>
 
 #include "cmap.h"
-#include "err.h"
 #include "lor.h"
-#include "mem.h"
-#include "minifier.h"
-#include "netstats.h"
-#include "time.h"
+#include "std/err.h"
+#include "std/mem.h"
+#include "std/time.h"
+#include "transform/minifier.h"
+#include "transform/netstats.h"
 
 static inline void spPrintError(enum sp_return err) {
     fprintf(stderr, "libserialport error: %d\n", err);

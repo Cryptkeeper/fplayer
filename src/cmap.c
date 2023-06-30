@@ -8,9 +8,9 @@
 #define STB_DS_IMPLEMENTATION
 #include <stb_ds.h>
 
-#include "err.h"
-#include "mem.h"
-#include "parse.h"
+#include "std/err.h"
+#include "std/mem.h"
+#include "std/parse.h"
 
 static ChannelRange *gRanges;
 

@@ -3,16 +3,16 @@
 #include <assert.h>
 #include <string.h>
 
-#include <lightorama/easy.h>
-#include <lightorama/lightorama.h>
-#include <stb_ds.h>
+#include "lightorama/easy.h"
+#include "lightorama/lightorama.h"
+#include "stb_ds.h"
 
-#include "cmap.h"
+#include "../cmap.h"
+#include "../lor.h"
+#include "../player.h"
 #include "encode.h"
 #include "fade.h"
-#include "lor.h"
 #include "netstats.h"
-#include "player.h"
 
 static inline lor_intensity_t minifyEncodeIntensity(uint8_t abs) {
     return lor_intensity_curve_vendor((float) (abs / 255.0));

@@ -12,10 +12,10 @@
 
 #include "audio.h"
 #include "cmap.h"
-#include "mem.h"
-#include "parse.h"
 #include "player.h"
 #include "serial.h"
+#include "std/mem.h"
+#include "std/parse.h"
 
 static void printUsage(void) {
     printf("Usage: fplayer -f=FILE -c=FILE [options] ...\n");

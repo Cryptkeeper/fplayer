@@ -4,9 +4,9 @@
 #include <string.h>
 
 #include "compress.h"
-#include "err.h"
-#include "mem.h"
-#include "time.h"
+#include "std/err.h"
+#include "std/mem.h"
+#include "std/time.h"
 
 void framePumpInit(FramePump *pump) {
     memset(pump, 0, sizeof(FramePump));

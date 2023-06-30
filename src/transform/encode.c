@@ -1,6 +1,6 @@
 #include "encode.h"
 
-#include <stb_ds.h>
+#include "stb_ds.h"
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
 
