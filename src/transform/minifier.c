@@ -8,10 +8,10 @@
 #include "stb_ds.h"
 
 #include "../cmap.h"
-#include "../lor.h"
 #include "../player.h"
 #include "encode.h"
 #include "fade.h"
+#include "lor.h"
 #include "netstats.h"
 
 static inline lor_intensity_t minifyEncodeIntensity(uint8_t abs) {

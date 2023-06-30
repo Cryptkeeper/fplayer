@@ -8,10 +8,10 @@
 #include <stb_ds.h>
 
 #include "cmap.h"
-#include "lor.h"
 #include "std/err.h"
 #include "std/mem.h"
 #include "std/time.h"
+#include "transform/lor.h"
 #include "transform/minifier.h"
 #include "transform/netstats.h"
 
