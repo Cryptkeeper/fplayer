@@ -31,9 +31,12 @@ Options:
 
 - Precise frame timing with automatic frame loss recovery
 - Protocol minifier for reduced bandwidth usage
+- Optional fade reconstruction and interpolation for a super smooth playback experience
 - "Frame pump" mechanism for pre-buffering upcoming frames
 - Support for zstd compressed sequences
 - Options for modifying playback speed and audio
+
+All in a small package. Most of fplayer's resource usage originates from audio file decoding and playback.
 
 ## Dependencies
 
