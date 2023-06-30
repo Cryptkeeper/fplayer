@@ -1,80 +1,82 @@
 #include "fade.h"
 
 #include <assert.h>
-#include <string.h>
 
 #include <stb_ds.h>
 
 #include "mem.h"
 
-struct frame_fades_t {
-    uint32_t frame;
-    Fade **fades;
-    int nFades;
+struct frame_data_t {
+    int *handles;
 };
 
 struct frame_kv_t {
     uint32_t key;
-    struct frame_fades_t value;
+    struct frame_data_t value;
 };
 
-static struct frame_kv_t *gFrameKV;
+static struct frame_kv_t *gFrames;
 
-static struct frame_fades_t *fadeGetFrame(const uint32_t frame,
-                                          const bool insert) {
-    struct frame_kv_t *const existing = hmgetp_null(gFrameKV, frame);
+static struct frame_data_t *fadeGetFrameData(const uint32_t frame,
+                                             const bool insert) {
+    struct frame_kv_t *const existing = hmgetp_null(gFrames, frame);
+
     if (existing != NULL) return &existing->value;
 
     if (!insert) return NULL;
 
-    struct frame_kv_t pair = (struct frame_kv_t){
-            .key = frame,
-            .value = (struct frame_fades_t){0},
-    };
+    hmput(gFrames, frame, (struct frame_data_t){0});
 
-    hmputs(gFrameKV, pair);
+    struct frame_kv_t *const put = hmgetp_null(gFrames, frame);
 
-    struct frame_kv_t *const put = hmgetp_null(gFrameKV, frame);
     return put != NULL ? &put->value : NULL;
 }
 
-void fadePush(uint32_t startFrame, Fade fade) {
-    // multiple frames may store a pointer to a single Fade struct
-    // alloc a central copy of the parameter
-    Fade *const newFade = mustMalloc(sizeof(Fade));
+static Fade *gFades;
 
-    memcpy(newFade, &fade, sizeof(Fade));
+static int fadeGetSharedHandle(const Fade fade) {
+    for (int i = 0; i < arrlen(gFades); i++) {
+        const Fade f = gFades[i];
+
+        // match to a pre-existing Fade entry
+        // this ignores `rc` with is used for live reference counting
+        if (f.id == fade.id && f.from == fade.from && f.to == fade.to &&
+            f.startFrame == fade.startFrame && f.frames == fade.frames)
+            return i;
+    }
+
+    const int idx = arrlen(gFades);
+
+    arrput(gFades, fade);
+
+    return idx;
+}
+
+void fadePush(uint32_t startFrame, const Fade fade) {
+    const int handle = fadeGetSharedHandle(fade);
 
     for (uint32_t frame = startFrame; frame < startFrame + fade.frames;
          frame++) {
-        struct frame_fades_t *const fades = fadeGetFrame(frame, true);
+        struct frame_data_t *const data = fadeGetFrameData(frame, true);
 
-        // re-alloc its pointer list and insert the new central value
-        const int newIdx = fades->nFades++;
-
-        fades->fades = mustRealloc(
-                fades->fades, sizeof(struct frame_fades_t *) * fades->nFades);
-
-        fades->fades[newIdx] = newFade;
+        arrput(data->handles, handle);
 
         // increment reference counter
         // used by `fadeFrameFree` to know when all references to a fade are
         // unused and it can be freed
-        newFade->rc++;
+        (&gFades[handle])->rc++;
     }
 }
 
 void fadeFrameFree(uint32_t frame) {
-    struct frame_fades_t *const fades = fadeGetFrame(frame, false);
+    struct frame_data_t *const data = fadeGetFrameData(frame, false);
 
-    if (fades == NULL) return;
+    if (data == NULL) return;
 
-    for (int i = 0; i < fades->nFades; i++) {
-        Fade *fade = fades->fades[i];
+    for (int i = 0; i < arrlen(data->handles); i++) {
+        const int handle = data->handles[i];
 
-        // previously freed reference
-        // pointer entry is NULL'd to avoid realloc'ing the pointer list
-        if (fade == NULL) continue;
+        Fade *const fade = &gFades[handle];
 
         // see `fadePush` for matching reference counter increment
         const int rc = --fade->rc;
@@ -82,16 +84,14 @@ void fadeFrameFree(uint32_t frame) {
         assert(rc >= 0);
 
         if (rc == 0) {
-            freeAndNull((void **) &fade);
-
-            // freeAndNull only NULLs the local `fade` variable
-            fades->fades[i] = NULL;
+            // TODO: free fade? seems like removing from array will cause large mem shift
         }
     }
 
-    freeAndNull((void **) &fades->fades);
+    arrfree(data->handles);
 
-    fades->nFades = 0;
+    // remove frame from lookup map
+    hmdel(gFrames, frame);
 }
 
 void fadeGetStatus(uint32_t frame,
@@ -101,26 +101,28 @@ void fadeGetStatus(uint32_t frame,
     *started = NULL;
     *finishing = false;
 
-    struct frame_fades_t *const fades = fadeGetFrame(frame, false);
+    struct frame_data_t *const data = fadeGetFrameData(frame, false);
 
-    if (fades == NULL) return;
+    if (data == NULL) return;
 
-    for (int i = 0; i < fades->nFades; i++) {
-        Fade *const match = fades->fades[i];
+    for (int i = 0; i < arrlen(data->handles); i++) {
+        Fade *const fade = &gFades[i];
 
-        if (match->id != id) continue;
+        if (fade->id != id) continue;
 
         // a newly started effect was found, pass a copy to the caller
-        const bool startedNew = match != NULL && match->startFrame == frame;
+        const bool startedNew = fade != NULL && fade->startFrame == frame;
 
         if (startedNew) {
-            *started = match;
+            *started = fade;
             *finishing = false;
 
             break;
         }
 
         // a fade effect is active, but may not have been started this frame (i.e. a fade tail)
+        // there's no reason why multiple Fades should be in the same frame with the same circuit ID,
+        // but this loop ensures it selects a newly started fade first, then a finishing fade
         *finishing = true;
     }
 }
