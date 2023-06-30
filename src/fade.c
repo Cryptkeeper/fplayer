@@ -94,6 +94,11 @@ void fadeFrameFree(uint32_t frame) {
     hmdel(gFrames, frame);
 }
 
+void fadeFree(void) {
+    hmfree(gFrames);
+    arrfree(gFades);
+}
+
 void fadeGetStatus(uint32_t frame,
                    uint32_t id,
                    Fade **started,

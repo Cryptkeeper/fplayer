@@ -17,6 +17,8 @@ void fadePush(uint32_t startFrame, Fade fade);
 
 void fadeFrameFree(uint32_t frame);
 
+void fadeFree(void);
+
 void fadeGetStatus(uint32_t frame,
                    uint32_t id,
                    Fade **started,

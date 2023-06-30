@@ -7,6 +7,7 @@
 #include <lightorama/heartbeat.h>
 
 #include "audio.h"
+#include "fade.h"
 #include "mem.h"
 #include "netstats.h"
 #include "precompute.h"
@@ -189,6 +190,8 @@ void playerRun(PlayerOpts opts) {
     if (opts.precomputeFades) precomputeStart(&gFramePump, &gPlaying);
 
     playerStartPlayback(opts);
+
+    fadeFree();
 
     sequenceFree(&gPlaying);
 
