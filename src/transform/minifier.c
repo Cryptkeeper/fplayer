@@ -93,7 +93,7 @@ static void minifyEncodeLoopOffset(const uint8_t unit,
                                    uint8_t alignOffset,
                                    EncodeChange *const stack,
                                    const minify_write_fn_t write) {
-    assert(stack->nChanges > 0);
+    assert(arrlen(stack) > 0);
 
     do {
         uint16_t consumed = 0;
