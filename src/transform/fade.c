@@ -46,7 +46,7 @@ static struct fade_handle_kvp_t *gFades;
 
 static inline bool fadeEqual(const Fade a, const Fade b) {
     return a.from == b.from && a.to == b.to && a.startFrame == b.startFrame &&
-           a.frames == b.frames;
+           a.frames == b.frames && a.type == b.type;
 }
 
 static int fadeCreateHandleRef(const Fade fade) {

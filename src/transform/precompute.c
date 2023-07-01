@@ -14,6 +14,7 @@ struct intensity_history_t {
     uint8_t lastIntensity;
     uint16_t frames;
     int slope;
+    enum fade_type_t type;
 };
 
 struct intensity_history_kv_t {
@@ -43,22 +44,34 @@ intensityHistoryReset(struct intensity_history_t *const history) {
 
 static int gFadesGenerated;
 
+static int intensityHistoryGetMinFrames(const enum fade_type_t type) {
+    switch (type) {
+        case FADE_SLOPE:
+            return 2;
+        case FADE_FLASH:
+            return 5;
+    }
+}
+
 static void intensityHistoryFlush(const uint32_t id,
                                   struct intensity_history_t *const history) {
-    // require at least two repeat frames of the slope to be considered a fade
+    // require at least N repeat frames of the slope to be considered a fade
     // otherwise it is a static change between two intensity levels
-    if (history->frames >= 2) {
-        gFadesGenerated++;
+    if (history->frames < intensityHistoryGetMinFrames(history->type))
+        goto reset;
 
-        fadePush(history->startFrame, id,
-                 (Fade){
-                         .from = history->firstIntensity,
-                         .to = history->lastIntensity,
-                         .startFrame = history->startFrame,
-                         .frames = history->frames,
-                 });
-    }
+    gFadesGenerated++;
 
+    fadePush(history->startFrame, id,
+             (Fade){
+                     .from = history->firstIntensity,
+                     .to = history->lastIntensity,
+                     .startFrame = history->startFrame,
+                     .frames = history->frames,
+                     .type = history->type,
+             });
+
+reset:
     intensityHistoryReset(history);
 }
 
@@ -68,6 +81,11 @@ static inline bool intensityHistorySlopeAligned(const int slope, const int dt) {
     // this controls when fading detects "shifts" and interrupts the fade state
     const int r = 1;
     return dt >= slope - r && dt <= slope + r;
+}
+
+static inline bool intensityFlash(const uint8_t old, const uint8_t new) {
+    const int d = (old > new) ? (old - new) : (new - old);
+    return d >= 200;
 }
 
 static void intensityHistoryPush(const uint32_t id,
@@ -85,9 +103,19 @@ static void intensityHistoryPush(const uint32_t id,
         return;
     }
 
-    if (history->frames > 0 &&
-        !intensityHistorySlopeAligned(history->slope, dt))
-        intensityHistoryFlush(id, history);
+    if (history->frames > 0) {
+        switch (history->type) {
+            case FADE_FLASH:
+                if (!intensityFlash(oldIntensity, newIntensity))
+                    intensityHistoryFlush(id, history);
+                break;
+
+            case FADE_SLOPE:
+                if (!intensityHistorySlopeAligned(history->slope, dt))
+                    intensityHistoryFlush(id, history);
+                break;
+        }
+    }
 
     history->slope = dt;
     history->lastIntensity = newIntensity;
@@ -96,6 +124,9 @@ static void intensityHistoryPush(const uint32_t id,
     if (history->frames++ == 0) {
         history->startFrame = frame;
         history->firstIntensity = oldIntensity;
+
+        history->type = intensityFlash(oldIntensity, newIntensity) ? FADE_FLASH
+                                                                   : FADE_SLOPE;
     }
 }
 

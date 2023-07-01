@@ -37,7 +37,8 @@ static void minifyEncodeRequest(struct encoding_request_t request,
 
     struct netstats_update_t update = {
             .packets = 1,
-            .fades = request.effect == LOR_EFFECT_FADE,
+            // only fades are >1 frame by the hardware's design
+            .fades = request.nFrames > 1 ? 1 : 0,
     };
 
     if (request.nCircuits == 1) {
@@ -143,14 +144,23 @@ static void minifyEncodeLoopOffset(const uint8_t unit,
             }
 
             if (hasFade) {
-                request.effect = LOR_EFFECT_FADE;
-                request.effectData = (union lor_effect_any_t){
-                        .fade = {
-                                .startIntensity =
-                                        minifyEncodeIntensity(fade.from),
-                                .endIntensity = minifyEncodeIntensity(fade.to),
-                                .duration = minifyGetFadeDuration(fade),
-                        }};
+                switch (fade.type) {
+                    case FADE_SLOPE:
+                        request.effect = LOR_EFFECT_FADE;
+                        request.effectData = (union lor_effect_any_t){
+                                .fade = {
+                                        .startIntensity = minifyEncodeIntensity(
+                                                fade.from),
+                                        .endIntensity =
+                                                minifyEncodeIntensity(fade.to),
+                                        .duration = minifyGetFadeDuration(fade),
+                                }};
+                        break;
+
+                    case FADE_FLASH:
+                        request.effect = LOR_EFFECT_SHIMMER;
+                        break;
+                }
             } else {
                 request.effect = LOR_EFFECT_SET_INTENSITY;
                 request.effectData = (union lor_effect_any_t){
