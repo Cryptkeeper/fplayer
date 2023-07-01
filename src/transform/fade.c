@@ -77,15 +77,14 @@ static int fadeCreateHandleRef(const Fade fade) {
 }
 
 void fadePush(const uint32_t startFrame, const uint32_t id, const Fade fade) {
-    const int handle = fadeCreateHandleRef(fade);
-
     for (uint32_t frame = startFrame; frame < startFrame + fade.frames;
          frame++) {
         struct frame_data_t *const data = fadeGetInsertFrameData(frame);
 
         struct frame_fade_kvp_t kvp = (struct frame_fade_kvp_t){
                 .key = id,
-                .value = handle,
+                // call each iteration so the internal reference counter is incremented
+                .value = fadeCreateHandleRef(fade),
         };
 
         hmputs(data->fades, kvp);
