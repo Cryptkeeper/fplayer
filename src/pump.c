@@ -68,38 +68,44 @@ static bool framePumpIsEmpty(const FramePump *pump) {
     return pump->readIdx >= pump->size;
 }
 
-bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameData) {
+static bool framePumpRecharge(FramePump *const pump, Sequence *const seq) {
+    const timeInstant start = timeGetNow();
+
+    // recharge pump depending on the compression type
+    switch (seq->header.compressionType) {
+        case TF_COMPRESSION_NONE:
+            framePumpChargeSequentialRead(pump, seq);
+            break;
+
+        case TF_COMPRESSION_ZLIB:
+        case TF_COMPRESSION_ZSTD:
+            if (framePumpChargeCompressionBlock(pump, seq)) return false;
+            break;
+    }
+
+    if (framePumpIsEmpty(pump))
+        fatalf(E_FATAL, "unexpected end of frame pump\n");
+
+    // check for performance issues after reading
+    const double chargeTimeMs =
+            (double) timeElapsedNs(start, timeGetNow()) / 1000000.0;
+
     const uint32_t frameSize = sequenceGetFrameSize(seq);
 
-    if (framePumpIsEmpty(pump)) {
-        const timeInstant start = timeGetNow();
+    printf("loaded %d frames in %.4fms\n", pump->size / frameSize,
+           chargeTimeMs);
 
-        // recharge pump depending on the compression type
-        switch (seq->header.compressionType) {
-            case TF_COMPRESSION_NONE:
-                framePumpChargeSequentialRead(pump, seq);
-                break;
+    return true;
+}
 
-            case TF_COMPRESSION_ZLIB:
-            case TF_COMPRESSION_ZSTD:
-                if (framePumpChargeCompressionBlock(pump, seq)) return false;
-                break;
-        }
-
-        if (framePumpIsEmpty(pump))
-            fatalf(E_FATAL, "unexpected end of frame pump\n");
-
-        // check for performance issues after reading
-        const double chargeTimeMs =
-                (double) timeElapsedNs(start, timeGetNow()) / 1000000.0;
-
-        printf("loaded %d frames in %.4fms\n", pump->size / frameSize,
-               chargeTimeMs);
-    }
+bool framePumpGet(FramePump *const pump,
+                  Sequence *const seq,
+                  uint8_t **frameData) {
+    if (framePumpIsEmpty(pump) && !framePumpRecharge(pump, seq)) return false;
 
     *frameData = &pump->frameData[pump->readIdx];
 
-    pump->readIdx += frameSize;
+    pump->readIdx += sequenceGetFrameSize(seq);
 
     return true;
 }
