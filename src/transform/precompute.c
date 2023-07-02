@@ -1,5 +1,6 @@
 #include "precompute.h"
 
+#include <assert.h>
 #include <string.h>
 
 #include "stb_ds.h"
@@ -92,6 +93,8 @@ static void intensityHistoryPush(const uint32_t id,
                                  const uint32_t frame,
                                  uint8_t oldIntensity,
                                  uint8_t newIntensity) {
+    assert(frame > 0);
+
     struct intensity_history_t *const history = intensityHistoryGetInsert(id);
 
     const int dt = (int) newIntensity - (int) oldIntensity;
@@ -122,7 +125,8 @@ static void intensityHistoryPush(const uint32_t id,
 
     // only set value when updating with first frame
     if (history->frames++ == 0) {
-        history->startFrame = frame;
+        // -1 since it started with the frame id which owns oldIntensity, not newIntensity
+        history->startFrame = frame - 1;
         history->firstIntensity = oldIntensity;
 
         history->type = intensityFlash(oldIntensity, newIntensity) ? FADE_FLASH
