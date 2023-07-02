@@ -242,6 +242,8 @@ void minifyStream(const uint8_t *const frameData,
     // flush any pending data from the last iteration
     if (arrlen(stack) > 0) minifyEncodeLoop(prevUnit, stack, write);
 
+    arrfree(stack);
+
     // allow fade data to be progressively freed
     fadeFrameFree(frame);
 }
