@@ -135,7 +135,6 @@ static void playerWaitForConnection(PlayerOpts opts) {
 
 static void playerOverrunSkipFrames(const int64_t ns) {
     const long millis = ns / 1000000;
-
     const uint8_t frameTimeMs = sequenceData()->frameStepTimeMillis;
 
     if (millis <= frameTimeMs) return;
@@ -145,13 +144,10 @@ static void playerOverrunSkipFrames(const int64_t ns) {
 
     if (skippedFrames == 0) return;
 
-    int64_t newFrame = gNextFrame + skippedFrames;
-
     const uint32_t max = sequenceGet(SI_FRAME_COUNT);
+    const int64_t newFrame = gNextFrame + skippedFrames;
 
-    if (newFrame >= max) newFrame = max;
-
-    gNextFrame = (uint32_t) newFrame;
+    gNextFrame = newFrame >= max ? max : (uint32_t) newFrame;
 
     printf("warning: skipping %d frames\n", skippedFrames);
 }
