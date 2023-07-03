@@ -188,7 +188,7 @@ void playerRun(PlayerOpts opts) {
 
     sequenceOpen(opts.sequenceFilePath, &gPlaying);
 
-    if (opts.precomputeFades) precomputeStart(&gFramePump, &gPlaying);
+    if (opts.precomputeFades) precomputeStart(&gPlaying);
 
     playerStartPlayback(opts);
 

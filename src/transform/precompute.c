@@ -5,6 +5,7 @@
 
 #include "stb_ds.h"
 
+#include "../pump.h"
 #include "../std/mem.h"
 #include "../std/time.h"
 #include "fade.h"
@@ -196,12 +197,15 @@ static void precomputeFlush(void) {
     }
 }
 
-void precomputeStart(FramePump *const pump, Sequence *const seq) {
+void precomputeStart(Sequence *const seq) {
     printf("precomputing fades...\n");
+
+    FramePump pump;
+    framePumpInit(&pump);
 
     const timeInstant now = timeGetNow();
 
-    while (precomputeHandleNextFrame(pump, seq))
+    while (precomputeHandleNextFrame(&pump, seq))
         ;
 
     precomputeFlush();
@@ -217,6 +221,5 @@ void precomputeStart(FramePump *const pump, Sequence *const seq) {
     // reset playback state, see `sequenceInit`
     seq->currentFrame = -1;
 
-    framePumpFree(pump);
-    framePumpInit(pump);
+    framePumpFree(&pump);
 }
