@@ -8,8 +8,6 @@
 
 #include <tinyfseq.h>
 
-typedef struct sequence_t Sequence;
-
 extern FILE *gFile;
 extern pthread_mutex_t gFileMutex;
 
@@ -17,16 +15,8 @@ void sequenceOpen(const char *filepath, const char **audioFilePath);
 
 void sequenceFree(void);
 
-struct tf_file_header_t *sequenceData(void) __attribute__((deprecated()));
+struct tf_file_header_t *sequenceData(void);
 
-enum seq_info_t {
-    SI_FRAME_SIZE,
-    SI_FRAME_COUNT,
-    SI_FPS,
-};
-
-uint32_t sequenceGet(enum seq_info_t info);
-
-uint32_t sequenceCompressionBlockSize(int i);
+#define sequenceFPS() (1000 / sequenceData()->frameStepTimeMillis)
 
 #endif//FPLAYER_SEQ_H

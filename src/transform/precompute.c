@@ -145,9 +145,9 @@ static uint8_t *gLastFrameData;
 static int gNextFrame;
 
 static bool precomputeHandleNextFrame(FramePump *const pump) {
-    if (gNextFrame >= sequenceGet(SI_FRAME_COUNT)) return false;
+    if (gNextFrame >= sequenceData()->frameCount) return false;
 
-    const uint32_t frameSize = sequenceGet(SI_FRAME_SIZE);
+    const uint32_t frameSize = sequenceData()->channelCount;
 
     const bool hasPrevFrame = gLastFrameData != NULL;
 

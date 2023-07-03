@@ -7,6 +7,7 @@
 #include <lightorama/heartbeat.h>
 
 #include "audio.h"
+#include "comblock.h"
 #include "pump.h"
 #include "seq.h"
 #include "serial.h"
@@ -77,10 +78,10 @@ static void playerLogStatus(void) {
     sds sleep = sleepGetStatus();
     sds netstats = nsGetStatus();
 
-    const uint32_t frameSize = sequenceGet(SI_FRAME_SIZE);
-
     printf("remaining: %s\tdt: %s\tpump: %4d\t%s\n", remaining, sleep,
-           (gFramePump.size - gFramePump.readIdx) / frameSize, netstats);
+           (gFramePump.size - gFramePump.readIdx) /
+                   sequenceData()->channelCount,
+           netstats);
 
     sdsfree(remaining);
     sdsfree(sleep);
@@ -88,9 +89,9 @@ static void playerLogStatus(void) {
 }
 
 static bool playerHandleNextFrame(void) {
-    if (gNextFrame >= sequenceGet(SI_FRAME_COUNT)) return false;
+    if (gNextFrame >= sequenceData()->frameCount) return false;
 
-    const uint32_t frameSize = sequenceGet(SI_FRAME_SIZE);
+    const uint32_t frameSize = sequenceData()->channelCount;
 
     if (gLastFrameData == NULL) {
         gLastFrameData = mustMalloc(frameSize);
@@ -129,7 +130,7 @@ static void playerOverrunSkipFrames(const int64_t ns) {
 
     if (skippedFrames == 0) return;
 
-    const uint32_t max = sequenceGet(SI_FRAME_COUNT);
+    const uint32_t max = sequenceData()->frameCount;
     const int64_t newFrame = gNextFrame + skippedFrames;
 
     gNextFrame = newFrame >= max ? max : (uint32_t) newFrame;
@@ -184,12 +185,16 @@ void playerRun(const PlayerOpts opts) {
 
     sequenceOpen(opts.sequenceFilePath, &audioFilePath);
 
+    comBlocksInit();
+
     if (opts.precomputeFades) precomputeRun();
 
     playerStartPlayback(opts, audioFilePath);
 
     // used by `playerRun`, don't free until player has finished
     precomputeFree();
+
+    comBlocksFree();
 
     sequenceFree();
 
@@ -199,8 +204,8 @@ void playerRun(const PlayerOpts opts) {
 }
 
 sds playerGetRemaining(void) {
-    const uint32_t framesRemaining = sequenceGet(SI_FRAME_SIZE) - gNextFrame;
-    const long seconds = framesRemaining / sequenceGet(SI_FPS);
+    const uint32_t framesRemaining = sequenceData()->frameCount - gNextFrame;
+    const long seconds = framesRemaining / sequenceFPS();
 
     return sdscatprintf(sdsempty(), "%02ldm %02lds", seconds / 60,
                         seconds % 60);

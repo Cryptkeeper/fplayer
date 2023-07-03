@@ -1,6 +1,6 @@
 #include "pump.h"
 
-#include "compress.h"
+#include "comblock.h"
 #include "seq.h"
 #include "std/err.h"
 #include "std/mem.h"
@@ -8,10 +8,10 @@
 
 static void framePumpChargeSequentialRead(FramePump *const pump,
                                           const uint32_t currentFrame) {
-    const uint32_t frameSize = sequenceGet(SI_FRAME_SIZE);
+    const uint32_t frameSize = sequenceData()->channelCount;
 
     // generates a frame data buffer of 5 seconds worth of playback
-    const uint32_t reqFrameCount = sequenceGet(SI_FPS) * 5;
+    const uint32_t reqFrameCount = sequenceFPS() * 5;
 
     if (pump->frameData == NULL)
         pump->frameData = mustMalloc(frameSize * reqFrameCount);
@@ -41,9 +41,9 @@ static bool framePumpChargeCompressionBlock(FramePump *const pump) {
     uint8_t *frameData = NULL;
     uint32_t size = 0;
 
-    decompressBlock(comBlockIndex, &frameData, &size);
+    comBlockGet(comBlockIndex, &frameData, &size);
 
-    const uint32_t frameSize = sequenceGet(SI_FRAME_SIZE);
+    const uint32_t frameSize = sequenceData()->channelCount;
 
     // the decompressed size should be a product of the frameSize
     // otherwise the data decompressed incorrectly
@@ -90,10 +90,8 @@ static bool framePumpRecharge(FramePump *const pump,
     const double chargeTimeMs =
             (double) timeElapsedNs(start, timeGetNow()) / 1000000.0;
 
-    const uint32_t frameSize = sequenceGet(SI_FRAME_SIZE);
-
-    printf("loaded %d frames in %.4fms\n", pump->size / frameSize,
-           chargeTimeMs);
+    printf("loaded %d frames in %.4fms\n",
+           pump->size / sequenceData()->channelCount, chargeTimeMs);
 
     return true;
 }
@@ -106,7 +104,7 @@ bool framePumpGet(FramePump *const pump,
 
     *frameData = &pump->frameData[pump->readIdx];
 
-    pump->readIdx += sequenceGet(SI_FRAME_SIZE);
+    pump->readIdx += sequenceData()->channelCount;
 
     return true;
 }

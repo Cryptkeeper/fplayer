@@ -1,89 +1,29 @@
 #include "seq.h"
 
-#include <assert.h>
-#include <string.h>
-
 #define TINYFSEQ_IMPLEMENTATION
 #include <tinyfseq.h>
 
-#ifdef TINYFSEQ_MEMCPY
-#undef TINYFSEQ_MEMCPY
-#endif
-#define TINYFSEQ_MEMCPY memcpy
+#include "stb_ds.h"
 
 #include "std/err.h"
 #include "std/mem.h"
 
-struct sequence_t {
-    struct tf_file_header_t header;
-    struct tf_compression_block_t *compressionBlocks;
-};
-
 FILE *gFile;
 pthread_mutex_t gFileMutex = PTHREAD_MUTEX_INITIALIZER;
 
-static Sequence gPlaying;
-
-#define COMPRESSION_BLOCK_SIZE 8
-
-static void sequenceTrimCompressionBlockCount(void) {
-    // a fseq file may include multiple empty compression blocks for padding purposes
-    // these will appear with a 0 size value, trailing previously valid blocks
-    // this function finds the first instance of a zero sized block and adjusts the
-    // decoded compressionBlockCount to match
-    for (int i = 0; i < gPlaying.header.compressionBlockCount; i++) {
-        if (gPlaying.compressionBlocks[i].size == 0) {
-            printf("shrinking compression block count %d->%d\n",
-                   gPlaying.header.compressionBlockCount, i);
-
-            // re-allocate the backing array to trim the empty compression block structs
-            // this only saves a few bytes of memory, but more importantly ensures the
-            // `compressionBlockCount` field accurately represents the `compressionBlocks`
-            // array allocation length
-            gPlaying.compressionBlocks = mustRealloc(
-                    gPlaying.compressionBlocks, i * COMPRESSION_BLOCK_SIZE);
-
-            gPlaying.header.compressionBlockCount = i;
-
-            return;
-        }
-    }
-}
-
-static void sequenceLoadCompressionBlocks(void) {
-    const uint8_t comBlockCount = gPlaying.header.compressionBlockCount;
-
-    if (comBlockCount == 0) return;
-
-    const uint16_t comDataSize = comBlockCount * COMPRESSION_BLOCK_SIZE;
-
-    struct tf_compression_block_t *compressionBlocks =
-            gPlaying.compressionBlocks = mustMalloc(comDataSize);
-
-    pthread_mutex_lock(&gFileMutex);
-
-    if (fseek(gFile, 32, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
-
-    if (fread(compressionBlocks, COMPRESSION_BLOCK_SIZE, comBlockCount,
-              gFile) != comBlockCount)
-        fatalf(E_FILE_IO, "unexpected end of compression blocks\n");
-
-    pthread_mutex_unlock(&gFileMutex);
-
-    sequenceTrimCompressionBlockCount();
-}
+static struct tf_file_header_t gPlaying;
 
 // 4 is the packed sizeof(struct tf_var_header_t)
 #define VAR_HEADER_SIZE    4
 #define MAX_VAR_VALUE_SIZE 512
 
 static const char *sequenceLoadAudioFilePath(void) {
-    const uint16_t varDataSize = gPlaying.header.channelDataOffset -
-                                 gPlaying.header.variableDataOffset;
+    const uint16_t varDataSize =
+            gPlaying.channelDataOffset - gPlaying.variableDataOffset;
 
     pthread_mutex_lock(&gFileMutex);
 
-    if (fseek(gFile, gPlaying.header.variableDataOffset, SEEK_SET) < 0)
+    if (fseek(gFile, gPlaying.variableDataOffset, SEEK_SET) < 0)
         fatalf(E_FILE_IO, NULL);
 
     uint8_t *varTable = mustMalloc(varDataSize);
@@ -148,11 +88,8 @@ void sequenceOpen(const char *const filepath,
 
     enum tf_err_t err;
 
-    if ((err = tf_read_file_header(b, sizeof(b), &gPlaying.header, NULL)) !=
-        TF_OK)
+    if ((err = tf_read_file_header(b, sizeof(b), &gPlaying, NULL)) != TF_OK)
         fatalf(E_FATAL, "error parsing sequence header: %s\n", tf_err_str(err));
-
-    sequenceLoadCompressionBlocks();
 
     *audioFilePath = sequenceLoadAudioFilePath();
 }
@@ -164,28 +101,9 @@ void sequenceFree(void) {
 
     pthread_mutex_unlock(&gFileMutex);
 
-    freeAndNull((void **) &gPlaying.compressionBlocks);
-
-    gPlaying = (Sequence){0};
+    gPlaying = (struct tf_file_header_t){0};
 }
 
 struct tf_file_header_t *sequenceData(void) {
-    return &gPlaying.header;
-}
-
-uint32_t sequenceGet(const enum seq_info_t info) {
-    switch (info) {
-        case SI_FRAME_SIZE:
-            return gPlaying.header.channelCount;
-        case SI_FRAME_COUNT:
-            return gPlaying.header.frameCount;
-        case SI_FPS:
-            return 1000 / gPlaying.header.frameStepTimeMillis;
-    }
-}
-
-uint32_t sequenceCompressionBlockSize(int i) {
-    assert(i >= 0 && i < gPlaying.header.compressionBlockCount);
-
-    return gPlaying.compressionBlocks[i].size;
+    return &gPlaying;
 }
