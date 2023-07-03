@@ -136,13 +136,11 @@ static void precomputeHistoryPush(const uint32_t id,
     }
 }
 
-static uint8_t *gLastFrameData;
-
-static void precomputeFree(void) {
+static void precomputeHistoryFree(void) {
     hmfree(gHistory);
-
-    freeAndNull((void **) &gLastFrameData);
 }
+
+static uint8_t *gLastFrameData;
 
 static int gNextFrame;
 
@@ -194,7 +192,7 @@ static void precomputeFlush(void) {
     }
 }
 
-void precomputeStart(void) {
+void precomputeRun(void) {
     printf("precomputing fades...\n");
 
     FramePump pump = {0};
@@ -206,7 +204,9 @@ void precomputeStart(void) {
 
     precomputeFlush();
 
-    precomputeFree();
+    precomputeHistoryFree();
+
+    freeAndNull((void **) &gLastFrameData);
 
     framePumpFree(&pump);
 
@@ -214,4 +214,8 @@ void precomputeStart(void) {
 
     printf("identified %d fade events (%d variants) in %dms\n", gFadesGenerated,
            fadeTableSize(), ms);
+}
+
+void precomputeFree(void) {
+    fadeFree();
 }

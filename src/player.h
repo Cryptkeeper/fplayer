@@ -17,8 +17,8 @@ typedef struct player_opts_t {
 
 void playerOptsFree(PlayerOpts *opts);
 
-sds playerGetRemaining(void);
-
 void playerRun(PlayerOpts opts);
+
+sds playerGetRemaining(void);
 
 #endif//FPLAYER_PLAYER_H

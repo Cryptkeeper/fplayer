@@ -13,11 +13,10 @@
 #include "std/mem.h"
 #include "std/sleep.h"
 #include "std/time.h"
-#include "transform/fade.h"
 #include "transform/netstats.h"
 #include "transform/precompute.h"
 
-void playerOptsFree(PlayerOpts *opts) {
+void playerOptsFree(PlayerOpts *const opts) {
     freeAndNull((void **) &opts->sequenceFilePath);
     freeAndNull((void **) &opts->channelMapFilePath);
     freeAndNull((void **) &opts->audioOverrideFilePath);
@@ -27,12 +26,42 @@ static FramePump gFramePump;
 
 static uint32_t gNextFrame;
 
-sds playerGetRemaining(void) {
-    const uint32_t framesRemaining = sequenceGet(SI_FRAME_SIZE) - gNextFrame;
-    const long seconds = framesRemaining / sequenceGet(SI_FPS);
+static uint8_t *gLastFrameData;
 
-    return sdscatprintf(sdsempty(), "%02ldm %02lds", seconds / 60,
-                        seconds % 60);
+// LOR hardware may require several heartbeat messages are sent
+// before it considers itself connected to the player
+// This artificially waits prior to starting playback to ensure the device is
+// considered connected and ready for frame data
+static void playerWaitForConnection(const PlayerOpts opts) {
+    if (opts.connectionWaitS == 0) return;
+
+    printf("waiting %d seconds for connection...\n", opts.connectionWaitS);
+
+    // assumes 2 heartbeat messages per second (500ms delay)
+    for (int toSend = opts.connectionWaitS * 2; toSend > 0; toSend--) {
+        serialWriteHeartbeat();
+
+        const struct timespec itrSleep = {
+                .tv_sec = 0,
+                .tv_nsec = LOR_HEARTBEAT_DELAY_NS,
+        };
+
+        nanosleep(&itrSleep, NULL);
+    }
+}
+
+static void playerPlayFirstAudioFile(const char *const override,
+                                     const char *const sequence) {
+    // select the override, if set, otherwise fallback to the sequence's hint
+    const char *const audioFilePath = override != NULL ? override : sequence;
+
+    if (audioFilePath != NULL) {
+        printf("preparing to play %s\n", audioFilePath);
+
+        audioPlayFile(audioFilePath);
+    } else {
+        printf("no audio file detected using override or via sequence\n");
+    }
 }
 
 static void playerLogStatus(void) {
@@ -56,12 +85,6 @@ static void playerLogStatus(void) {
     sdsfree(remaining);
     sdsfree(sleep);
     sdsfree(netstats);
-}
-
-static uint8_t *gLastFrameData;
-
-static void playerFree(void) {
-    freeAndNull((void **) &gLastFrameData);
 }
 
 static bool playerHandleNextFrame(void) {
@@ -95,44 +118,6 @@ static bool playerHandleNextFrame(void) {
     return true;
 }
 
-static void playerPlayFirstAudioFile(const PlayerOpts opts,
-                                     const char *seqAudioFilePath) {
-    // select the override, if set, otherwise fallback to the sequence's hint
-    const char *const audioFilePath = opts.audioOverrideFilePath != NULL
-                                              ? opts.audioOverrideFilePath
-                                              : seqAudioFilePath;
-
-    if (audioFilePath != NULL) {
-        printf("preparing to play %s\n", audioFilePath);
-
-        audioPlayFile(audioFilePath);
-    } else {
-        printf("no audio file detected using override or via sequence\n");
-    }
-}
-
-// LOR hardware may require several heartbeat messages are sent
-// before it considers itself connected to the player
-// This artificially waits prior to starting playback to ensure the device is
-// considered connected and ready for frame data
-static void playerWaitForConnection(PlayerOpts opts) {
-    if (opts.connectionWaitS == 0) return;
-
-    printf("waiting %d seconds for connection...\n", opts.connectionWaitS);
-
-    // assumes 2 heartbeat messages per second (500ms delay)
-    for (int toSend = opts.connectionWaitS * 2; toSend > 0; toSend--) {
-        serialWriteHeartbeat();
-
-        const struct timespec itrSleep = {
-                .tv_sec = 0,
-                .tv_nsec = LOR_HEARTBEAT_DELAY_NS,
-        };
-
-        nanosleep(&itrSleep, NULL);
-    }
-}
-
 static void playerOverrunSkipFrames(const int64_t ns) {
     const long millis = ns / 1000000;
     const uint8_t frameTimeMs = sequenceData()->frameStepTimeMillis;
@@ -152,14 +137,15 @@ static void playerOverrunSkipFrames(const int64_t ns) {
     printf("warning: skipping %d frames\n", skippedFrames);
 }
 
-static void playerStartPlayback(PlayerOpts opts, const char *seqAudioFilePath) {
+static void playerStartPlayback(const PlayerOpts opts,
+                                const char *mediaFilePath) {
     // optionally override the sequence's playback rate with the CLI's value
     if (opts.frameStepTimeOverrideMs > 0)
         sequenceData()->frameStepTimeMillis = opts.frameStepTimeOverrideMs;
 
-    playerPlayFirstAudioFile(opts, seqAudioFilePath);
+    playerPlayFirstAudioFile(opts.audioOverrideFilePath, mediaFilePath);
 
-    freeAndNull((void **) &seqAudioFilePath);
+    freeAndNull((void **) &mediaFilePath);
 
     // start sequence timer loop
     sleepTimerLoop(playerHandleNextFrame, sequenceData()->frameStepTimeMillis,
@@ -187,22 +173,35 @@ static void playerStartPlayback(PlayerOpts opts, const char *seqAudioFilePath) {
     audioStop();
 }
 
-void playerRun(PlayerOpts opts) {
+static void playerFree(void) {
+    freeAndNull((void **) &gLastFrameData);
+}
+
+void playerRun(const PlayerOpts opts) {
     playerWaitForConnection(opts);
 
     const char *audioFilePath = NULL;
 
     sequenceOpen(opts.sequenceFilePath, &audioFilePath);
 
-    if (opts.precomputeFades) precomputeStart();
+    if (opts.precomputeFades) precomputeRun();
 
     playerStartPlayback(opts, audioFilePath);
 
-    fadeFree();
+    // used by `playerRun`, don't free until player has finished
+    precomputeFree();
 
     sequenceFree();
 
     framePumpFree(&gFramePump);
 
     playerFree();
+}
+
+sds playerGetRemaining(void) {
+    const uint32_t framesRemaining = sequenceGet(SI_FRAME_SIZE) - gNextFrame;
+    const long seconds = framesRemaining / sequenceGet(SI_FPS);
+
+    return sdscatprintf(sdsempty(), "%02ldm %02lds", seconds / 60,
+                        seconds % 60);
 }
