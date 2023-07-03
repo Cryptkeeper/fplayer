@@ -8,24 +8,24 @@
 #include "std/mem.h"
 #endif
 
+#include "seq.h"
 #include "std/err.h"
 
-static uint32_t sequenceGetComBlockPos(const Sequence *seq, int comBlockIndex) {
+static uint32_t sequenceGetComBlockPos(const int comBlockIndex) {
     uint32_t offset = 0;
 
     // add the sizes of all previous compression block entries
     for (int i = 0; i < comBlockIndex; i++)
-        offset += seq->compressionBlocks[i].size;
+        offset += sequenceCompressionBlockSize(i);
 
-    return seq->header.channelDataOffset + offset;
+    return sequenceData()->channelDataOffset + offset;
 }
 
 #ifdef ENABLE_ZSTD
-static void decompressBlockZstd(Sequence *seq,
-                                int comBlockIndex,
-                                uint8_t **frameData,
-                                uint32_t *size) {
-    const size_t dInSize = seq->compressionBlocks[comBlockIndex].size;
+static void decompressBlockZstd(const uint32_t comBlockIndex,
+                                uint8_t **const frameData,
+                                uint32_t *const size) {
+    const size_t dInSize = sequenceCompressionBlockSize(comBlockIndex);
     void *dIn = mustMalloc(dInSize);
 
     const size_t dOutSize = ZSTD_DStreamOutSize();
@@ -34,13 +34,15 @@ static void decompressBlockZstd(Sequence *seq,
     ZSTD_DCtx *ctx = ZSTD_createDCtx();
     if (ctx == NULL) fatalf(E_ALLOC_FAIL, NULL);
 
-    FILE *f = seq->openFile;
+    pthread_mutex_lock(&gFileMutex);
 
     // seek to start position of this compression block's frame data
-    if (fseek(f, sequenceGetComBlockPos(seq, comBlockIndex), SEEK_SET) < 0)
+    if (fseek(gFile, sequenceGetComBlockPos(comBlockIndex), SEEK_SET) < 0)
         fatalf(E_FILE_IO, NULL);
 
-    if (fread(dIn, 1, dInSize, f) != dInSize) fatalf(E_FILE_IO, NULL);
+    if (fread(dIn, 1, dInSize, gFile) != dInSize) fatalf(E_FILE_IO, NULL);
+
+    pthread_mutex_unlock(&gFileMutex);
 
     ZSTD_inBuffer in = {
             .src = dIn,
@@ -78,14 +80,13 @@ static void decompressBlockZstd(Sequence *seq,
 }
 #endif
 
-void decompressBlock(Sequence *seq,
-                     int comBlockIndex,
-                     uint8_t **frameData,
-                     uint32_t *size) {
-    switch (seq->header.compressionType) {
+void decompressBlock(const uint32_t comBlockIndex,
+                     uint8_t **const frameData,
+                     uint32_t *const size) {
+    switch (sequenceData()->compressionType) {
         case TF_COMPRESSION_ZSTD: {
 #ifdef ENABLE_ZSTD
-            decompressBlockZstd(seq, comBlockIndex, frameData, size);
+            decompressBlockZstd(comBlockIndex, frameData, size);
 #else
             fatalf(E_FATAL, "zstd support disabled at build time\n");
 #endif
@@ -94,6 +95,6 @@ void decompressBlock(Sequence *seq,
 
         default:
             fatalf(E_FATAL, "cannot decompress type: %d\n",
-                   seq->header.compressionType);
+                   sequenceData()->compressionType);
     }
 }

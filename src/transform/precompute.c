@@ -6,11 +6,12 @@
 #include "stb_ds.h"
 
 #include "../pump.h"
+#include "../seq.h"
 #include "../std/mem.h"
 #include "../std/time.h"
 #include "fade.h"
 
-struct intensity_history_t {
+struct precompute_history_t {
     uint32_t startFrame;
     uint8_t firstIntensity;
     uint8_t lastIntensity;
@@ -19,34 +20,34 @@ struct intensity_history_t {
     enum fade_type_t type;
 };
 
-struct intensity_history_kv_t {
+struct precompute_history_kv_t {
     uint32_t key;
-    struct intensity_history_t value;
+    struct precompute_history_t value;
 };
 
-static struct intensity_history_kv_t *gHistory;
+static struct precompute_history_kv_t *gHistory;
 
-static struct intensity_history_t *
-intensityHistoryGetInsert(const uint32_t id) {
-    struct intensity_history_kv_t *const existing = hmgetp_null(gHistory, id);
+static struct precompute_history_t *
+precomputeHistoryGetInsert(const uint32_t id) {
+    struct precompute_history_kv_t *const existing = hmgetp_null(gHistory, id);
 
     if (existing != NULL) return &existing->value;
 
-    hmput(gHistory, id, (struct intensity_history_t){0});
+    hmput(gHistory, id, (struct precompute_history_t){0});
 
-    struct intensity_history_kv_t *const put = hmgetp_null(gHistory, id);
+    struct precompute_history_kv_t *const put = hmgetp_null(gHistory, id);
 
     return put != NULL ? &put->value : NULL;
 }
 
 static inline void
-intensityHistoryReset(struct intensity_history_t *const history) {
-    *history = (struct intensity_history_t){0};
+precomputeHistoryReset(struct precompute_history_t *const history) {
+    *history = (struct precompute_history_t){0};
 }
 
 static int gFadesGenerated;
 
-static int intensityHistoryGetMinFrames(const enum fade_type_t type) {
+static int precomputeHistoryGetMinFrames(const enum fade_type_t type) {
     switch (type) {
         case FADE_SLOPE:
             return 2;
@@ -55,11 +56,11 @@ static int intensityHistoryGetMinFrames(const enum fade_type_t type) {
     }
 }
 
-static void intensityHistoryFlush(const uint32_t id,
-                                  struct intensity_history_t *const history) {
+static void precomputeHistoryFlush(const uint32_t id,
+                                   struct precompute_history_t *const history) {
     // require at least N repeat frames of the slope to be considered a fade
     // otherwise it is a static change between two intensity levels
-    if (history->frames < intensityHistoryGetMinFrames(history->type))
+    if (history->frames < precomputeHistoryGetMinFrames(history->type))
         goto reset;
 
     gFadesGenerated++;
@@ -74,10 +75,10 @@ static void intensityHistoryFlush(const uint32_t id,
              });
 
 reset:
-    intensityHistoryReset(history);
+    precomputeHistoryReset(history);
 }
 
-static inline bool intensityHistorySlopeAligned(const int slope, const int dt) {
+static inline bool precomputeHistoryAligned(const int slope, const int dt) {
     // returns whether `dt` (a delta between two intensity values) is considered
     // align with a previous delta, `slope`
     // this controls when fading detects "shifts" and interrupts the fade state
@@ -90,18 +91,18 @@ static inline bool intensityFlash(const uint8_t old, const uint8_t new) {
     return d >= 200;
 }
 
-static void intensityHistoryPush(const uint32_t id,
-                                 const uint32_t frame,
-                                 uint8_t oldIntensity,
-                                 uint8_t newIntensity) {
+static void precomputeHistoryPush(const uint32_t id,
+                                  const uint32_t frame,
+                                  const uint8_t oldIntensity,
+                                  const uint8_t newIntensity) {
     assert(frame > 0);
 
-    struct intensity_history_t *const history = intensityHistoryGetInsert(id);
+    struct precompute_history_t *const history = precomputeHistoryGetInsert(id);
 
     const int dt = (int) newIntensity - (int) oldIntensity;
 
     if (dt == 0) {
-        intensityHistoryFlush(id, history);
+        precomputeHistoryFlush(id, history);
 
         // early return, no value storing invalid slope data for next iteration
         return;
@@ -111,12 +112,12 @@ static void intensityHistoryPush(const uint32_t id,
         switch (history->type) {
             case FADE_FLASH:
                 if (!intensityFlash(oldIntensity, newIntensity))
-                    intensityHistoryFlush(id, history);
+                    precomputeHistoryFlush(id, history);
                 break;
 
             case FADE_SLOPE:
-                if (!intensityHistorySlopeAligned(history->slope, dt))
-                    intensityHistoryFlush(id, history);
+                if (!precomputeHistoryAligned(history->slope, dt))
+                    precomputeHistoryFlush(id, history);
                 break;
         }
     }
@@ -135,24 +136,22 @@ static void intensityHistoryPush(const uint32_t id,
     }
 }
 
-static void intensityHistoryFree(void) {
-    hmfree(gHistory);
-}
-
 static uint8_t *gLastFrameData;
 
 static void precomputeFree(void) {
+    hmfree(gHistory);
+
     freeAndNull((void **) &gLastFrameData);
 }
 
-static bool precomputeHandleNextFrame(FramePump *const pump,
-                                      Sequence *const seq) {
-    if (!sequenceNextFrame(seq)) return false;
+static int gNextFrame;
 
-    // maintain a copy of the previous frame to use for detecting differences
-    const uint32_t frameSize = sequenceGetFrameSize(seq);
+static bool precomputeHandleNextFrame(FramePump *const pump) {
+    if (gNextFrame >= sequenceGet(SI_FRAME_COUNT)) return false;
 
-    static bool hasPrevFrame = false;
+    const uint32_t frameSize = sequenceGet(SI_FRAME_SIZE);
+
+    const bool hasPrevFrame = gLastFrameData != NULL;
 
     if (gLastFrameData == NULL) {
         gLastFrameData = mustMalloc(frameSize);
@@ -161,19 +160,19 @@ static bool precomputeHandleNextFrame(FramePump *const pump,
         memset(gLastFrameData, 0, frameSize);
     }
 
+    const uint32_t frame = gNextFrame++;
+
     // fetch the current frame data
     uint8_t *frameData = NULL;
 
-    if (!framePumpGet(pump, seq, &frameData)) return false;
+    if (!framePumpGet(pump, frame, &frameData)) return false;
 
     if (hasPrevFrame) {
         for (uint32_t circuit = 0; circuit < frameSize; circuit++) {
-            const uint32_t frame = sequenceGetFrame(seq);
-
             const uint8_t oldIntensity = gLastFrameData[circuit];
             const uint8_t newIntensity = frameData[circuit];
 
-            intensityHistoryPush(circuit, frame, oldIntensity, newIntensity);
+            precomputeHistoryPush(circuit, frame, oldIntensity, newIntensity);
         }
     }
 
@@ -182,44 +181,37 @@ static bool precomputeHandleNextFrame(FramePump *const pump,
     // write outgoing state changes
     memcpy(gLastFrameData, frameData, frameSize);
 
-    hasPrevFrame = true;
-
     return true;
 }
 
 static void precomputeFlush(void) {
     // flush any pending fades that end on the last frame
     for (int i = 0; i < hmlen(gHistory); i++) {
-        struct intensity_history_kv_t *const kv = &gHistory[i];
+        struct precompute_history_kv_t *const kv = &gHistory[i];
 
         if (kv != NULL && kv->value.frames >= 2)
-            intensityHistoryFlush(kv->key, &kv->value);
+            precomputeHistoryFlush(kv->key, &kv->value);
     }
 }
 
-void precomputeStart(Sequence *const seq) {
+void precomputeStart(void) {
     printf("precomputing fades...\n");
 
-    FramePump pump;
-    framePumpInit(&pump);
+    FramePump pump = {0};
 
     const timeInstant now = timeGetNow();
 
-    while (precomputeHandleNextFrame(&pump, seq))
+    while (precomputeHandleNextFrame(&pump))
         ;
 
     precomputeFlush();
+
     precomputeFree();
 
-    intensityHistoryFree();
+    framePumpFree(&pump);
 
     const int ms = (int) (timeElapsedNs(now, timeGetNow()) / 1000000);
 
     printf("identified %d fade events (%d variants) in %dms\n", gFadesGenerated,
            fadeTableSize(), ms);
-
-    // reset playback state, see `sequenceInit`
-    seq->currentFrame = -1;
-
-    framePumpFree(&pump);
 }

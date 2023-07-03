@@ -1,32 +1,30 @@
 #include "pump.h"
 
 #include "compress.h"
+#include "seq.h"
 #include "std/err.h"
 #include "std/mem.h"
 #include "std/time.h"
 
-void framePumpInit(FramePump *pump) {
-    *pump = (FramePump){
-            .comBlockIndex = -1,
-    };
-}
-
-static void framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
-    const uint32_t frameSize = sequenceGetFrameSize(seq);
+static void framePumpChargeSequentialRead(FramePump *const pump,
+                                          const uint32_t currentFrame) {
+    const uint32_t frameSize = sequenceGet(SI_FRAME_SIZE);
 
     // generates a frame data buffer of 5 seconds worth of playback
-    const uint32_t reqFrameCount = sequenceGetFPS(seq) * 5;
+    const uint32_t reqFrameCount = sequenceGet(SI_FPS) * 5;
 
     if (pump->frameData == NULL)
         pump->frameData = mustMalloc(frameSize * reqFrameCount);
 
-    FILE *f = seq->openFile;
+    pthread_mutex_lock(&gFileMutex);
 
-    if (fseek(f, seq->currentFrame * frameSize, SEEK_SET) < 0)
+    if (fseek(gFile, currentFrame * frameSize, SEEK_SET) < 0)
         fatalf(E_FILE_IO, NULL);
 
     const unsigned long framesRead =
-            fread(pump->frameData, frameSize, reqFrameCount, f);
+            fread(pump->frameData, frameSize, reqFrameCount, gFile);
+
+    pthread_mutex_unlock(&gFileMutex);
 
     if (framesRead < 1) fatalf(E_FILE_IO, "unexpected end of frame data\n");
 
@@ -34,17 +32,18 @@ static void framePumpChargeSequentialRead(FramePump *pump, Sequence *seq) {
     pump->size = framesRead * frameSize;
 }
 
-static bool framePumpChargeCompressionBlock(FramePump *pump, Sequence *seq) {
-    if (pump->comBlockIndex >= seq->header.compressionBlockCount) return true;
+static bool framePumpChargeCompressionBlock(FramePump *const pump) {
+    if (pump->consumedComBlocks >= sequenceData()->compressionBlockCount)
+        return true;
 
-    pump->comBlockIndex += 1;
+    const int comBlockIndex = pump->consumedComBlocks++;
 
     uint8_t *frameData = NULL;
     uint32_t size = 0;
 
-    decompressBlock(seq, pump->comBlockIndex, &frameData, &size);
+    decompressBlock(comBlockIndex, &frameData, &size);
 
-    const uint32_t frameSize = sequenceGetFrameSize(seq);
+    const uint32_t frameSize = sequenceGet(SI_FRAME_SIZE);
 
     // the decompressed size should be a product of the frameSize
     // otherwise the data decompressed incorrectly
@@ -64,22 +63,23 @@ static bool framePumpChargeCompressionBlock(FramePump *pump, Sequence *seq) {
     return false;
 }
 
-static bool framePumpIsEmpty(const FramePump *pump) {
+static bool framePumpIsEmpty(const FramePump *const pump) {
     return pump->readIdx >= pump->size;
 }
 
-static bool framePumpRecharge(FramePump *const pump, Sequence *const seq) {
+static bool framePumpRecharge(FramePump *const pump,
+                              const uint32_t currentFrame) {
     const timeInstant start = timeGetNow();
 
     // recharge pump depending on the compression type
-    switch (seq->header.compressionType) {
+    switch (sequenceData()->compressionType) {
         case TF_COMPRESSION_NONE:
-            framePumpChargeSequentialRead(pump, seq);
+            framePumpChargeSequentialRead(pump, currentFrame);
             break;
 
         case TF_COMPRESSION_ZLIB:
         case TF_COMPRESSION_ZSTD:
-            if (framePumpChargeCompressionBlock(pump, seq)) return false;
+            if (framePumpChargeCompressionBlock(pump)) return false;
             break;
     }
 
@@ -90,7 +90,7 @@ static bool framePumpRecharge(FramePump *const pump, Sequence *const seq) {
     const double chargeTimeMs =
             (double) timeElapsedNs(start, timeGetNow()) / 1000000.0;
 
-    const uint32_t frameSize = sequenceGetFrameSize(seq);
+    const uint32_t frameSize = sequenceGet(SI_FRAME_SIZE);
 
     printf("loaded %d frames in %.4fms\n", pump->size / frameSize,
            chargeTimeMs);
@@ -99,13 +99,14 @@ static bool framePumpRecharge(FramePump *const pump, Sequence *const seq) {
 }
 
 bool framePumpGet(FramePump *const pump,
-                  Sequence *const seq,
-                  uint8_t **frameData) {
-    if (framePumpIsEmpty(pump) && !framePumpRecharge(pump, seq)) return false;
+                  const uint32_t currentFrame,
+                  uint8_t **const frameData) {
+    if (framePumpIsEmpty(pump) && !framePumpRecharge(pump, currentFrame))
+        return false;
 
     *frameData = &pump->frameData[pump->readIdx];
 
-    pump->readIdx += sequenceGetFrameSize(seq);
+    pump->readIdx += sequenceGet(SI_FRAME_SIZE);
 
     return true;
 }

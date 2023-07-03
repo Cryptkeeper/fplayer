@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "seq.h"
+#include <sds.h>
 
 typedef struct player_opts_t {
     char *sequenceFilePath;
@@ -17,8 +17,8 @@ typedef struct player_opts_t {
 
 void playerOptsFree(PlayerOpts *opts);
 
-void playerRun(PlayerOpts opts);
+sds playerGetRemaining(void);
 
-Sequence *playerGetPlaying(void);
+void playerRun(PlayerOpts opts);
 
 #endif//FPLAYER_PLAYER_H

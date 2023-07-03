@@ -3,10 +3,7 @@
 
 #include <stdint.h>
 
-#include "seq.h"
-
-void decompressBlock(Sequence *seq,
-                     int comBlockIndex,
+void decompressBlock(uint32_t comBlockIndex,
                      uint8_t **frameData,
                      uint32_t *size);
 

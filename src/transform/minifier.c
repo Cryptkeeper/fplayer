@@ -8,7 +8,7 @@
 #include "stb_ds.h"
 
 #include "../cmap.h"
-#include "../player.h"
+#include "../seq.h"
 #include "encode.h"
 #include "fade.h"
 #include "lor.h"
@@ -82,8 +82,7 @@ static void minifyEncodeRequest(struct encoding_request_t request,
 }
 
 static inline lor_time_t minifyGetFadeDuration(const Fade fade) {
-    const uint64_t ms =
-            playerGetPlaying()->header.frameStepTimeMillis * fade.frames;
+    const uint64_t ms = sequenceData()->frameStepTimeMillis * fade.frames;
 
     return lor_seconds_to_time((float) ms / 1000.0F);
 }

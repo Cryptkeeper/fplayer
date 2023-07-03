@@ -23,8 +23,17 @@ void playerOptsFree(PlayerOpts *opts) {
     freeAndNull((void **) &opts->audioOverrideFilePath);
 }
 
-static Sequence gPlaying;
 static FramePump gFramePump;
+
+static uint32_t gNextFrame;
+
+sds playerGetRemaining(void) {
+    const uint32_t framesRemaining = sequenceGet(SI_FRAME_SIZE) - gNextFrame;
+    const long seconds = framesRemaining / sequenceGet(SI_FPS);
+
+    return sdscatprintf(sdsempty(), "%02ldm %02lds", seconds / 60,
+                        seconds % 60);
+}
 
 static void playerLogStatus(void) {
     static timeInstant gLastLog;
@@ -35,11 +44,11 @@ static void playerLogStatus(void) {
 
     gLastLog = now;
 
-    sds remaining = sequenceGetRemaining(&gPlaying);
+    sds remaining = playerGetRemaining();
     sds sleep = sleepGetStatus();
     sds netstats = nsGetStatus();
 
-    const uint32_t frameSize = sequenceGetFrameSize(&gPlaying);
+    const uint32_t frameSize = sequenceGet(SI_FRAME_SIZE);
 
     printf("remaining: %s\tdt: %s\tpump: %4d\t%s\n", remaining, sleep,
            (gFramePump.size - gFramePump.readIdx) / frameSize, netstats);
@@ -56,10 +65,9 @@ static void playerFree(void) {
 }
 
 static bool playerHandleNextFrame(void) {
-    if (!sequenceNextFrame(&gPlaying)) return false;
+    if (gNextFrame >= sequenceGet(SI_FRAME_COUNT)) return false;
 
-    // maintain a copy of the previous frame to use for detecting differences
-    const uint32_t frameSize = sequenceGetFrameSize(&gPlaying);
+    const uint32_t frameSize = sequenceGet(SI_FRAME_SIZE);
 
     if (gLastFrameData == NULL) {
         gLastFrameData = mustMalloc(frameSize);
@@ -68,12 +76,12 @@ static bool playerHandleNextFrame(void) {
         memset(gLastFrameData, 0, frameSize);
     }
 
+    const uint32_t frame = gNextFrame++;
+
     // fetch the current frame data
     uint8_t *frameData = NULL;
 
-    if (!framePumpGet(&gFramePump, &gPlaying, &frameData)) return false;
-
-    const uint32_t frame = sequenceGetFrame(&gPlaying);
+    if (!framePumpGet(&gFramePump, frame, &frameData)) return false;
 
     serialWriteFrame(frameData, gLastFrameData, frameSize, frame);
 
@@ -87,11 +95,12 @@ static bool playerHandleNextFrame(void) {
     return true;
 }
 
-static void playerPlayFirstAudioFile(PlayerOpts opts) {
+static void playerPlayFirstAudioFile(const PlayerOpts opts,
+                                     const char *seqAudioFilePath) {
     // select the override, if set, otherwise fallback to the sequence's hint
-    const char *audioFilePath = opts.audioOverrideFilePath != NULL
-                                        ? opts.audioOverrideFilePath
-                                        : gPlaying.audioFilePath;
+    const char *const audioFilePath = opts.audioOverrideFilePath != NULL
+                                              ? opts.audioOverrideFilePath
+                                              : seqAudioFilePath;
 
     if (audioFilePath != NULL) {
         printf("preparing to play %s\n", audioFilePath);
@@ -124,36 +133,40 @@ static void playerWaitForConnection(PlayerOpts opts) {
     }
 }
 
-static void playerOverrunSkipFrames(int64_t ns) {
+static void playerOverrunSkipFrames(const int64_t ns) {
     const long millis = ns / 1000000;
 
-    if (millis <= gPlaying.header.frameStepTimeMillis) return;
+    const uint8_t frameTimeMs = sequenceData()->frameStepTimeMillis;
+
+    if (millis <= frameTimeMs) return;
 
     const int skippedFrames =
-            (int) ceil((double) (millis - gPlaying.header.frameStepTimeMillis) /
-                       (double) gPlaying.header.frameStepTimeMillis);
+            (int) ceil((double) (millis - frameTimeMs) / (double) frameTimeMs);
 
     if (skippedFrames == 0) return;
 
-    int64_t newFrame = gPlaying.currentFrame + skippedFrames;
+    int64_t newFrame = gNextFrame + skippedFrames;
 
-    if (newFrame > gPlaying.header.frameCount)
-        newFrame = gPlaying.header.frameCount;
+    const uint32_t max = sequenceGet(SI_FRAME_COUNT);
 
-    gPlaying.currentFrame = newFrame;
+    if (newFrame >= max) newFrame = max;
+
+    gNextFrame = (uint32_t) newFrame;
 
     printf("warning: skipping %d frames\n", skippedFrames);
 }
 
-static void playerStartPlayback(PlayerOpts opts) {
+static void playerStartPlayback(PlayerOpts opts, const char *seqAudioFilePath) {
     // optionally override the sequence's playback rate with the CLI's value
     if (opts.frameStepTimeOverrideMs > 0)
-        gPlaying.header.frameStepTimeMillis = opts.frameStepTimeOverrideMs;
+        sequenceData()->frameStepTimeMillis = opts.frameStepTimeOverrideMs;
 
-    playerPlayFirstAudioFile(opts);
+    playerPlayFirstAudioFile(opts, seqAudioFilePath);
+
+    freeAndNull((void **) &seqAudioFilePath);
 
     // start sequence timer loop
-    sleepTimerLoop(playerHandleNextFrame, gPlaying.header.frameStepTimeMillis,
+    sleepTimerLoop(playerHandleNextFrame, sequenceData()->frameStepTimeMillis,
                    playerOverrunSkipFrames);
 
     printf("turning off lights, waiting for end of audio...\n");
@@ -181,26 +194,19 @@ static void playerStartPlayback(PlayerOpts opts) {
 void playerRun(PlayerOpts opts) {
     playerWaitForConnection(opts);
 
-    // read and parse sequence file data
-    sequenceInit(&gPlaying);
+    const char *audioFilePath = NULL;
 
-    framePumpInit(&gFramePump);
+    sequenceOpen(opts.sequenceFilePath, &audioFilePath);
 
-    sequenceOpen(opts.sequenceFilePath, &gPlaying);
+    if (opts.precomputeFades) precomputeStart();
 
-    if (opts.precomputeFades) precomputeStart(&gPlaying);
-
-    playerStartPlayback(opts);
+    playerStartPlayback(opts, audioFilePath);
 
     fadeFree();
 
-    sequenceFree(&gPlaying);
+    sequenceFree();
 
     framePumpFree(&gFramePump);
 
     playerFree();
-}
-
-Sequence *playerGetPlaying(void) {
-    return &gPlaying;
 }

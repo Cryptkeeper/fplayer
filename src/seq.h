@@ -1,39 +1,32 @@
 #ifndef FPLAYER_SEQ_H
 #define FPLAYER_SEQ_H
 
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
-#include <sds.h>
+#include <pthread.h>
 
 #include <tinyfseq.h>
 
-typedef struct sequence_t {
-    FILE *openFile;
+typedef struct sequence_t Sequence;
 
-    struct tf_file_header_t header;
-    struct tf_compression_block_t *compressionBlocks;
+extern FILE *gFile;
+extern pthread_mutex_t gFileMutex;
 
-    char *audioFilePath;
+void sequenceOpen(const char *filepath, const char **audioFilePath);
 
-    int64_t currentFrame;
-} Sequence;
+void sequenceFree(void);
 
-void sequenceInit(Sequence *seq);
+struct tf_file_header_t *sequenceData(void) __attribute__((deprecated()));
 
-void sequenceOpen(const char *filepath, Sequence *seq);
+enum seq_info_t {
+    SI_FRAME_SIZE,
+    SI_FRAME_COUNT,
+    SI_FPS,
+};
 
-void sequenceFree(Sequence *seq);
+uint32_t sequenceGet(enum seq_info_t info);
 
-bool sequenceNextFrame(Sequence *seq);
-
-uint32_t sequenceGetFrameSize(const Sequence *seq);
-
-uint32_t sequenceGetFrame(const Sequence *seq);
-
-int sequenceGetFPS(const Sequence *seq);
-
-sds sequenceGetRemaining(const Sequence *seq);
+uint32_t sequenceCompressionBlockSize(int i);
 
 #endif//FPLAYER_SEQ_H

@@ -4,18 +4,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "seq.h"
-
 typedef struct frame_pump_t {
     uint8_t *frameData;
     uint32_t readIdx;
     uint32_t size;
-    int16_t comBlockIndex;
+    int16_t consumedComBlocks;
 } FramePump;
 
-void framePumpInit(FramePump *pump);
-
-bool framePumpGet(FramePump *pump, Sequence *seq, uint8_t **frameData);
+bool framePumpGet(FramePump *pump, uint32_t currentFrame, uint8_t **frameData);
 
 void framePumpFree(FramePump *pump);
 

@@ -14,74 +14,84 @@
 #include "std/err.h"
 #include "std/mem.h"
 
-void sequenceInit(Sequence *const seq) {
-    *seq = (Sequence){
-            // frame 0 is a valid frame id, use -1 as a sentinel value
-            // this requires oversizing currentFrame (int64_t) against frameCount (uint32_t)
-            .currentFrame = -1,
-    };
-}
+struct sequence_t {
+    struct tf_file_header_t header;
+    struct tf_compression_block_t *compressionBlocks;
+};
+
+FILE *gFile;
+pthread_mutex_t gFileMutex = PTHREAD_MUTEX_INITIALIZER;
+
+static Sequence gPlaying;
 
 #define COMPRESSION_BLOCK_SIZE 8
 
-static void sequenceTrimCompressionBlockCount(Sequence *const seq) {
+static void sequenceTrimCompressionBlockCount(void) {
     // a fseq file may include multiple empty compression blocks for padding purposes
     // these will appear with a 0 size value, trailing previously valid blocks
     // this function finds the first instance of a zero sized block and adjusts the
     // decoded compressionBlockCount to match
-    for (int i = 0; i < seq->header.compressionBlockCount; i++) {
-        if (seq->compressionBlocks[i].size == 0) {
+    for (int i = 0; i < gPlaying.header.compressionBlockCount; i++) {
+        if (gPlaying.compressionBlocks[i].size == 0) {
             printf("shrinking compression block count %d->%d\n",
-                   seq->header.compressionBlockCount, i);
+                   gPlaying.header.compressionBlockCount, i);
 
             // re-allocate the backing array to trim the empty compression block structs
             // this only saves a few bytes of memory, but more importantly ensures the
             // `compressionBlockCount` field accurately represents the `compressionBlocks`
             // array allocation length
-            seq->compressionBlocks = mustRealloc(seq->compressionBlocks,
-                                                 i * COMPRESSION_BLOCK_SIZE);
+            gPlaying.compressionBlocks = mustRealloc(
+                    gPlaying.compressionBlocks, i * COMPRESSION_BLOCK_SIZE);
 
-            seq->header.compressionBlockCount = i;
+            gPlaying.header.compressionBlockCount = i;
 
             return;
         }
     }
 }
 
-static void sequenceGetCompressionBlocks(FILE *f, Sequence *seq) {
-    const uint8_t comBlockCount = seq->header.compressionBlockCount;
+static void sequenceLoadCompressionBlocks(void) {
+    const uint8_t comBlockCount = gPlaying.header.compressionBlockCount;
 
     if (comBlockCount == 0) return;
 
     const uint16_t comDataSize = comBlockCount * COMPRESSION_BLOCK_SIZE;
 
-    struct tf_compression_block_t *compressionBlocks = seq->compressionBlocks =
-            mustMalloc(comDataSize);
+    struct tf_compression_block_t *compressionBlocks =
+            gPlaying.compressionBlocks = mustMalloc(comDataSize);
 
-    if (fseek(f, 32, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
+    pthread_mutex_lock(&gFileMutex);
 
-    if (fread(compressionBlocks, COMPRESSION_BLOCK_SIZE, comBlockCount, f) !=
-        comBlockCount)
+    if (fseek(gFile, 32, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
+
+    if (fread(compressionBlocks, COMPRESSION_BLOCK_SIZE, comBlockCount,
+              gFile) != comBlockCount)
         fatalf(E_FILE_IO, "unexpected end of compression blocks\n");
 
-    sequenceTrimCompressionBlockCount(seq);
+    pthread_mutex_unlock(&gFileMutex);
+
+    sequenceTrimCompressionBlockCount();
 }
 
 // 4 is the packed sizeof(struct tf_var_header_t)
 #define VAR_HEADER_SIZE    4
 #define MAX_VAR_VALUE_SIZE 512
 
-static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
-    const uint16_t varDataSize =
-            seq->header.channelDataOffset - seq->header.variableDataOffset;
+static const char *sequenceLoadAudioFilePath(void) {
+    const uint16_t varDataSize = gPlaying.header.channelDataOffset -
+                                 gPlaying.header.variableDataOffset;
 
-    if (fseek(f, seq->header.variableDataOffset, SEEK_SET) < 0)
+    pthread_mutex_lock(&gFileMutex);
+
+    if (fseek(gFile, gPlaying.header.variableDataOffset, SEEK_SET) < 0)
         fatalf(E_FILE_IO, NULL);
 
     uint8_t *varTable = mustMalloc(varDataSize);
 
-    if (fread(varTable, 1, varDataSize, f) != varDataSize)
+    if (fread(varTable, 1, varDataSize, gFile) != varDataSize)
         fatalf(E_FILE_IO, NULL);
+
+    pthread_mutex_unlock(&gFileMutex);
 
     struct tf_var_header_t varHeader;
     enum tf_err_t err;
@@ -89,6 +99,8 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
     uint8_t *readIdx = &varTable[0];
 
     char *varString = mustMalloc(MAX_VAR_VALUE_SIZE);
+
+    char *audioFilePath = NULL;
 
     for (int remaining = varDataSize; remaining > VAR_HEADER_SIZE;) {
         if ((err = tf_read_var_header(readIdx, remaining, &varHeader,
@@ -105,19 +117,24 @@ static void sequenceGetAudioFilePath(FILE *f, Sequence *seq) {
 
         // mf = Media File variable, contains audio filepath
         if (varHeader.id[0] == 'm' && varHeader.id[1] == 'f')
-            seq->audioFilePath = mustStrdup(varString);
+            audioFilePath = mustStrdup(varString);
 
         remaining -= varHeader.size;
     }
 
     freeAndNull((void **) &varTable);
     freeAndNull((void **) &varString);
+
+    return audioFilePath;
 }
 
 #define FSEQ_HEADER_SIZE 32
 
-void sequenceOpen(const char *filepath, Sequence *seq) {
-    FILE *f = seq->openFile = fopen(filepath, "rb");
+void sequenceOpen(const char *const filepath,
+                  const char **const audioFilePath) {
+    pthread_mutex_lock(&gFileMutex);
+
+    FILE *const f = gFile = fopen(filepath, "rb");
 
     if (f == NULL)
         fatalf(E_FILE_NOT_FOUND, "error opening sequence: %s\n", filepath);
@@ -127,54 +144,48 @@ void sequenceOpen(const char *filepath, Sequence *seq) {
     if (fread(b, 1, FSEQ_HEADER_SIZE, f) != FSEQ_HEADER_SIZE)
         fatalf(E_FILE_IO, NULL);
 
+    pthread_mutex_unlock(&gFileMutex);
+
     enum tf_err_t err;
 
-    if ((err = tf_read_file_header(b, sizeof(b), &seq->header, NULL)) != TF_OK)
+    if ((err = tf_read_file_header(b, sizeof(b), &gPlaying.header, NULL)) !=
+        TF_OK)
         fatalf(E_FATAL, "error parsing sequence header: %s\n", tf_err_str(err));
 
-    sequenceGetCompressionBlocks(f, seq);
+    sequenceLoadCompressionBlocks();
 
-    sequenceGetAudioFilePath(f, seq);
+    *audioFilePath = sequenceLoadAudioFilePath();
 }
 
-void sequenceFree(Sequence *seq) {
-    freeAndNullWith(&seq->openFile, fclose);
+void sequenceFree(void) {
+    pthread_mutex_lock(&gFileMutex);
 
-    freeAndNull((void **) &seq->compressionBlocks);
-    freeAndNull((void **) &seq->audioFilePath);
+    freeAndNullWith(&gFile, fclose);
+
+    pthread_mutex_unlock(&gFileMutex);
+
+    freeAndNull((void **) &gPlaying.compressionBlocks);
+
+    gPlaying = (Sequence){0};
 }
 
-bool sequenceNextFrame(Sequence *seq) {
-    if (seq->currentFrame >= seq->header.frameCount - 1) return false;
-
-    seq->currentFrame += 1;
-
-    return true;
+struct tf_file_header_t *sequenceData(void) {
+    return &gPlaying.header;
 }
 
-inline uint32_t sequenceGetFrameSize(const Sequence *seq) {
-    return seq->header.channelCount;
+uint32_t sequenceGet(const enum seq_info_t info) {
+    switch (info) {
+        case SI_FRAME_SIZE:
+            return gPlaying.header.channelCount;
+        case SI_FRAME_COUNT:
+            return gPlaying.header.frameCount;
+        case SI_FPS:
+            return 1000 / gPlaying.header.frameStepTimeMillis;
+    }
 }
 
-inline uint32_t sequenceGetFrame(const Sequence *const seq) {
-    // `currentFrame` is signed+oversized to enable -1 as a sentinel value
-    // it should never be -1 in this state, and can be downcasted to its
-    // true uint32 value
-    assert(seq->currentFrame >= 0 && seq->currentFrame <= UINT32_MAX);
+uint32_t sequenceCompressionBlockSize(int i) {
+    assert(i >= 0 && i < gPlaying.header.compressionBlockCount);
 
-    return (uint32_t) seq->currentFrame;
-}
-
-inline int sequenceGetFPS(const Sequence *seq) {
-    return 1000 / seq->header.frameStepTimeMillis;
-}
-
-sds sequenceGetRemaining(const Sequence *seq) {
-    long framesRemaining = seq->header.frameCount;
-    if (seq->currentFrame != -1) framesRemaining -= seq->currentFrame;
-
-    const long seconds = framesRemaining / sequenceGetFPS(seq);
-
-    return sdscatprintf(sdsempty(), "%02ldm %02lds", seconds / 60,
-                        seconds % 60);
+    return gPlaying.compressionBlocks[i].size;
 }
