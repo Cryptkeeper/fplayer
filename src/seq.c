@@ -36,30 +36,35 @@ static sds sequenceLoadAudioFilePath(void) {
 
     uint8_t *readIdx = &varTable[0];
 
-    char *varString = mustMalloc(MAX_VAR_VALUE_SIZE);
+    void *varData = mustMalloc(MAX_VAR_VALUE_SIZE);
 
-    char *audioFilePath = NULL;
+    sds audioFilePath = NULL;
 
     for (int remaining = varDataSize; remaining > VAR_HEADER_SIZE;) {
         if ((err = tf_read_var_header(readIdx, remaining, &varHeader,
-                                      (uint8_t *) varString, MAX_VAR_VALUE_SIZE,
+                                      (uint8_t *) varData, MAX_VAR_VALUE_SIZE,
                                       &readIdx)) != TF_OK)
             fatalf(E_FATAL, "error parsing sequence variable: %s\n",
                    tf_err_str(err));
+
+        // ensure the variable string value is null terminated
+        // size includes 4-byte structure, manually offset
+        sds varString = sdsnewlen(varData, varHeader.size - VAR_HEADER_SIZE);
+
         printf("var '%c%c': %s\n", varHeader.id[0], varHeader.id[1], varString);
 
         // mf = Media File variable, contains audio filepath
+        // caller is responsible for freeing `audioFilePath` copy return
         if (varHeader.id[0] == 'm' && varHeader.id[1] == 'f')
-            // ensure the variable string value is null terminated
-            // size includes 4-byte structure, manually offset
-            audioFilePath =
-                    sdsnewlen(varString, varHeader.size - VAR_HEADER_SIZE);
+            if (audioFilePath == NULL) audioFilePath = sdsdup(varString);
+
+        sdsfree(varString);
 
         remaining -= varHeader.size;
     }
 
+    freeAndNull((void **) &varData);
     freeAndNull((void **) &varTable);
-    freeAndNull((void **) &varString);
 
     return audioFilePath;
 }
