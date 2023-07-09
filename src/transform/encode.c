@@ -1,5 +1,7 @@
 #include "encode.h"
 
+#include <assert.h>
+
 #include "stb_ds.h"
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
@@ -9,6 +11,8 @@ uint16_t encodeStackGetMatches(const EncodeChange *const stack,
     uint16_t matches = 0;
 
     const int len = arrlen(stack);
+    assert(len > 0);
+
     const int max = len < 16 ? len : 16;
 
     for (int i = 0; i < max; i++) {
