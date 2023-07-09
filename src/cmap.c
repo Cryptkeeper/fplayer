@@ -80,8 +80,9 @@ static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
 
         if (nCols != 5) {
             fprintf(stderr,
-                    "invalid channel map entry: `%s`, requires 5 columns\n",
-                    row);
+                    "invalid channel map entry L%d: `%s`, requires 5 "
+                    "comma-seperated values\n",
+                    i, row);
 
             *cmapParseErrs = true;
 
@@ -90,7 +91,8 @@ static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
 
         for (int j = 0; j < nCols; j++) {
             if (sdslen(cols[j]) == 0) {
-                fprintf(stderr, "empty channel map entry column: %d\n", j);
+                fprintf(stderr, "empty channel map entry column L%d: C%d\n", i,
+                        j);
 
                 *cmapParseErrs = true;
 
@@ -103,9 +105,7 @@ static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
         sds error = channelRangeValidate(channelRange);
 
         if (error != NULL) {
-            fprintf(stderr,
-                    "error registering unmappable channel range L%d: %s\n", i,
-                    error);
+            fprintf(stderr, "unmappable channel range L%d: %s\n", i, error);
 
             sdsfree(error);
 
