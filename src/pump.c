@@ -41,6 +41,8 @@ static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
     // the frames list of all individually free-able frames
     uint8_t **frames = NULL;
 
+    arrsetcap(frames, framesRead);
+
     for (uint32_t i = 0; i < framesRead; i++) {
         uint8_t *const frame = mustMalloc(frameSize);
 
