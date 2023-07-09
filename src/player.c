@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include <lightorama/heartbeat.h>
+#include <stb_ds.h>
 
 #include "audio.h"
 #include "comblock.h"
@@ -79,9 +80,7 @@ static void playerLogStatus(void) {
     sds netstats = nsGetStatus();
 
     printf("remaining: %s\tdt: %s\tpump: %4d\t%s\n", remaining, sleep,
-           (gFramePump.size - gFramePump.readIdx) /
-                   sequenceData()->channelCount,
-           netstats);
+           (int) (arrlen(gFramePump.frames) - gFramePump.head), netstats);
 
     sdsfree(remaining);
     sdsfree(sleep);
@@ -103,9 +102,7 @@ static bool playerHandleNextFrame(void) {
     const uint32_t frame = gNextFrame++;
 
     // fetch the current frame data
-    uint8_t *frameData = NULL;
-
-    if (!framePumpGet(&gFramePump, frame, &frameData)) return false;
+    const uint8_t *const frameData = framePumpGet(&gFramePump, frame);
 
     serialWriteFrame(frameData, gLastFrameData, frameSize, frame);
 

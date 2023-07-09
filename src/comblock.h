@@ -5,7 +5,7 @@
 
 void comBlocksInit(void);
 
-void comBlockGet(int index, uint8_t **frameData, uint32_t *size);
+uint8_t **comBlockGet(int index);
 
 void comBlocksFree(void);
 

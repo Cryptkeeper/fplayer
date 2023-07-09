@@ -1,20 +1,24 @@
 #include "pump.h"
 
+#include <assert.h>
+#include <stdbool.h>
+#include <string.h>
+
+#include <stb_ds.h>
+
 #include "comblock.h"
 #include "seq.h"
 #include "std/err.h"
 #include "std/mem.h"
 #include "std/time.h"
 
-static void framePumpChargeSequentialRead(FramePump *const pump,
-                                          const uint32_t currentFrame) {
+static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
     const uint32_t frameSize = sequenceData()->channelCount;
 
     // generates a frame data buffer of 5 seconds worth of playback
     const uint32_t reqFrameCount = sequenceFPS() * 5;
 
-    if (pump->frameData == NULL)
-        pump->frameData = mustMalloc(frameSize * reqFrameCount);
+    uint8_t *frameData = mustMalloc(frameSize * reqFrameCount);
 
     pthread_mutex_lock(&gFileMutex);
 
@@ -22,93 +26,95 @@ static void framePumpChargeSequentialRead(FramePump *const pump,
         fatalf(E_FILE_IO, NULL);
 
     const unsigned long framesRead =
-            fread(pump->frameData, frameSize, reqFrameCount, gFile);
+            fread(frameData, frameSize, reqFrameCount, gFile);
 
     pthread_mutex_unlock(&gFileMutex);
 
     if (framesRead < 1) fatalf(E_FILE_IO, "unexpected end of frame data\n");
 
-    pump->readIdx = 0;
-    pump->size = framesRead * frameSize;
+    // most of this is a modified copy of how `comblock.c` handles generating
+    // the frames list of all individually free-able frames
+    uint8_t **frames = NULL;
+
+    for (uint32_t i = 0; i < framesRead; i++) {
+        uint8_t *const frame = mustMalloc(frameSize);
+
+        memcpy(frame, &frameData[i * frameSize], frameSize);
+
+        arrput(frames, frame);
+    }
+
+    freeAndNull((void **) &frameData);
+
+    return frames;
 }
 
-static bool framePumpChargeCompressionBlock(FramePump *const pump) {
+static uint8_t **framePumpChargeCompressionBlock(FramePump *const pump) {
     if (pump->consumedComBlocks >= sequenceData()->compressionBlockCount)
-        return true;
+        return NULL;
 
-    const int comBlockIndex = pump->consumedComBlocks++;
-
-    uint8_t *frameData = NULL;
-    uint32_t size = 0;
-
-    comBlockGet(comBlockIndex, &frameData, &size);
-
-    const uint32_t frameSize = sequenceData()->channelCount;
-
-    // the decompressed size should be a product of the frameSize
-    // otherwise the data decompressed incorrectly
-    if (size % frameSize != 0)
-        fatalf(E_FATAL,
-               "decompressed frame data size (%d) is not multiple of frame "
-               "size (%d)\n",
-               size, frameSize);
-
-    // free previously decompressed block prior to overwriting reference
-    freeAndNull((void **) &pump->frameData);
-
-    pump->frameData = frameData;
-    pump->readIdx = 0;
-    pump->size = size;
-
-    return false;
+    return comBlockGet(pump->consumedComBlocks++);
 }
 
-static bool framePumpIsEmpty(const FramePump *const pump) {
-    return pump->readIdx >= pump->size;
+static inline bool framePumpIsEmpty(const FramePump *const pump) {
+    return pump->head >= arrlen(pump->frames);
 }
 
-static bool framePumpRecharge(FramePump *const pump,
+static void framePumpRecharge(FramePump *const pump,
                               const uint32_t currentFrame) {
     const timeInstant start = timeGetNow();
+
+    uint8_t **frames = NULL;
 
     // recharge pump depending on the compression type
     switch (sequenceData()->compressionType) {
         case TF_COMPRESSION_NONE:
-            framePumpChargeSequentialRead(pump, currentFrame);
+            frames = framePumpChargeSequentialRead(currentFrame);
             break;
-
         case TF_COMPRESSION_ZLIB:
         case TF_COMPRESSION_ZSTD:
-            if (framePumpChargeCompressionBlock(pump)) return false;
+            frames = framePumpChargeCompressionBlock(pump);
             break;
     }
 
-    if (framePumpIsEmpty(pump))
+    if (frames == NULL || arrlen(frames) == 0)
         fatalf(E_FATAL, "unexpected end of frame pump\n");
+
+    pump->frames = frames;
+    pump->head = 0;
 
     // check for performance issues after reading
     const double chargeTimeMs =
             (double) timeElapsedNs(start, timeGetNow()) / 1000000.0;
 
-    printf("loaded %d frames in %.4fms\n",
-           pump->size / sequenceData()->channelCount, chargeTimeMs);
-
-    return true;
+    printf("loaded %d frames in %.4fms\n", (int) arrlen(frames), chargeTimeMs);
 }
 
-bool framePumpGet(FramePump *const pump,
-                  const uint32_t currentFrame,
-                  uint8_t **const frameData) {
-    if (framePumpIsEmpty(pump) && !framePumpRecharge(pump, currentFrame))
-        return false;
+const uint8_t *framePumpGet(FramePump *const pump,
+                            const uint32_t currentFrame) {
+    if (framePumpIsEmpty(pump)) framePumpRecharge(pump, currentFrame);
 
-    *frameData = &pump->frameData[pump->readIdx];
+    const uint32_t frameSize = sequenceData()->channelCount;
 
-    pump->readIdx += sequenceData()->channelCount;
+    // copy the frame data entry to a central buffer that is exposed
+    // this enables us to internally free the frame allocation without another callback
+    if (pump->buffer == NULL) pump->buffer = mustMalloc(frameSize);
 
-    return true;
+    memcpy(pump->buffer, pump->frames[pump->head], frameSize);
+
+    // free previous frame data, not needed once copied
+    freeAndNull((void **) &pump->frames[pump->head++]);
+
+    return pump->buffer;
 }
 
-void framePumpFree(FramePump *pump) {
-    freeAndNull((void **) &pump->frameData);
+void framePumpFree(FramePump *const pump) {
+    // by the time a pump is freed, all frames should have already
+    // been consumed and freed by `framePumpGet` calls
+    for (int i = 0; i < arrlen(pump->frames); i++)
+        assert(pump->frames[i] == NULL);
+
+    arrfree(pump->frames);
+
+    freeAndNull((void **) pump->buffer);
 }

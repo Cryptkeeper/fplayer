@@ -74,10 +74,8 @@ static void comBlocksLoadAddrs(void) {
 }
 
 #ifdef ENABLE_ZSTD
-static void comBlockGetZstd(const int comBlockIndex,
-                            uint8_t **const frameData,
-                            uint32_t *const size) {
-    const ComBlock comBlock = gBlocks[comBlockIndex];
+static uint8_t **comBlockGetZstd(const int index) {
+    const ComBlock comBlock = gBlocks[index];
 
     const size_t dInSize = comBlock.size;
     void *dIn = mustMalloc(dInSize);
@@ -103,6 +101,8 @@ static void comBlockGetZstd(const int comBlockIndex,
             .pos = 0,
     };
 
+    uint8_t **frames = NULL;
+
     while (in.pos < in.size) {
         ZSTD_outBuffer out = {
                 .dst = dOut,
@@ -117,19 +117,34 @@ static void comBlockGetZstd(const int comBlockIndex,
                    "error while decompressing zstd stream: %s (%zu)\n",
                    ZSTD_getErrorName(err), err);
 
-        // append the decompressed data chunk to the full array
-        const size_t head = *size;
+        const uint32_t frameSize = sequenceData()->channelCount;
 
-        *size += out.pos;
-        *frameData = mustRealloc(*frameData, *size);
+        // the decompressed size should be a product of the frameSize
+        // otherwise the data (is most likely) decompressed incorrectly
+        if (out.pos % frameSize != 0)
+            fatalf(E_FATAL,
+                   "decompressed frame data size (%d) is not multiple of frame "
+                   "size (%d)\n",
+                   out.pos, frameSize);
 
-        memcpy(&(*frameData)[head], dOut, out.pos);
+        // break each chunk into its own allocation
+        // they are appended to a central, ordered table for playback
+        // this enables fplayer to free decompressed frame blocks as they are played
+        for (uint32_t i = 0; i < out.pos / frameSize; i++) {
+            uint8_t *const frame = mustMalloc(frameSize);
+
+            memcpy(frame, &dOut[i * frameSize], frameSize);
+
+            arrput(frames, frame);
+        }
     }
 
     freeAndNullWith(&ctx, ZSTD_freeDCtx);
 
     freeAndNull(&dIn);
     freeAndNull(&dOut);
+
+    return frames;
 }
 #endif
 
@@ -137,23 +152,17 @@ void comBlocksInit(void) {
     comBlocksLoadAddrs();
 }
 
-void comBlockGet(const int index,
-                 uint8_t **const frameData,
-                 uint32_t *const size) {
+uint8_t **comBlockGet(const int index) {
     const enum tf_ctype_t compression = sequenceData()->compressionType;
 
     switch (compression) {
-        case TF_COMPRESSION_ZSTD: {
 #ifdef ENABLE_ZSTD
-            comBlockGetZstd(index, frameData, size);
-#else
-            fatalf(E_FATAL, "zstd support disabled at build time\n");
+        case TF_COMPRESSION_ZSTD:
+            return comBlockGetZstd(index);
 #endif
-            break;
-        }
-
         default:
             fatalf(E_FATAL, "cannot decompress type: %d\n", compression);
+            return NULL;
     }
 }
 

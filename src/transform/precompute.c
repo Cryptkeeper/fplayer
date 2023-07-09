@@ -161,9 +161,7 @@ static bool precomputeHandleNextFrame(FramePump *const pump) {
     const uint32_t frame = gNextFrame++;
 
     // fetch the current frame data
-    uint8_t *frameData = NULL;
-
-    if (!framePumpGet(pump, frame, &frameData)) return false;
+    const uint8_t *const frameData = framePumpGet(pump, frame);
 
     if (hasPrevFrame) {
         for (uint32_t circuit = 0; circuit < frameSize; circuit++) {
