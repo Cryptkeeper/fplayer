@@ -21,7 +21,6 @@
 #include "cmap.h"
 #include "player.h"
 #include "serial.h"
-#include "std/mem.h"
 #include "std/parse.h"
 
 static void printUsage(void) {
@@ -93,7 +92,7 @@ static void printSerialEnumPorts(void) {
     for (int i = 0; i < arrlen(ports); i++) {
         printf("%s\n", ports[i]);
 
-        freeAndNullWith(&ports[i], sdsfree);
+        sdsfree(ports[i]);
     }
 
     arrfree(ports);
@@ -120,15 +119,15 @@ static int parseOpts(int argc, char **argv) {
                 return cReturnOK;
 
             case 'f':
-                gPlayerOpts.sequenceFilePath = mustStrdup(optarg);
+                gPlayerOpts.sequenceFilePath = sdsnew(optarg);
                 break;
 
             case 'c':
-                gPlayerOpts.channelMapFilePath = mustStrdup(optarg);
+                gPlayerOpts.channelMapFilePath = sdsnew(optarg);
                 break;
 
             case 'a':
-                gPlayerOpts.audioOverrideFilePath = mustStrdup(optarg);
+                gPlayerOpts.audioOverrideFilePath = sdsnew(optarg);
                 break;
 
             case 'r':
@@ -147,7 +146,7 @@ static int parseOpts(int argc, char **argv) {
                 break;
 
             case 'd':
-                gSerialOpts.devName = mustStrdup(optarg);
+                gSerialOpts.devName = sdsnew(optarg);
                 break;
 
             case 'b':

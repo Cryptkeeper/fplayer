@@ -7,10 +7,10 @@
 #include <sds.h>
 
 typedef struct player_opts_t {
-    char *sequenceFilePath;
-    char *audioOverrideFilePath;
+    sds sequenceFilePath;
+    sds channelMapFilePath;
+    sds audioOverrideFilePath;
     uint8_t frameStepTimeOverrideMs;
-    char *channelMapFilePath;
     uint8_t connectionWaitS;
     bool precomputeFades;
 } PlayerOpts;

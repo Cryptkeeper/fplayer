@@ -18,9 +18,9 @@
 #include "transform/precompute.h"
 
 void playerOptsFree(PlayerOpts *const opts) {
-    freeAndNull((void **) &opts->sequenceFilePath);
-    freeAndNull((void **) &opts->channelMapFilePath);
-    freeAndNull((void **) &opts->audioOverrideFilePath);
+    sdsfree(opts->sequenceFilePath);
+    sdsfree(opts->channelMapFilePath);
+    sdsfree(opts->audioOverrideFilePath);
 }
 
 static FramePump gFramePump;
@@ -51,10 +51,9 @@ static void playerWaitForConnection(const PlayerOpts opts) {
     }
 }
 
-static void playerPlayFirstAudioFile(const char *const override,
-                                     const char *const sequence) {
+static void playerPlayFirstAudioFile(sds override, sds sequence) {
     // select the override, if set, otherwise fallback to the sequence's hint
-    const char *const audioFilePath = override != NULL ? override : sequence;
+    sds audioFilePath = override != NULL ? override : sequence;
 
     if (audioFilePath != NULL) {
         printf("preparing to play %s\n", audioFilePath);
@@ -134,15 +133,14 @@ static void playerOverrunSkipFrames(const int64_t ns) {
     printf("warning: skipping %d frames\n", skippedFrames);
 }
 
-static void playerStartPlayback(const PlayerOpts opts,
-                                const char *mediaFilePath) {
+static void playerStartPlayback(const PlayerOpts opts, sds audioFilePath) {
     // optionally override the sequence's playback rate with the CLI's value
     if (opts.frameStepTimeOverrideMs > 0)
         sequenceData()->frameStepTimeMillis = opts.frameStepTimeOverrideMs;
 
-    playerPlayFirstAudioFile(opts.audioOverrideFilePath, mediaFilePath);
+    playerPlayFirstAudioFile(opts.audioOverrideFilePath, audioFilePath);
 
-    freeAndNull((void **) &mediaFilePath);
+    sdsfree(audioFilePath);
 
     // start sequence timer loop
     sleepTimerLoop(playerHandleNextFrame, sequenceData()->frameStepTimeMillis,
@@ -177,7 +175,7 @@ static void playerFree(void) {
 void playerRun(const PlayerOpts opts) {
     playerWaitForConnection(opts);
 
-    const char *audioFilePath = NULL;
+    sds audioFilePath = NULL;
 
     sequenceOpen(opts.sequenceFilePath, &audioFilePath);
 

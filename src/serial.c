@@ -36,7 +36,7 @@ static inline void spPrintError(enum sp_return err) {
     } while (0)
 
 void serialOptsFree(SerialOpts *opts) {
-    freeAndNull((void **) &opts->devName);
+    sdsfree(opts->devName);
 }
 
 static struct sp_port *gPort;

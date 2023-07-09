@@ -6,12 +6,13 @@
 
 #include <pthread.h>
 
+#include <sds.h>
 #include <tinyfseq.h>
 
 extern FILE *gFile;
 extern pthread_mutex_t gFileMutex;
 
-void sequenceOpen(const char *filepath, const char **audioFilePath);
+void sequenceOpen(sds filepath, sds *audioFilePath);
 
 void sequenceFree(void);
 

@@ -6,7 +6,7 @@
 #include <sds.h>
 
 typedef struct serial_opts_t {
-    char *devName;
+    sds devName;
     int baudRate;
 } SerialOpts;
 

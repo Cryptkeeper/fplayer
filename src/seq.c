@@ -1,5 +1,6 @@
 #include "seq.h"
 
+#include <sds.h>
 #include <tinyfseq.h>
 
 #include "std/err.h"
@@ -14,7 +15,7 @@ static struct tf_file_header_t gPlaying;
 #define VAR_HEADER_SIZE    4
 #define MAX_VAR_VALUE_SIZE 512
 
-static const char *sequenceLoadAudioFilePath(void) {
+static sds sequenceLoadAudioFilePath(void) {
     const uint16_t varDataSize =
             gPlaying.channelDataOffset - gPlaying.variableDataOffset;
 
@@ -45,16 +46,14 @@ static const char *sequenceLoadAudioFilePath(void) {
                                       &readIdx)) != TF_OK)
             fatalf(E_FATAL, "error parsing sequence variable: %s\n",
                    tf_err_str(err));
-
-        // ensure the variable string value is null terminated
-        // size includes 4-byte structure, manually offset
-        varString[varHeader.size - 1 - VAR_HEADER_SIZE] = '\0';
-
         printf("var '%c%c': %s\n", varHeader.id[0], varHeader.id[1], varString);
 
         // mf = Media File variable, contains audio filepath
         if (varHeader.id[0] == 'm' && varHeader.id[1] == 'f')
-            audioFilePath = mustStrdup(varString);
+            // ensure the variable string value is null terminated
+            // size includes 4-byte structure, manually offset
+            audioFilePath =
+                    sdsnewlen(varString, varHeader.size - VAR_HEADER_SIZE);
 
         remaining -= varHeader.size;
     }
@@ -67,8 +66,7 @@ static const char *sequenceLoadAudioFilePath(void) {
 
 #define FSEQ_HEADER_SIZE 32
 
-void sequenceOpen(const char *const filepath,
-                  const char **const audioFilePath) {
+void sequenceOpen(sds filepath, sds *const audioFilePath) {
     pthread_mutex_lock(&gFileMutex);
 
     FILE *const f = gFile = fopen(filepath, "rb");
