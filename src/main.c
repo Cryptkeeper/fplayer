@@ -51,8 +51,11 @@ static void printVersions(void) {
 #ifdef ENABLE_OPENAL
     printf("ALUT %d.%d\n", alutGetMajorVersion(), alutGetMinorVersion());
     printf("OpenAL %s\n", alGetString(AL_VERSION));
+#else
+    printf("ALUT disabled\n");
+    printf("OpenAL disabled\n");
 #endif
-    
+
     printf("libtinyfseq %s\n", TINYFSEQ_VERSION);
     printf("libserialport %s\n", SP_PACKAGE_VERSION_STRING);
 
