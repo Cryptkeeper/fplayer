@@ -202,5 +202,5 @@ void framePumpFree(FramePump *const pump) {
 
     arrfree(pump->frames);
 
-    freeAndNull((void **) pump->buffer);
+    freeAndNull((void **) &pump->buffer);
 }
