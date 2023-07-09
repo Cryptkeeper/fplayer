@@ -1,7 +1,10 @@
 #include <getopt.h>
 #include <stdio.h>
 
+#ifdef ENABLE_OPENAL
 #include <AL/alut.h>
+#endif
+
 #include <libserialport.h>
 
 #ifdef ENABLE_ZSTD
@@ -45,10 +48,13 @@ static void printUsage(void) {
 }
 
 static void printVersions(void) {
+#ifdef ENABLE_OPENAL
     printf("ALUT %d.%d\n", alutGetMajorVersion(), alutGetMinorVersion());
+    printf("OpenAL %s\n", alGetString(AL_VERSION));
+#endif
+    
     printf("libtinyfseq %s\n", TINYFSEQ_VERSION);
     printf("libserialport %s\n", SP_PACKAGE_VERSION_STRING);
-    printf("OpenAL %s\n", alGetString(AL_VERSION));
 
 #ifdef ENABLE_ZSTD
     printf("zstd %s\n", ZSTD_versionString());

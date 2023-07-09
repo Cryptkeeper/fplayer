@@ -23,7 +23,7 @@ target_include_directories(fplayer PRIVATE libtinyfseq sds stb)
 
 target_link_libraries(fplayer lightorama m serialport)
 
-set(USE_OPENAL true)
+option(USE_OPENAL "enable audio playback via alut+openal" true)
 
 if (USE_OPENAL)
     target_link_libraries(fplayer alut)
@@ -37,7 +37,7 @@ if (USE_OPENAL)
     add_compile_definitions(ENABLE_OPENAL)
 endif ()
 
-set(USE_ZSTD true)
+option(USE_ZSTD "enable zstd decompression at playback" true)
 
 if (USE_ZSTD)
     target_link_libraries(fplayer zstd)
