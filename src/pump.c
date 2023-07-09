@@ -152,17 +152,16 @@ static FramePump *framePumpPreloadGet(void) {
 }
 
 static bool framePumpSwapPreload(FramePump *const pump) {
-    FramePump *const nextPump = framePumpPreloadGet();
+    FramePump *nextPump = framePumpPreloadGet();
 
     if (nextPump == NULL) return false;
 
-    // attempt to swap to the preloaded frame pump, if any
-    // otherwise block the playback loop while the next frames are loaded
+    // frees old pump's internal allocations, but not `pump` itself
     framePumpFree(pump);
 
-    memcpy(pump, nextPump, sizeof(FramePump));
+    *pump = *nextPump;
 
-    free(nextPump);
+    freeAndNull((void **) &nextPump);
 
     return true;
 }
@@ -177,8 +176,8 @@ const uint8_t *framePumpGet(FramePump *const pump,
 
         const uint32_t threshold = sequenceFPS() / 5;
 
-        // once we hit the 10 frames remaining warning, hint at starting a
-        // job thread for pre-processing the next frame pump chunk
+        // once we hit the `threshold` frames remaining warning, hint at starting
+        // a job thread for pre-loading the next frame pump chunk
         if (remaining > 0 && remaining <= threshold) {
             const uint32_t startFrame = currentFrame + remaining;
 
