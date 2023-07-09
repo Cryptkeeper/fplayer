@@ -44,7 +44,9 @@ fplayer offloads deserialization and encoding work to my other libraries,
 [libtinyfseq](https://github.com/Cryptkeeper/libtinyfseq) and
 [liblightorama](https://github.com/Cryptkeeper/liblightorama). Both are provided as git submodules and are built locally via the CMake build configuration. You do not need to install these.
 
-You provide: OpenAL, an ALUT-compatible library (e.g. freealut), libserialport, and zstd (optional).
+You must provide: libserialport
+
+You optionally (but should) provide: OpenAL, an ALUT-compatible library, and zstd.
 
 I have included a few package manager commands below to install the dependencies. You can definitely build it on other platforms, but you'll be responsible for ensuring the dependencies are found and linked.
 
@@ -53,6 +55,16 @@ I have included a few package manager commands below to install the dependencies
 
 ### Ubuntu
 ```apt-get install -y libopenal-dev libalut-dev libserialport-dev libzstd-dev```
+
+## Setup
+
+1. Clone the repository and its submodules: `git clone --recursive git@github.com:Cryptkeeper/fplayer.git`
+2. Build the CMake project with `cmake . -DUSE_OPENAL=true -DUSE_ZSTD=true`
+3. Compile the project with `make .`
+
+`-DUSE_OPENAL=true` and `-DUSE_ZSTD=true` are optional arguments (default to true) that allow you to strip out the specified dependencies. This enables easier build customization for environments where the user may not benefit from the inclusion of either dependency.
+
+`fplayer -v` will print the dependency versions used, and if any are disabled in the CMake configuration, they will be marked with a "disabled" tag.
 
 ## Artifacts
 macOS and Ubuntu build downloads are available as artifacts via [Actions](https://github.com/Cryptkeeper/fplayer/actions).
