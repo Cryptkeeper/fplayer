@@ -10,6 +10,8 @@ typedef struct frame_pump_t {
     int16_t consumedComBlocks;
 } FramePump;
 
+uint32_t framePumpGetRemaining(const FramePump *pump);
+
 const uint8_t *framePumpGet(FramePump *pump, uint32_t currentFrame);
 
 void framePumpFree(FramePump *pump);

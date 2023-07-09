@@ -1,7 +1,6 @@
 #include "pump.h"
 
 #include <assert.h>
-#include <stdbool.h>
 #include <string.h>
 
 #include <stb_ds.h>
@@ -11,6 +10,10 @@
 #include "std/err.h"
 #include "std/mem.h"
 #include "std/time.h"
+
+uint32_t framePumpGetRemaining(const FramePump *pump) {
+    return arrlen(pump->frames) - pump->head;
+}
 
 static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
     const uint32_t frameSize = sequenceData()->channelCount;
@@ -56,10 +59,6 @@ static uint8_t **framePumpChargeCompressionBlock(FramePump *const pump) {
     return comBlockGet(pump->consumedComBlocks++);
 }
 
-static inline bool framePumpIsEmpty(const FramePump *const pump) {
-    return pump->head >= arrlen(pump->frames);
-}
-
 static void framePumpRecharge(FramePump *const pump,
                               const uint32_t currentFrame) {
     const timeInstant start = timeGetNow();
@@ -92,7 +91,7 @@ static void framePumpRecharge(FramePump *const pump,
 
 const uint8_t *framePumpGet(FramePump *const pump,
                             const uint32_t currentFrame) {
-    if (framePumpIsEmpty(pump)) framePumpRecharge(pump, currentFrame);
+    if (framePumpGetRemaining(pump) == 0) framePumpRecharge(pump, currentFrame);
 
     const uint32_t frameSize = sequenceData()->channelCount;
 

@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include <lightorama/heartbeat.h>
-#include <stb_ds.h>
 
 #include "audio.h"
 #include "comblock.h"
@@ -80,7 +79,7 @@ static void playerLogStatus(void) {
     sds netstats = nsGetStatus();
 
     printf("remaining: %s\tdt: %s\tpump: %4d\t%s\n", remaining, sleep,
-           (int) (arrlen(gFramePump.frames) - gFramePump.head), netstats);
+           framePumpGetRemaining(&gFramePump), netstats);
 
     sdsfree(remaining);
     sdsfree(sleep);
