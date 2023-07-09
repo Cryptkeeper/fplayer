@@ -45,6 +45,12 @@ if (USE_ZSTD)
     add_compile_definitions(ENABLE_ZSTD)
 endif ()
 
+option(USE_PTHREAD "enable pthread frame pre-buffering" true)
+
+if (USE_PTHREAD)
+    add_compile_definitions(ENABLE_PTHREAD)
+endif ()
+
 add_compile_options(-Wall -Wextra -pedantic)
 
 # silence macOS OpenAL deprecation warning messages

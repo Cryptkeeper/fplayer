@@ -2,7 +2,9 @@
 
 A work-in-progress C99 [fseq file](http://github.com/Cryptkeeper/fseq-file-format) player (like [xLights](http://github.com/smeighan/xLights) and [Falcon Player/fpp](https://github.com/FalconChristmas/fpp)) for [Light-O-Rama](https://lightorama.com) hardware. This project is a way for me to explore solutions to a better version of my previous project, [libreorama](https://github.com/Cryptkeeper/libreorama).
 
-Use `fplayer -h` to show program usage and get started. You'll need an fseq file of your choosing, and its audio file (if any). You may attach a Light-O-Rama device (note its serial port device name), but it is not required for the program to playback a sequence. A default channel map is included (`channels.csv`) for use with `-c` (`-c=channels.csv`), but you will likely want to modify it in the future.
+Use `fplayer -h` to show program usage and get started.
+
+You'll need an fseq file of your choosing, and its audio file (if any). You may attach a Light-O-Rama device (note its serial port device name or list available serial ports with `fplayer -l`), but it is not required for the program to playback a sequence. A default channel map is included (`channels.csv`) for use with `-c` (`-c=channels.csv`), but you will likely want to modify it in the future.
 
 ```
 Usage: fplayer -f=FILE -c=FILE [options] ...
@@ -60,10 +62,10 @@ I have included a few package manager commands below to install the dependencies
 ## Setup
 
 1. Clone the repository and its submodules: `git clone --recursive git@github.com:Cryptkeeper/fplayer.git`
-2. Build the CMake project with `cmake . -DUSE_OPENAL=true -DUSE_ZSTD=true`
+2. Build the CMake project with `cmake . -DUSE_OPENAL=true -DUSE_ZSTD=true -DUSE_PTHREAD=true`
 3. Compile the project with `make`
 
-`-DUSE_OPENAL=true` and `-DUSE_ZSTD=true` are optional arguments (default to true) that allow you to strip out the specified dependencies. This enables easier build customization for environments where the user may not benefit from the inclusion of either dependency.
+`-DUSE_OPENAL=true`, `-DUSE_ZSTD=true`, and `-DUSE_PTHREAD=true` are optional arguments (default to true) that allow you to strip out the specified dependencies. This enables easier build customization for environments where the user may not benefit from the inclusion of either dependency. For hardware that doesn't benefit from multithreading, disabling pthread usage will make cause the async frame buffer pre-loading to run sync/blocking within the main program loop.
 
 `fplayer -v` will print the dependency versions used, and if any are disabled in the CMake configuration, they will be marked with a "disabled" tag.
 

@@ -3,7 +3,9 @@
 #include <assert.h>
 #include <string.h>
 
+#ifdef ENABLE_PTHREAD
 #include <pthread.h>
+#endif
 
 #include <stb_ds.h>
 
@@ -95,6 +97,7 @@ static void framePumpRecharge(FramePump *const pump,
            (int) arrlen(frames), chargeTimeMs);
 }
 
+#ifdef ENABLE_PTHREAD
 struct frame_pump_thread_args_t {
     uint32_t startFrame;
     int16_t consumedComBlocks;
@@ -148,10 +151,28 @@ static FramePump *framePumpPreloadGet(void) {
     return (FramePump *) args;
 }
 
+static bool framePumpSwapPreload(FramePump *const pump) {
+    FramePump *const nextPump = framePumpPreloadGet();
+
+    if (nextPump == NULL) return false;
+
+    // attempt to swap to the preloaded frame pump, if any
+    // otherwise block the playback loop while the next frames are loaded
+    framePumpFree(pump);
+
+    memcpy(pump, nextPump, sizeof(FramePump));
+
+    free(nextPump);
+
+    return true;
+}
+#endif
+
 const uint8_t *framePumpGet(FramePump *const pump,
                             const uint32_t currentFrame,
                             const bool recharge) {
     if (recharge) {
+#ifdef ENABLE_PTHREAD
         const uint32_t remaining = framePumpGetRemaining(pump);
 
         const uint32_t threshold = sequenceFPS() / 5;
@@ -164,22 +185,18 @@ const uint8_t *framePumpGet(FramePump *const pump,
             if (startFrame < sequenceData()->frameCount)
                 framePumpHintPreload(startFrame, pump->consumedComBlocks);
         }
+#endif
     }
 
     if (framePumpGetRemaining(pump) == 0) {
-        FramePump *const nextPump = framePumpPreloadGet();
-
+#ifdef ENABLE_PTHREAD
         // attempt to swap to the preloaded frame pump, if any
         // otherwise block the playback loop while the next frames are loaded
-        if (nextPump != NULL) {
-            framePumpFree(pump);
-
-            memcpy(pump, nextPump, sizeof(FramePump));
-
-            free(nextPump);
-        } else {
+        if (!framePumpSwapPreload(pump))
             framePumpRecharge(pump, currentFrame, false);
-        }
+#else
+        framePumpRecharge(pump, currentFrame, false);
+#endif
     }
 
     const uint32_t frameSize = sequenceData()->channelCount;
