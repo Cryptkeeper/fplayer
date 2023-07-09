@@ -88,6 +88,9 @@ static int testConfigurations(const char *filepath) {
 
     channelMapFree();
 
+    if (parseErrs)
+        fprintf(stderr, "warning: channel map parsing errors detected!\n");
+
     return parseErrs ? cReturnErr : cReturnOK;
 }
 

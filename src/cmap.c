@@ -10,19 +10,36 @@
 #include "std/mem.h"
 #include "std/parse.h"
 
-static ChannelRange *gRanges;
-
-static bool channelRangeIsMappable(const ChannelRange range) {
+static sds channelRangeValidate(const ChannelRange range) {
     const int64_t rid = range.eid - range.sid;
-    if (rid < 0) return false;
+
+    if (rid < 0)
+        return sdscatprintf(sdsempty(),
+                            "start ID (%d, C0) is greater than end ID (%d, C1)",
+                            range.sid, range.eid);
 
     const int rcircuit = range.ecircuit - range.scircuit;
-    if (rcircuit < 0) return false;
+
+    if (rcircuit < 0)
+        return sdscatprintf(
+                sdsempty(),
+                "start circuit (%d, C3) is greater than end circuit (%d, C4)",
+                range.scircuit, range.ecircuit);
 
     // LOR values should be 1-indexed
-    if (range.unit == 0 || range.scircuit == 0) return false;
+    if (range.unit == 0 || range.scircuit == 0)
+        return sdscatprintf(
+                sdsempty(),
+                "unit (%d, C2) and start circuit (%d, C3) should be >=1",
+                range.unit, range.scircuit);
 
-    return rid == rcircuit;
+    if (rid != rcircuit)
+        return sdscatprintf(sdsempty(),
+                            "ID range (%lld values) must be equal in "
+                            "length to circuit range (%d values)",
+                            rid, rcircuit);
+
+    return NULL;
 }
 
 static ChannelRange channelRangeParseColumns(sds *cols, int nCols) {
@@ -38,6 +55,8 @@ static ChannelRange channelRangeParseColumns(sds *cols, int nCols) {
 
     return cr;
 }
+
+static ChannelRange *gRanges;
 
 static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
     sds buf = sdsnew(b);
@@ -81,9 +100,14 @@ static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
 
         const ChannelRange channelRange = channelRangeParseColumns(cols, nCols);
 
-        if (!channelRangeIsMappable(channelRange)) {
-            fatalf(E_FATAL, "error registering unmappable channel range: L%d\n",
-                   i);
+        sds error = channelRangeValidate(channelRange);
+
+        if (error != NULL) {
+            fatalf(E_FATAL,
+                   "error registering unmappable channel range L%d: %s\n", i,
+                   error);
+
+            sdsfree(error);
 
             *cmapParseErrs = true;
 

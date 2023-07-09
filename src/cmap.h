@@ -9,9 +9,7 @@ typedef struct channel_range_t ChannelRange;
 struct channel_range_t {
     uint32_t sid;
     uint32_t eid;
-
     uint8_t unit;
-
     uint16_t scircuit;
     uint16_t ecircuit;
 };
