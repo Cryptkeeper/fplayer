@@ -14,7 +14,7 @@ struct channel_range_t {
     uint16_t ecircuit;
 };
 
-void channelMapInit(const char *filepath, bool *cmapParseErrs);
+void channelMapInit(const char *filepath);
 
 bool channelMapFind(uint32_t id, uint8_t *unit, uint16_t *circuit);
 

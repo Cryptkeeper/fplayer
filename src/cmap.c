@@ -58,13 +58,15 @@ static ChannelRange channelRangeParseColumns(sds *cols, int nCols) {
 
 static ChannelRange *gRanges;
 
-static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
+static void channelMapParseCSV(const char *const b) {
     sds buf = sdsnew(b);
 
     int nRows = 0;
     sds *rows = sdssplitlen(buf, sdslen(buf), "\n", 1, &nRows);
 
     sdsfree(buf);
+
+    int ignoredRows = 0;
 
     for (int i = 0; i < nRows; i++) {
         sds row = rows[i];
@@ -84,7 +86,7 @@ static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
                     "comma-seperated values\n",
                     i, row);
 
-            *cmapParseErrs = true;
+            ignoredRows++;
 
             goto continue_free;
         }
@@ -94,7 +96,7 @@ static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
                 fprintf(stderr, "empty channel map entry column L%d: C%d\n", i,
                         j);
 
-                *cmapParseErrs = true;
+                ignoredRows++;
 
                 goto continue_free;
             }
@@ -109,7 +111,7 @@ static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
 
             sdsfree(error);
 
-            *cmapParseErrs = true;
+            ignoredRows++;
 
             goto continue_free;
         }
@@ -124,9 +126,13 @@ static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
 
     printf("configured %d valid channel map entries(s)\n",
            (int) arrlen(gRanges));
+
+    if (ignoredRows > 0)
+        fprintf(stderr, "warning: %d invalid channel map entries ignored\n",
+                ignoredRows);
 }
 
-void channelMapInit(const char *filepath, bool *cmapParseErrs) {
+void channelMapInit(const char *const filepath) {
     FILE *f = fopen(filepath, "rb");
 
     if (f == NULL)
@@ -145,7 +151,7 @@ void channelMapInit(const char *filepath, bool *cmapParseErrs) {
 
     fclose(f);
 
-    channelMapParseCSV(b, cmapParseErrs);
+    channelMapParseCSV(b);
 
     // cleanup local resources in same scope as allocation
     freeAndNull((void **) &b);

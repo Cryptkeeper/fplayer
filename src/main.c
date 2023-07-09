@@ -81,17 +81,10 @@ static SerialOpts gSerialOpts = {
 #define cReturnErr 1 /* early return, 1 */
 #define cContinue  2 /* no return */
 
-static int testConfigurations(const char *filepath) {
-    bool parseErrs = false;
-
-    channelMapInit(filepath, &parseErrs);
+static void testConfigurations(const char *const filepath) {
+    channelMapInit(filepath);
 
     channelMapFree();
-
-    if (parseErrs)
-        fprintf(stderr, "warning: channel map parsing errors detected!\n");
-
-    return parseErrs ? cReturnErr : cReturnOK;
 }
 
 static void printSerialEnumPorts(void) {
@@ -111,7 +104,8 @@ static int parseOpts(int argc, char **argv) {
     while ((c = getopt(argc, argv, ":t:lhvf:c:a:r:w:pd:b:")) != -1) {
         switch (c) {
             case 't':
-                return testConfigurations(optarg);
+                testConfigurations(optarg);
+                return cReturnOK;
 
             case 'l':
                 printSerialEnumPorts();
@@ -194,12 +188,7 @@ int main(int argc, char **argv) {
     argv += optind;
 
     // load required app context configs
-    bool cmapParseErrs = false;
-
-    channelMapInit(gPlayerOpts.channelMapFilePath, &cmapParseErrs);
-
-    if (cmapParseErrs)
-        fprintf(stderr, "warning: channel map parsing errors detected!\n");
+    channelMapInit(gPlayerOpts.channelMapFilePath);
 
     // initialize core subsystems
     audioInit(&argc, argv);
