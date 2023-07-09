@@ -134,8 +134,9 @@ static uint8_t **comBlockGetZstd(const int index) {
         // this enables fplayer to free decompressed frame blocks as they are played
         for (uint32_t i = 0; i < out.pos / frameSize; i++) {
             uint8_t *const frame = mustMalloc(frameSize);
+            uint8_t *const src = &((uint8_t *) dOut)[i * frameSize];
 
-            memcpy(frame, &dOut[i * frameSize], frameSize);
+            memcpy(frame, src, frameSize);
 
             arrput(frames, frame);
         }
