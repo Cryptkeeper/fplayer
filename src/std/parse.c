@@ -6,14 +6,18 @@
 
 #include "err.h"
 
-static inline long clampLong(long l, long min, long max) {
+static inline long clampLong(const long l, const long min, const long max) {
     if (l <= min) return min;
     else if (l >= max)
         return max;
     return l;
 }
 
-void parseLong(const char *s, void *i, int n, long min, long max) {
+void parseLong(const char *const s,
+               void *const i,
+               const int n,
+               const long min,
+               const long max) {
     if (s == NULL || strlen(s) == 0) goto fail;
 
     char *endptr = NULL;
