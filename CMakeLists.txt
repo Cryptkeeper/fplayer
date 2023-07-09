@@ -21,7 +21,7 @@ add_subdirectory(liblightorama)
 
 target_include_directories(fplayer PRIVATE libtinyfseq sds stb)
 
-target_link_libraries(fplayer lightorama m alut serialport zstd)
+target_link_libraries(fplayer lightorama m alut serialport)
 
 if (APPLE)
     target_link_libraries(fplayer "-framework OpenAL")
@@ -29,9 +29,15 @@ else ()
     target_link_libraries(fplayer openal)
 endif ()
 
-add_compile_options(-Wall -Wextra -pedantic)
+set(USE_ZSTD true)
 
-add_compile_definitions(ENABLE_ZSTD)
+if (USE_ZSTD)
+    target_link_libraries(fplayer zstd)
+
+    add_compile_definitions(ENABLE_ZSTD)
+endif ()
+
+add_compile_options(-Wall -Wextra -pedantic)
 
 # silence macOS OpenAL deprecation warning messages
 if (APPLE)
