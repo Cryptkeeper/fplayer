@@ -3,15 +3,12 @@
 #include <stb_ds.h>
 
 #ifdef ENABLE_ZSTD
-#include <string.h>
-
 #include <zstd.h>
-
-#include "std/mem.h"
 #endif
 
 #include "seq.h"
 #include "std/err.h"
+#include "std/mem.h"
 
 #define COMPRESSION_BLOCK_SIZE 8
 
