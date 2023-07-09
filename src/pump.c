@@ -65,6 +65,15 @@ static uint8_t **framePumpChargeCompressionBlock(FramePump *const pump) {
     return comBlockGet(pump->consumedComBlocks++);
 }
 
+static void framePumpFreeFrames(FramePump *const pump) {
+    // by the time a pump is freed, all frames should have already
+    // been consumed and freed by `framePumpGet` calls
+    for (int i = 0; i < arrlen(pump->frames); i++)
+        assert(pump->frames[i] == NULL);
+
+    arrfree(pump->frames);
+}
+
 static void framePumpRecharge(FramePump *const pump,
                               const uint32_t currentFrame,
                               const bool preload) {
@@ -85,6 +94,8 @@ static void framePumpRecharge(FramePump *const pump,
 
     if (frames == NULL || arrlen(frames) == 0)
         fatalf(E_FATAL, "unexpected end of frame pump\n");
+
+    if (pump->frames != NULL) framePumpFreeFrames(pump);
 
     pump->frames = frames;
     pump->head = 0;
@@ -213,12 +224,7 @@ const uint8_t *framePumpGet(FramePump *const pump,
 }
 
 void framePumpFree(FramePump *const pump) {
-    // by the time a pump is freed, all frames should have already
-    // been consumed and freed by `framePumpGet` calls
-    for (int i = 0; i < arrlen(pump->frames); i++)
-        assert(pump->frames[i] == NULL);
-
-    arrfree(pump->frames);
+    framePumpFreeFrames(pump);
 
     freeAndNull((void **) &pump->buffer);
 }
