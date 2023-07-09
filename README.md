@@ -23,6 +23,7 @@ Options:
 
 [CLI]
 	-t <file>		Test load channel map and exit
+	-l			Print available serial port list and exit
 	-h			Print this message and exit
 	-v			Print library versions and exit
 ```
@@ -60,7 +61,7 @@ I have included a few package manager commands below to install the dependencies
 
 1. Clone the repository and its submodules: `git clone --recursive git@github.com:Cryptkeeper/fplayer.git`
 2. Build the CMake project with `cmake . -DUSE_OPENAL=true -DUSE_ZSTD=true`
-3. Compile the project with `make .`
+3. Compile the project with `make`
 
 `-DUSE_OPENAL=true` and `-DUSE_ZSTD=true` are optional arguments (default to true) that allow you to strip out the specified dependencies. This enables easier build customization for environments where the user may not benefit from the inclusion of either dependency.
 
