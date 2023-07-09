@@ -11,7 +11,10 @@
 #include <zstd.h>
 #endif
 
+#define STB_DS_IMPLEMENTATION
 #include <stb_ds.h>
+
+#define TINYFSEQ_IMPLEMENTATION
 #include <tinyfseq.h>
 
 #include "audio.h"

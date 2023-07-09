@@ -1,9 +1,6 @@
 #include "seq.h"
 
-#define TINYFSEQ_IMPLEMENTATION
 #include <tinyfseq.h>
-
-#include "stb_ds.h"
 
 #include "std/err.h"
 #include "std/mem.h"

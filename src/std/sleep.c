@@ -1,8 +1,6 @@
 #include "sleep.h"
 
 #include <math.h>
-#include <stdint.h>
-#include <stdio.h>
 
 #include "time.h"
 
