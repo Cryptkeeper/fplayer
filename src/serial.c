@@ -167,3 +167,24 @@ static void serialPortFree(struct sp_port *const port) {
 void serialExit(void) {
     freeAndNullWith(&gPort, serialPortFree);
 }
+
+sds *serialEnumPorts(void) {
+    struct sp_port **pl;
+
+    spTry(sp_list_ports(&pl));
+
+    sds *ports = NULL;
+
+    // https://github.com/martinling/libserialport/blob/master/examples/list_ports.c#L28
+    for (int i = 0; pl[i] != NULL; i++) {
+        const struct sp_port *const port = pl[i];
+
+        sds name = sdsnew(sp_get_port_name(port));
+
+        arrput(ports, name);
+    }
+
+    sp_free_port_list(pl);
+
+    return ports;
+}

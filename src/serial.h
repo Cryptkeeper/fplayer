@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <sds.h>
+
 typedef struct serial_opts_t {
     char *devName;
     int baudRate;
@@ -22,5 +24,7 @@ void serialWriteFrame(const uint8_t *frameData,
                       uint32_t frame);
 
 void serialExit(void);
+
+sds *serialEnumPorts(void);
 
 #endif//FPLAYER_SERIAL_H

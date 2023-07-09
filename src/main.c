@@ -11,6 +11,7 @@
 #include <zstd.h>
 #endif
 
+#include <stb_ds.h>
 #include <tinyfseq.h>
 
 #include "audio.h"
@@ -43,6 +44,7 @@ static void printUsage(void) {
 
     printf("\n[CLI]\n");
     printf("\t-t <file>\t\tTest load channel map and exit\n");
+    printf("\t-l\t\t\tPrint available serial port list and exit\n");
     printf("\t-h\t\t\tPrint this message and exit\n");
     printf("\t-v\t\t\tPrint library versions and exit\n");
 }
@@ -86,12 +88,28 @@ static int testConfigurations(const char *filepath) {
     return parseErrs ? cReturnErr : cReturnOK;
 }
 
+static void printSerialEnumPorts(void) {
+    sds *ports = serialEnumPorts();
+
+    for (int i = 0; i < arrlen(ports); i++) {
+        printf("%s\n", ports[i]);
+
+        freeAndNullWith(&ports[i], sdsfree);
+    }
+
+    arrfree(ports);
+}
+
 static int parseOpts(int argc, char **argv) {
     int c;
-    while ((c = getopt(argc, argv, ":t:hvf:c:a:r:w:pd:b:")) != -1) {
+    while ((c = getopt(argc, argv, ":t:lhvf:c:a:r:w:pd:b:")) != -1) {
         switch (c) {
             case 't':
                 return testConfigurations(optarg);
+
+            case 'l':
+                printSerialEnumPorts();
+                return cReturnOK;
 
             case 'h':
                 printUsage();
