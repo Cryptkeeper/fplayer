@@ -2,42 +2,44 @@
 
 #include <stddef.h>
 
-int gNSPackets = 0;
-int gNSFades = 0;
-int gNSSaved = 0;
-int gNSSize = 0;
+netstat_t gNSPackets = 0;
+netstat_t gNSFades = 0;
+netstat_t gNSSaved = 0;
+netstat_t gNSWritten = 0;
 
-static int gNSPacketsSum;
-static int gNSSavedSum;
-static int gNSSizeSum;
+static netstat_t gNSPacketsSum;
+static netstat_t gNSSavedSum;
+static netstat_t gNSWrittenSum;
 
 #define gStatsCount 4
 
-// a table with each entry being a [0: int *, 1: int *] pair of a tracked stat
-// and its matching sum accumulator variable
-static int *gStats[gStatsCount][2] = {
+// a table with each entry being a [0: netstat_t *, 1: netstat_t *] pair of a
+// tracked stat and its matching sum accumulator variable
+static netstat_t *gStats[gStatsCount][2] = {
         {&gNSPackets, &gNSPacketsSum},
         {&gNSFades, NULL},
         {&gNSSaved, &gNSSavedSum},
-        {&gNSSize, &gNSSizeSum},
+        {&gNSWritten, &gNSWrittenSum},
 };
 
-static float nsGetCompressionRatio(const int saved, const int size) {
+static float nsGetCompressionRatio(const netstat_t saved,
+                                   const netstat_t size) {
     return (float) saved / (float) (saved + size);
 }
 
 sds nsGetStatus(void) {
-    const float kb = (float) gNSSize / 1024.0F;
+    const float kb = (float) gNSWritten / 1024.0F;
 
-    const float cr = nsGetCompressionRatio(gNSSaved, gNSSize);
+    const float cr = nsGetCompressionRatio(gNSSaved, gNSWritten);
 
     sds str = sdscatprintf(
-            sdsempty(), "%.03f KB/s\tfades: %d\tpackets: %d\tcompressed: %.02f",
-            kb, gNSFades, gNSPackets, cr);
+            sdsempty(),
+            "%.03f KB/s\tfades: %llu\tpackets: %llu\tcompressed: %.02f", kb,
+            gNSFades, gNSPackets, cr);
 
     for (int i = 0; i < gStatsCount; i++) {
-        int *const last = gStats[i][0];
-        int *const sum = gStats[i][1];
+        netstat_t *const last = gStats[i][0];
+        netstat_t *const sum = gStats[i][1];
 
         if (sum != NULL) *sum += *last;
 
@@ -48,10 +50,10 @@ sds nsGetStatus(void) {
 }
 
 sds nsGetSummary(void) {
-    const float cr = nsGetCompressionRatio(gNSSavedSum, gNSSizeSum);
+    const float cr = nsGetCompressionRatio(gNSSavedSum, gNSWrittenSum);
 
-    return sdscatprintf(
-            sdsempty(),
-            "transferred %d bytes via %d packets, saved %d bytes (%.0f%%)",
-            gNSSizeSum, gNSPacketsSum, gNSSavedSum, cr * 100);
+    return sdscatprintf(sdsempty(),
+                        "transferred %llu bytes via %llu packets, saved %llu "
+                        "bytes (%.0f%%)",
+                        gNSWrittenSum, gNSPacketsSum, gNSSavedSum, cr * 100);
 }

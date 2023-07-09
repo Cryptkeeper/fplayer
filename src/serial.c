@@ -79,7 +79,7 @@ void serialInit(const SerialOpts opts) {
 }
 
 static void serialWrite(const uint8_t *const b, const int size) {
-    gNSSize += size;
+    gNSWritten += size;
 
     switch (gSrc) {
         case SERIAL_NULL:
