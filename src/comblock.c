@@ -71,6 +71,8 @@ static void comBlocksLoadAddrs(void) {
 
         offset += block.size;
     }
+
+    freeAndNull((void **) &b);
 }
 
 #ifdef ENABLE_ZSTD
