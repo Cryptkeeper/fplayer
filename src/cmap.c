@@ -103,9 +103,9 @@ static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
         sds error = channelRangeValidate(channelRange);
 
         if (error != NULL) {
-            fatalf(E_FATAL,
-                   "error registering unmappable channel range L%d: %s\n", i,
-                   error);
+            fprintf(stderr,
+                    "error registering unmappable channel range L%d: %s\n", i,
+                    error);
 
             sdsfree(error);
 
@@ -122,7 +122,8 @@ static void channelMapParseCSV(const char *b, bool *cmapParseErrs) {
 
     sdsfreesplitres(rows, nRows);
 
-    printf("configured %d channel map entries(s)\n", (int) arrlen(gRanges));
+    printf("configured %d valid channel map entries(s)\n",
+           (int) arrlen(gRanges));
 }
 
 void channelMapInit(const char *filepath, bool *cmapParseErrs) {
