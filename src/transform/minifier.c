@@ -35,11 +35,8 @@ static void minifyEncodeRequest(struct encoding_request_t request,
     assert(request.circuits > 0);
     assert(request.nCircuits > 0);
 
-    struct netstats_update_t update = {
-            .packets = 1,
-            // only fades are >1 frame by the hardware's design
-            .fades = request.nFrames > 1 ? 1 : 0,
-    };
+    gNSPackets += 1;
+    gNSFades += request.nFrames > 1 ? 1 : 0;// only fades are >1 frame
 
     if (request.nCircuits == 1) {
         assert(request.groupOffset == 0);
@@ -53,7 +50,7 @@ static void minifyEncodeRequest(struct encoding_request_t request,
         if (request.effect == LOR_EFFECT_FADE) {
             // 4 bytes per individual set normally + 2 bytes padding each
             // +2 to written size since it doesn't include padding yet
-            update.saved = request.nFrames * 6 - (size + 2);
+            gNSSaved += request.nFrames * 6 - (size + 2);
         }
     } else {
         const int size = lor_write_channelset_effect(
@@ -72,11 +69,9 @@ static void minifyEncodeRequest(struct encoding_request_t request,
 
         // if the effect is sent once, mark the individual step frames as saved
         // +2 to written size since it doesn't include padding yet
-        update.saved = (request.nFrames * request.nCircuits * ungroupedSize) -
-                       (size + 2);
+        gNSSaved += (request.nFrames * request.nCircuits * ungroupedSize) -
+                    (size + 2);
     }
-
-    nsRecord(update);
 
     bufflush(false, write);
 }

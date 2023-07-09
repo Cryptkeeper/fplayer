@@ -79,9 +79,7 @@ void serialInit(const SerialOpts opts) {
 }
 
 static void serialWrite(const uint8_t *const b, const int size) {
-    nsRecord((struct netstats_update_t){
-            .size = size,
-    });
+    gNSSize += size;
 
     switch (gSrc) {
         case SERIAL_NULL:
@@ -108,9 +106,7 @@ void serialWriteHeartbeat(void) {
 
     bufflush(false, serialWrite);
 
-    nsRecord((struct netstats_update_t){
-            .packets = 1,
-    });
+    gNSPackets++;
 }
 
 static void serialWriteThrottledHeartbeat(void) {
@@ -139,9 +135,7 @@ void serialWriteAllOff(void) {
 
     bufflush(true, serialWrite);
 
-    nsRecord((struct netstats_update_t){
-            .packets = arrlen(uids),
-    });
+    gNSPackets += arrlen(uids);
 }
 
 void serialWriteFrame(const uint8_t *const frameData,
