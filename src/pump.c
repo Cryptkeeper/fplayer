@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <string.h>
 
+#include <pthread.h>
+
 #include <stb_ds.h>
 
 #include "comblock.h"
@@ -60,7 +62,8 @@ static uint8_t **framePumpChargeCompressionBlock(FramePump *const pump) {
 }
 
 static void framePumpRecharge(FramePump *const pump,
-                              const uint32_t currentFrame) {
+                              const uint32_t currentFrame,
+                              const bool preload) {
     const timeInstant start = timeGetNow();
 
     uint8_t **frames = NULL;
@@ -86,12 +89,96 @@ static void framePumpRecharge(FramePump *const pump,
     const double chargeTimeMs =
             (double) timeElapsedNs(start, timeGetNow()) / 1000000.0;
 
-    printf("loaded %d frames in %.4fms\n", (int) arrlen(frames), chargeTimeMs);
+    printf("%s %d frames in %.4fms\n", preload ? "pre-loaded" : "loaded",
+           (int) arrlen(frames), chargeTimeMs);
+}
+
+struct frame_pump_thread_args_t {
+    uint32_t startFrame;
+    int16_t consumedComBlocks;
+};
+
+static void *framePumpThread(void *pargs) {
+    const struct frame_pump_thread_args_t args =
+            *((struct frame_pump_thread_args_t *) pargs);
+
+    FramePump *const framePump = mustMalloc(sizeof(FramePump));
+
+    *framePump = (FramePump){
+            .consumedComBlocks = args.consumedComBlocks,
+    };
+
+    framePumpRecharge(framePump, args.startFrame, true);
+
+    pthread_exit(framePump);
+}
+
+// https://www.austingroupbugs.net/view.php?id=599
+#define PTHREAD_NULL ((pthread_t) NULL)
+
+static pthread_t gPumpThread = PTHREAD_NULL;
+static struct frame_pump_thread_args_t gThreadArgs;
+
+static void framePumpHintPreload(const uint32_t startFrame,
+                                 const int16_t consumedComBlocks) {
+    if (gPumpThread != PTHREAD_NULL) return;
+
+    gThreadArgs.startFrame = startFrame;
+    gThreadArgs.consumedComBlocks = consumedComBlocks;
+
+    int err;
+    if ((err = pthread_create(&gPumpThread, NULL, framePumpThread,
+                              &gThreadArgs)) != 0)
+        fatalf(E_FATAL, "error creating pthread: %d\n", err);
+}
+
+static FramePump *framePumpPreloadGet(void) {
+    if (gPumpThread == PTHREAD_NULL) return NULL;
+
+    void *args = NULL;
+
+    int err;
+    if ((err = pthread_join(gPumpThread, &args)) != 0)
+        fatalf(E_FATAL, "error joining pthread: %d\n", err);
+
+    gPumpThread = PTHREAD_NULL;
+
+    return (FramePump *) args;
 }
 
 const uint8_t *framePumpGet(FramePump *const pump,
-                            const uint32_t currentFrame) {
-    if (framePumpGetRemaining(pump) == 0) framePumpRecharge(pump, currentFrame);
+                            const uint32_t currentFrame,
+                            const bool recharge) {
+    if (recharge) {
+        const uint32_t remaining = framePumpGetRemaining(pump);
+
+        const uint32_t threshold = sequenceFPS() / 5;
+
+        // once we hit the 10 frames remaining warning, hint at starting a
+        // job thread for pre-processing the next frame pump chunk
+        if (remaining > 0 && remaining <= threshold) {
+            const uint32_t startFrame = currentFrame + remaining;
+
+            if (startFrame < sequenceData()->frameCount)
+                framePumpHintPreload(startFrame, pump->consumedComBlocks);
+        }
+    }
+
+    if (framePumpGetRemaining(pump) == 0) {
+        FramePump *const nextPump = framePumpPreloadGet();
+
+        // attempt to swap to the preloaded frame pump, if any
+        // otherwise block the playback loop while the next frames are loaded
+        if (nextPump != NULL) {
+            framePumpFree(pump);
+
+            memcpy(pump, nextPump, sizeof(FramePump));
+
+            free(nextPump);
+        } else {
+            framePumpRecharge(pump, currentFrame, false);
+        }
+    }
 
     const uint32_t frameSize = sequenceData()->channelCount;
 

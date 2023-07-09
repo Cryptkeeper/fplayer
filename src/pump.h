@@ -1,6 +1,7 @@
 #ifndef FPLAYER_PUMP_H
 #define FPLAYER_PUMP_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef struct frame_pump_t {
@@ -12,7 +13,8 @@ typedef struct frame_pump_t {
 
 uint32_t framePumpGetRemaining(const FramePump *pump);
 
-const uint8_t *framePumpGet(FramePump *pump, uint32_t currentFrame);
+const uint8_t *
+framePumpGet(FramePump *pump, uint32_t currentFrame, bool recharge);
 
 void framePumpFree(FramePump *pump);
 

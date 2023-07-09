@@ -101,7 +101,7 @@ static bool playerHandleNextFrame(void) {
     const uint32_t frame = gNextFrame++;
 
     // fetch the current frame data
-    const uint8_t *const frameData = framePumpGet(&gFramePump, frame);
+    const uint8_t *const frameData = framePumpGet(&gFramePump, frame, true);
 
     serialWriteFrame(frameData, gLastFrameData, frameSize, frame);
 
