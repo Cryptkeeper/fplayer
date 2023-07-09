@@ -21,12 +21,20 @@ add_subdirectory(liblightorama)
 
 target_include_directories(fplayer PRIVATE libtinyfseq sds stb)
 
-target_link_libraries(fplayer lightorama m alut serialport)
+target_link_libraries(fplayer lightorama m serialport)
 
-if (APPLE)
-    target_link_libraries(fplayer "-framework OpenAL")
-else ()
-    target_link_libraries(fplayer openal)
+set(USE_OPENAL true)
+
+if (USE_OPENAL)
+    target_link_libraries(fplayer alut)
+
+    if (APPLE)
+        target_link_libraries(fplayer "-framework OpenAL")
+    else ()
+        target_link_libraries(fplayer openal)
+    endif ()
+
+    add_compile_definitions(ENABLE_OPENAL)
 endif ()
 
 set(USE_ZSTD true)
