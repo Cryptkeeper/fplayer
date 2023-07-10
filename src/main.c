@@ -24,31 +24,31 @@
 #include "std/parse.h"
 
 static void printUsage(void) {
-    printf("Usage: fplayer -f=FILE -c=FILE [options] ...\n");
+    printf("Usage: fplayer -f=FILE -c=FILE [options] ...\n\n"
 
-    printf("\nOptions:\n");
+           "Options:\n\n"
 
-    printf("\n[Playback]\n");
-    printf("\t-f <file>\t\tFSEQ v2 sequence file path (required)\n");
-    printf("\t-c <file>\t\tNetwork channel map file path (required)\n");
-    printf("\t-d <device name|stdout>\tDevice name for serial port "
-           "connection\n");
-    printf("\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n");
-    printf("\t-p\t\t\tPrecompute fades for smoother playback and reduced "
-           "bandwidth (experimental)\n");
+           "[Playback]\n"
+           "\t-f <file>\t\tFSEQ v2 sequence file path (required)\n"
+           "\t-c <file>\t\tNetwork channel map file path (required)\n"
+           "\t-d <device name|stdout>\tDevice name for serial port "
+           "connection\n"
+           "\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n"
+           "\t-p\t\t\tPrecompute fades for smoother playback and reduced "
+           "bandwidth (experimental)\n\n"
 
-    printf("\n[Controls]\n");
-    printf("\t-a <file>\t\tOverride audio with specified filepath\n");
-    printf("\t-r <frame ms>\t\tOverride playback frame rate interval (in "
-           "milliseconds)\n");
-    printf("\t-w <seconds>\t\tPlayback start delay to allow connection "
-           "setup\n");
+           "[Controls]\n"
+           "\t-a <file>\t\tOverride audio with specified filepath\n"
+           "\t-r <frame ms>\t\tOverride playback frame rate interval (in "
+           "milliseconds)\n"
+           "\t-w <seconds>\t\tPlayback start delay to allow connection "
+           "setup\n\n"
 
-    printf("\n[CLI]\n");
-    printf("\t-t <file>\t\tTest load channel map and exit\n");
-    printf("\t-l\t\t\tPrint available serial port list and exit\n");
-    printf("\t-h\t\t\tPrint this message and exit\n");
-    printf("\t-v\t\t\tPrint library versions and exit\n");
+           "[CLI]\n"
+           "\t-t <file>\t\tTest load channel map and exit\n"
+           "\t-l\t\t\tPrint available serial port list and exit\n"
+           "\t-h\t\t\tPrint this message and exit\n"
+           "\t-v\t\t\tPrint library versions and exit\n");
 }
 
 static void printVersions(void) {
