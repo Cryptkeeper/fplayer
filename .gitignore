@@ -5,6 +5,7 @@
 *.mp3
 *.wav
 *.fseq
+*.pcf
 
 # CMake
 cmake-build-debug/

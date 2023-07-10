@@ -1,7 +1,7 @@
 #ifndef FPLAYER_PRECOMPUTE_H
 #define FPLAYER_PRECOMPUTE_H
 
-void precomputeRun(void);
+void precomputeRun(const char *fp);
 
 void precomputeFree(void);
 

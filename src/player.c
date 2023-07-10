@@ -181,7 +181,14 @@ void playerRun(const PlayerOpts opts) {
 
     comBlocksInit();
 
-    if (opts.precomputeFades) precomputeRun();
+    if (opts.precomputeFades) {
+        sds cacheFilePath =
+                sdscatprintf(sdsempty(), "%s.pcf", opts.sequenceFilePath);
+
+        precomputeRun(cacheFilePath);
+
+        sdsfree(cacheFilePath);
+    }
 
     playerStartPlayback(opts, audioFilePath);
 

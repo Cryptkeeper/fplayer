@@ -1,7 +1,10 @@
 #include "fade.h"
 
+#include <assert.h>
+
 #include "stb_ds.h"
 
+#include "../pcf/pcf.h"
 #include "../std/mem.h"
 
 struct frame_fade_kvp_t {
@@ -14,7 +17,7 @@ struct frame_data_t {
 };
 
 struct frame_data_kvp_t {
-    uint32_t key;
+    uint32_t key;// frame id
     struct frame_data_t value;
 };
 
@@ -93,6 +96,120 @@ void fadePush(const uint32_t startFrame, const uint32_t id, const Fade fade) {
 
 int fadeTableSize(void) {
     return (int) hmlen(gFades);
+}
+
+struct handle_remap_t {
+    int key;        /* handle */
+    uint32_t value; /* index */
+};
+
+bool fadeTableCache(const char *const fp) {
+    pcf_file_t file = {NULL};
+
+    struct handle_remap_t *remaps = NULL;
+
+    for (uint32_t i = 0; i < hmlen(gFrames); i++) {
+        const struct frame_data_kvp_t data = gFrames[i];
+
+        pcf_event_t *events = NULL;
+
+        arrsetcap(events, hmlen(data.value.fades));
+
+        for (uint32_t j = 0; j < hmlen(data.value.fades); j++) {
+            // map of (uint32_t circuit) to (int handle)
+            const struct frame_fade_kvp_t frame = data.value.fades[j];
+
+            // lookup fade reference
+            const struct fade_handle_kvp_t *fade =
+                    hmgetp_null(gFades, frame.value);
+
+            assert(fade != NULL);
+
+            // only export fades at their start frame points, not trailing effects
+            if (fade->value.fade.startFrame != data.key) continue;
+
+            // remap the handle to the deduplicated, flat index
+            uint32_t index = 0;
+
+            // check if fade handle has already been deduplicated
+            struct handle_remap_t *const remap =
+                    hmgetp_null(remaps, frame.value);
+
+            if (remap != NULL) {
+                index = remap->value;
+            } else {
+                bool didMatch = false;
+
+                // check if the underlying fade matches another handle's fade
+                // this is the primary dedupe mechanism
+                for (uint32_t k = 0; k < arrlen(file.fades); k++) {
+                    const pcf_fade_t prevFade = file.fades[k];
+
+                    if (prevFade.from == fade->value.fade.from &&
+                        prevFade.to == fade->value.fade.to &&
+                        prevFade.frames == fade->value.fade.frames) {
+                        index = k;
+                        didMatch = true;
+
+                        break;
+                    }
+                }
+
+                // insert new fade for reference
+                // used by auto deduping above to generate a dictionary
+                if (!didMatch) {
+                    index = arrlen(file.fades);
+
+                    const pcf_fade_t newFade = (pcf_fade_t){
+                            .from = fade->value.fade.from,
+                            .to = fade->value.fade.to,
+                            .frames = fade->value.fade.frames,
+                    };
+
+                    arrput(file.fades, newFade);
+                }
+
+                // insert remap instruction for future usages of the handle
+                hmput(remaps, frame.value, index);
+            }
+
+            const pcf_event_t event = (pcf_event_t){
+                    .circuit = frame.key,
+                    .fade = index,
+            };
+
+            arrput(events, event);
+        }
+
+        if (arrlen(events) > 0) {
+            arrput(file.events, events);
+
+            const pcf_frame_t frame = (pcf_frame_t){
+                    .frame = data.key,
+                    .nEvents = arrlen(events),
+            };
+
+            arrput(file.frames, frame);
+
+            // safety check, mismatched array size returns could cause OOB access
+            assert(arrlen(file.frames) == arrlen(file.events));
+        } else {
+            arrfree(events);
+        }
+    }
+
+    hmfree(remaps);
+
+    const bool ok = pcfSave(fp, &file);
+
+    pcfFree(&file);
+
+    return ok;
+}
+
+bool fadeTableLoadCache(const char *const fp) {
+    // TODO
+    return false;
 }
 
 void fadeFrameFree(const uint32_t frame) {

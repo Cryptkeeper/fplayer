@@ -190,7 +190,16 @@ static void precomputeFlush(void) {
     }
 }
 
-void precomputeRun(void) {
+void precomputeRun(const char *const fp) {
+    if (fadeTableLoadCache(fp)) {
+        printf("loaded precomputed cache file: %s\n", fp);
+
+        return;
+    }
+
+    // no cache, start a fresh precompute
+    // step through each frame via a temporary frame pump and compare state changes
+    // all data MUST be freed prior to returning to playback init
     printf("precomputing fades...\n");
 
     FramePump pump = {0};
@@ -212,6 +221,12 @@ void precomputeRun(void) {
 
     printf("identified %d fade events (%d variants) in %dms\n", gFadesGenerated,
            fadeTableSize(), ms);
+
+    if (fadeTableCache(fp)) {
+        printf("saved precompute cache: %s\n", fp);
+    } else {
+        fprintf(stderr, "failed to save precompute cache: %s\n", fp);
+    }
 }
 
 void precomputeFree(void) {

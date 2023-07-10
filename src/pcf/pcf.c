@@ -1,0 +1,133 @@
+#include "pcf.h"
+
+#include <assert.h>
+#include <stdio.h>
+
+#include "stb_ds.h"
+
+#include "../std/mem.h"
+
+// (p)re-computed (c)ache (f)file v(1)
+// OR
+// (p)re-(c)omputed (f)ades v(1)
+#define pcfMagicSig                                                            \
+    { 'P', 'C', 'F', '1' }
+
+#define pcfMagicSig4 ((unsigned char[4]) pcfMagicSig)
+
+bool pcfOpen(const char *const fp, pcf_file_t *const file) {
+    FILE *f = fopen(fp, "rb");
+
+    if (f == NULL) return false;
+
+    pcf_directory_t dir = {0};
+    if (fread(&dir, sizeof(pcf_directory_t), 1, f) != 1) goto fail;
+
+    if (memcmp(dir.magic, pcfMagicSig4, sizeof(pcfMagicSig4)) != 0) goto fail;
+
+    pcf_fade_t *fades = NULL;
+
+    arrsetcap(fades, dir.nFades);
+
+    for (uint32_t i = 0; i < dir.nFades; i++) {
+        pcf_fade_t fade = {0};
+        if (fread(&fade, sizeof(fade), 1, f) != 1) goto fail;
+
+        arrput(fades, fade);
+    }
+
+    pcf_frame_t *frames = NULL;
+    pcf_event_t **eventsMatrix = NULL;
+
+    arrsetcap(frames, dir.nFrames);
+    arrsetcap(eventsMatrix, dir.nFrames);
+
+    for (uint32_t i = 0; i < dir.nFrames; i++) {
+        pcf_frame_t frame = {0};
+        if (fread(&frame, sizeof(frame), 1, f) != 1) goto fail;
+
+        arrput(frames, frame);
+
+        pcf_event_t *events = NULL;
+
+        arrsetcap(events, frame.nEvents);
+
+        for (uint32_t j = 0; j < frame.nEvents; j++) {
+            pcf_event_t event = {0};
+            if (fread(&event, sizeof(event), 1, f) != 1) goto fail;
+
+            arrput(events, event);
+        }
+
+        arrput(eventsMatrix, events);
+    }
+
+    freeAndNullWith(&f, fclose);
+
+    *file = (pcf_file_t){
+            .fades = fades,
+            .frames = frames,
+            .events = eventsMatrix,
+    };
+
+    return true;
+
+fail:
+    freeAndNullWith(&f, fclose);
+
+    // caller isn't responsible for freeing resources in fail return
+    pcfFree(file);
+
+    return false;
+}
+
+bool pcfSave(const char *const fp, const pcf_file_t *const file) {
+    FILE *f = fopen(fp, "wb");
+
+    if (f == NULL) return false;
+
+    const pcf_directory_t dir = (pcf_directory_t){
+            .magic = pcfMagicSig,
+            .nFades = arrlen(file->fades),
+            .nFrames = arrlen(file->frames),
+    };
+
+    if (fwrite(&dir, sizeof(dir), 1, f) != 1) goto fail;
+
+    for (uint32_t i = 0; i < dir.nFades; i++)
+        if (fwrite(&file->fades[i], sizeof(pcf_fade_t), 1, f) != 1) goto fail;
+
+    assert(arrlen(file->frames) == arrlen(file->events));
+
+    for (uint32_t i = 0; i < dir.nFrames; i++) {
+        const pcf_frame_t frame = file->frames[i];
+
+        if (fwrite(&frame, sizeof(frame), 1, f) != 1) goto fail;
+
+        for (uint32_t j = 0; j < frame.nEvents; j++)
+            if (fwrite(&file->events[i][j], sizeof(pcf_event_t), 1, f) != 1)
+                goto fail;
+    }
+
+    freeAndNullWith(&f, fclose);
+
+    return true;
+
+fail:
+    freeAndNullWith(&f, fclose);
+
+    // quick attempt at trying to delete corrupt file
+    remove(fp);
+
+    return false;
+}
+
+void pcfFree(pcf_file_t *const file) {
+    arrfree(file->fades);
+    arrfree(file->frames);
+
+    for (uint32_t i = 0; i < arrlen(file->events); i++)
+        arrfree(file->events[i]);
+
+    arrfree(file->events);
+}
