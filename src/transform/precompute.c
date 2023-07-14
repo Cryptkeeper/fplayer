@@ -65,14 +65,13 @@ static void precomputeHistoryFlush(const uint32_t id,
 
     gFadesGenerated++;
 
-    fadePush(history->startFrame, id,
-             (Fade){
-                     .from = history->firstIntensity,
-                     .to = history->lastIntensity,
-                     .startFrame = history->startFrame,
-                     .frames = history->frames,
-                     .type = history->type,
-             });
+    fadePush(id, (Fade){
+                         .from = history->firstIntensity,
+                         .to = history->lastIntensity,
+                         .startFrame = history->startFrame,
+                         .frames = history->frames,
+                         .type = history->type,
+                 });
 
 reset:
     precomputeHistoryReset(history);

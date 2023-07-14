@@ -17,7 +17,7 @@ typedef struct fade_t {
     enum fade_type_t type;
 } Fade;
 
-void fadePush(uint32_t startFrame, uint32_t id, Fade fade);
+void fadePush(uint32_t id, Fade fade);
 
 int fadeTableSize(void);
 

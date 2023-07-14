@@ -79,9 +79,9 @@ static int fadeCreateHandleRef(const Fade fade) {
     return key;
 }
 
-void fadePush(const uint32_t startFrame, const uint32_t id, const Fade fade) {
-    for (uint32_t frame = startFrame; frame < startFrame + fade.frames;
-         frame++) {
+void fadePush(const uint32_t id, const Fade fade) {
+    for (uint32_t frame = fade.startFrame;
+         frame < fade.startFrame + fade.frames; frame++) {
         struct frame_data_t *const data = fadeGetInsertFrameData(frame);
 
         struct frame_fade_kvp_t kvp = (struct frame_fade_kvp_t){
@@ -219,14 +219,13 @@ bool fadeTableLoadCache(const char *const fp) {
             const pcf_event_t event = events[j];
             const pcf_fade_t fade = file.fades[event.fade];
 
-            fadePush(frame.frame, event.circuit,
-                     (Fade){
-                             .from = fade.from,
-                             .to = fade.to,
-                             .frames = fade.frames,
-                             .startFrame = frame.frame,
-                             .type = FADE_SLOPE,
-                     });
+            fadePush(event.circuit, (Fade){
+                                            .from = fade.from,
+                                            .to = fade.to,
+                                            .frames = fade.frames,
+                                            .startFrame = frame.frame,
+                                            .type = FADE_SLOPE,
+                                    });
         }
     }
 
