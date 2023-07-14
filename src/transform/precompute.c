@@ -191,8 +191,14 @@ static void precomputeFlush(void) {
 }
 
 void precomputeRun(const char *const fp) {
+    const timeInstant start = timeGetNow();
+
     if (fadeTableLoadCache(fp)) {
-        printf("loaded precomputed cache file: %s\n", fp);
+        sds time = timeElapsedString(start, timeGetNow());
+
+        printf("loaded precomputed cache file: %s in %s\n", fp, time);
+
+        sdsfree(time);
 
         return;
     }
@@ -203,8 +209,6 @@ void precomputeRun(const char *const fp) {
     printf("precomputing fades...\n");
 
     FramePump pump = {0};
-
-    const timeInstant now = timeGetNow();
 
     while (precomputeHandleNextFrame(&pump))
         ;
@@ -217,10 +221,12 @@ void precomputeRun(const char *const fp) {
 
     framePumpFree(&pump);
 
-    const int ms = (int) (timeElapsedNs(now, timeGetNow()) / 1000000);
+    sds time = timeElapsedString(start, timeGetNow());
 
-    printf("identified %d fade events (%d variants) in %dms\n", gFadesGenerated,
-           fadeTableSize(), ms);
+    printf("identified %d fade events (%d variants) in %s\n", gFadesGenerated,
+           fadeTableSize(), time);
+
+    sdsfree(time);
 
     if (fadeTableCache(fp)) {
         printf("saved precompute cache: %s\n", fp);

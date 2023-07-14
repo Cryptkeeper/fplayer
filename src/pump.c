@@ -101,11 +101,12 @@ static void framePumpRecharge(FramePump *const pump,
     pump->head = 0;
 
     // check for performance issues after reading
-    const double chargeTimeMs =
-            (double) timeElapsedNs(start, timeGetNow()) / 1000000.0;
+    sds time = timeElapsedString(start, timeGetNow());
 
-    printf("%s %d frames in %.4fms\n", preload ? "pre-loaded" : "loaded",
-           (int) arrlen(frames), chargeTimeMs);
+    printf("%s %d frames in %s\n", preload ? "pre-loaded" : "loaded",
+           (int) arrlen(frames), time);
+
+    sdsfree(time);
 }
 
 #ifdef ENABLE_PTHREAD
