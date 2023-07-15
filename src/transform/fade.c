@@ -147,7 +147,9 @@ bool fadeTableCache(const char *const fp) {
 
                     if (prevFade.from == fade->value.fade.from &&
                         prevFade.to == fade->value.fade.to &&
-                        prevFade.frames == fade->value.fade.frames) {
+                        prevFade.frames == fade->value.fade.frames &&
+                        (prevFade.isFlash ==
+                         (fade->value.fade.type == FADE_FLASH))) {
                         index = k;
                         didMatch = true;
 
@@ -160,9 +162,14 @@ bool fadeTableCache(const char *const fp) {
                 if (!didMatch) {
                     index = arrlen(file.fades);
 
+                    // uint16_t `frames` value is stored in 12 bits
+                    // ensure < 2^12 before implicitly trimming the type
+                    assert(fade->value.fade.frames < 4096);
+
                     const pcf_fade_t newFade = (pcf_fade_t){
                             .from = fade->value.fade.from,
                             .to = fade->value.fade.to,
+                            .isFlash = fade->value.fade.type == FADE_FLASH,
                             .frames = fade->value.fade.frames,
                     };
 
@@ -219,13 +226,14 @@ bool fadeTableLoadCache(const char *const fp) {
             const pcf_event_t event = events[j];
             const pcf_fade_t fade = file.fades[event.fade];
 
-            fadePush(event.circuit, (Fade){
-                                            .from = fade.from,
-                                            .to = fade.to,
-                                            .frames = fade.frames,
-                                            .startFrame = frame.frame,
-                                            .type = FADE_SLOPE,
-                                    });
+            fadePush(event.circuit,
+                     (Fade){
+                             .from = fade.from,
+                             .to = fade.to,
+                             .frames = fade.frames,
+                             .startFrame = frame.frame,
+                             .type = fade.isFlash ? FADE_FLASH : FADE_SLOPE,
+                     });
         }
     }
 

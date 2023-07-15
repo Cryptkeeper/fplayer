@@ -15,7 +15,9 @@ typedef struct pcf_directory_t pcf_directory_t;
 struct pcf_fade_t {
     uint8_t from;
     uint8_t to;
-    uint16_t frames;
+    bool isFlash : 1;
+    uint8_t reserved : 3;
+    uint16_t frames : 12;
 } __attribute__((packed));
 
 typedef struct pcf_fade_t pcf_fade_t;
