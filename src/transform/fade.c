@@ -215,7 +215,8 @@ bool fadeTableCache(const char *const fp) {
 }
 
 bool fadeTableLoadCache(const char *const fp) {
-    pcf_file_t file = {0};
+    pcf_file_t file = {NULL};
+    
     if (!pcfOpen(fp, &file)) return false;
 
     for (uint32_t i = 0; i < arrlen(file.frames); i++) {

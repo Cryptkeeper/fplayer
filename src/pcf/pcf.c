@@ -25,11 +25,7 @@ bool pcfOpen(const char *const fp, pcf_file_t *const file) {
 
     if (memcmp(dir.magic, pcfMagicSig4, sizeof(pcfMagicSig4)) != 0) goto fail;
 
-    pcf_file_t open = {
-            .fades = NULL,
-            .frames = NULL,
-            .events = NULL,
-    };
+    pcf_file_t open = {NULL};
 
     arrsetcap(open.fades, dir.nFades);
 
