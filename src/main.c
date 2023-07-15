@@ -76,10 +76,6 @@ static SerialOpts gSerialOpts = {
         .baudRate = 19200,
 };
 
-#define cReturnOK  0 /* early return, 0 */
-#define cReturnErr 1 /* early return, 1 */
-#define cContinue  2 /* no return */
-
 static void testConfigurations(const char *const filepath) {
     channelMapInit(filepath);
 
@@ -98,25 +94,25 @@ static void printSerialEnumPorts(void) {
     arrfree(ports);
 }
 
-static int parseOpts(int argc, char **argv) {
+static bool parseOpts(const int argc, char **const argv, int *const ec) {
     int c;
     while ((c = getopt(argc, argv, ":t:lhvf:c:a:r:w:pd:b:")) != -1) {
         switch (c) {
             case 't':
                 testConfigurations(optarg);
-                return cReturnOK;
+                return true;
 
             case 'l':
                 printSerialEnumPorts();
-                return cReturnOK;
+                return true;
 
             case 'h':
                 printUsage();
-                return cReturnOK;
+                return true;
 
             case 'v':
                 printVersions();
-                return cReturnOK;
+                return true;
 
             case 'f':
                 gPlayerOpts.sequenceFilePath = sdsnew(optarg);
@@ -156,12 +152,14 @@ static int parseOpts(int argc, char **argv) {
 
             case ':':
                 fprintf(stderr, "option is missing argument: %c\n", optopt);
-                return cReturnErr;
+                *ec = EXIT_FAILURE;
+                return true;
 
             case '?':
             default:
                 fprintf(stderr, "unknown option: %c\n", optopt);
-                return cReturnErr;
+                *ec = EXIT_FAILURE;
+                return true;
         }
     }
 
@@ -169,19 +167,16 @@ static int parseOpts(int argc, char **argv) {
         gPlayerOpts.channelMapFilePath == NULL) {
         printUsage();
 
-        return cReturnErr;
+        *ec = EXIT_FAILURE;
+        return true;
     }
 
-    return cContinue;
+    return false;
 }
 
 int main(int argc, char **argv) {
-    switch (parseOpts(argc, argv)) {
-        case cReturnOK:
-            return 0;
-        case cReturnErr:
-            return 1;
-    }
+    int ec = EXIT_SUCCESS;
+    if (parseOpts(argc, argv, &ec)) return ec;
 
     argc -= optind;
     argv += optind;
