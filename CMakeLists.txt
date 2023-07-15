@@ -8,10 +8,18 @@ if (APPLE)
     link_directories(/usr/local/lib)
 endif ()
 
+file(GLOB_RECURSE SDS_FILES "sds/*.c")
+
+option(BUILD_MFTOOL "enable building mftool executable" true)
+
+if (BUILD_MFTOOL)
+    add_executable(mftool "mftool/main.c" ${SDS_FILES})
+
+    target_include_directories(mftool PRIVATE libtinyfseq sds stb)
+endif ()
+
 file(GLOB_RECURSE SRC_FILES "src/*.[ch]")
 file(GLOB_RECURSE TEST_FILES "test/*.c")
-
-file(GLOB_RECURSE SDS_FILES "sds/*.c")
 
 add_executable(fplayer ${SRC_FILES} ${TEST_FILES} ${SDS_FILES})
 
