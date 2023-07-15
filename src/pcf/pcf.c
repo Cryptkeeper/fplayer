@@ -25,28 +25,29 @@ bool pcfOpen(const char *const fp, pcf_file_t *const file) {
 
     if (memcmp(dir.magic, pcfMagicSig4, sizeof(pcfMagicSig4)) != 0) goto fail;
 
-    pcf_fade_t *fades = NULL;
+    pcf_file_t open = {
+            .fades = NULL,
+            .frames = NULL,
+            .events = NULL,
+    };
 
-    arrsetcap(fades, dir.nFades);
+    arrsetcap(open.fades, dir.nFades);
 
     for (uint32_t i = 0; i < dir.nFades; i++) {
         pcf_fade_t fade = {0};
         if (fread(&fade, sizeof(fade), 1, f) != 1) goto fail;
 
-        arrput(fades, fade);
+        arrput(open.fades, fade);
     }
 
-    pcf_frame_t *frames = NULL;
-    pcf_event_t **eventsMatrix = NULL;
-
-    arrsetcap(frames, dir.nFrames);
-    arrsetcap(eventsMatrix, dir.nFrames);
+    arrsetcap(open.frames, dir.nFrames);
+    arrsetcap(open.events, dir.nFrames);
 
     for (uint32_t i = 0; i < dir.nFrames; i++) {
         pcf_frame_t frame = {0};
         if (fread(&frame, sizeof(frame), 1, f) != 1) goto fail;
 
-        arrput(frames, frame);
+        arrput(open.frames, frame);
 
         pcf_event_t *events = NULL;
 
@@ -59,16 +60,12 @@ bool pcfOpen(const char *const fp, pcf_file_t *const file) {
             arrput(events, event);
         }
 
-        arrput(eventsMatrix, events);
+        arrput(open.events, events);
     }
 
-    freeAndNullWith(&f, fclose);
+    *file = open;
 
-    *file = (pcf_file_t){
-            .fades = fades,
-            .frames = frames,
-            .events = eventsMatrix,
-    };
+    freeAndNullWith(&f, fclose);
 
     return true;
 
