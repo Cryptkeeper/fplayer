@@ -44,8 +44,10 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: fplayer-ubuntu
-          path: build/fplayer
+          name: ubuntu
+          path: |
+            build/fplayer
+            build/mftool
 
   build-macos:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
