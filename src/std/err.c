@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char *errGetMessage(Err err) {
+static const char *errGetMessage(const Err err) {
     switch (err) {
         case E_OK:
             return "E_OK";
@@ -23,7 +23,7 @@ static const char *errGetMessage(Err err) {
     }
 }
 
-void fatalf(Err err, const char *format, ...) {
+void fatalf(const Err err, const char *const format, ...) {
     fprintf(stderr, "fatal error: %s (%d)\n", errGetMessage(err), (int) err);
 
     if (format != NULL) {
@@ -36,7 +36,7 @@ void fatalf(Err err, const char *format, ...) {
 
     // `errno` is likely set
     if (err == E_FILE_NOT_FOUND || err == E_ALLOC_FAIL) {
-        const char *msg = (const char *) strerror(errno);
+        const char *const msg = strerror(errno);
 
         if (msg != NULL) fprintf(stderr, "%s\n", msg);
     }
