@@ -176,7 +176,6 @@ void playerRun(const PlayerOpts opts) {
     playerWaitForConnection(opts);
 
     sds audioFilePath = NULL;
-
     sequenceOpen(opts.sequenceFilePath, &audioFilePath);
 
     comBlocksInit();
@@ -185,6 +184,7 @@ void playerRun(const PlayerOpts opts) {
         sds cacheFilePath =
                 sdscatprintf(sdsempty(), "%s.pcf", opts.sequenceFilePath);
 
+        // load existing data or precompute and save new data
         precomputeRun(cacheFilePath);
 
         sdsfree(cacheFilePath);
@@ -192,11 +192,9 @@ void playerRun(const PlayerOpts opts) {
 
     playerStartPlayback(opts, audioFilePath);
 
-    // used by `playerRun`, don't free until player has finished
+    // playback finished, free resources and exit cleanly
     precomputeFree();
-
     comBlocksFree();
-
     sequenceFree();
 
     framePumpFree(&gFramePump);
