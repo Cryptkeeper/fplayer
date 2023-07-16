@@ -15,7 +15,7 @@
 #include <sds.h>
 
 // slimmed down version of fplayer's `fatalf`
-void fatalf(const char *format, ...) {
+static void fatalf(const char *format, ...) {
     va_list args;
 
     va_start(args, format);
