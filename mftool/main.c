@@ -171,6 +171,10 @@ static void fseqOpen(sds fp, FILE **fd, struct tf_file_header_t *const header) {
 
     if ((err = tf_read_file_header(b, sizeof(b), header, NULL)) != TF_OK)
         fatalf("error decoding fseq header: %s\n", tf_err_str(err));
+
+    if (header->majorVersion != '2' || header->minorVersion != '0')
+        fatalf("unsupported fseq file version: %d.%d\n", header->majorVersion,
+               header->minorVersion);
 }
 
 static void fseqCopySetVars(sds sfp, sds dfp, const struct var_t *const vars) {
