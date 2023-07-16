@@ -154,7 +154,7 @@ static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
 static void fseqOpen(sds fp, FILE **fd, struct tf_file_header_t *const header) {
     FILE *const f = *fd = fopen(fp, "rb");
 
-    if (f == NULL) fatalf("error opening file `%s`\n", fd);
+    if (f == NULL) fatalf("error opening file `%s`\n", fp);
 
     uint8_t b[32];
 
