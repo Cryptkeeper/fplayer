@@ -1,7 +1,6 @@
 #undef NDEBUG
 #include <assert.h>
 
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +12,12 @@
 #include <stb_ds.h>
 
 #include <sds.h>
+
+static inline void fatalf(sds msg) {
+    perror(msg);
+    sdsfree(msg);
+    exit(1);
+}
 
 #define VAR_HEADER_SIZE 4
 
@@ -137,40 +142,39 @@ static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
     return copied;
 }
 
-static void fseqOpen(const char *const fp,
-                     FILE **fd,
-                     struct tf_file_header_t *const header) {
+static void fseqOpen(sds fp, FILE **fd, struct tf_file_header_t *const header) {
     FILE *const f = *fd = fopen(fp, "rb");
-    assert(f != NULL);
+
+    if (f == NULL)
+        fatalf(sdscatprintf(sdsempty(), "error opening file `%s`", fp));
 
     uint8_t b[32];
-
     fread(b, sizeof(b), 1, f);
 
     const enum tf_err_t err = tf_read_file_header(b, sizeof(b), header, NULL);
     assert(err == TF_OK && "error decoding fseq header");
 }
 
-static void fseqCopySetVars(const char *const sfp,
-                            const char *const dfp,
-                            const struct var_t *const vars) {
+static void fseqCopySetVars(sds sfp, sds dfp, const struct var_t *const vars) {
     FILE *src;
-    struct tf_file_header_t header;
+    struct tf_file_header_t original;
 
-    fseqOpen(sfp, &src, &header);
+    fseqOpen(sfp, &src, &original);
 
     FILE *const dst = fopen(dfp, "wb");
-    assert(dst != NULL);
 
-    const struct tf_file_header_t resized = fseqResize(header, vars);
+    if (dst == NULL)
+        fatalf(sdscatprintf(sdsempty(), "error opening file `%s`", dfp));
 
-    fseqWriteHeader(dst, resized);
-    fseqCopyConfigBlocks(dst, resized, src);
+    const struct tf_file_header_t header = fseqResize(original, vars);
+
+    fseqWriteHeader(dst, header);
+    fseqCopyConfigBlocks(dst, header, src);
     fseqWriteVars(dst, vars);
 
     // ensure the channel data is aligned on both files before bulk copying
-    fseek(src, header.channelDataOffset, SEEK_SET);
-    fseek(dst, resized.channelDataOffset, SEEK_SET);
+    fseek(src, original.channelDataOffset, SEEK_SET);
+    fseek(dst, header.channelDataOffset, SEEK_SET);
 
     // bulk copy channel data
     const size_t copied = fseqCopyChannelData(src, dst);
@@ -181,7 +185,7 @@ static void fseqCopySetVars(const char *const sfp,
     fclose(dst);
 }
 
-static struct var_t *fseqReadVars(const char *const fp) {
+static struct var_t *fseqReadVars(sds fp) {
     FILE *src;
     struct tf_file_header_t header;
 
@@ -241,25 +245,26 @@ static void freeVars(struct var_t *vars) {
 
 static void printUsage(void) {
     printf("Usage:\n\n"
-           "Enumerate sequence variables: mftool <fseq file>\n"
-           "Copy sequence with new `mf` variable: mftool <fseq file> <new fseq "
-           "file> <new audio file>\n");
+           "mftool <fseq file>                  Enumerate sequence variables\n"
+           "mftool <fseq file> <audio file>     Set sequence `mf` variable "
+           "(copies file)\n");
 }
 
 int main(const int argc, char **const argv) {
-    if (argc < 2) {
+    if (argc < 2 ||
+        (strcasecmp(argv[1], "-h") == 0 || strcasecmp(argv[1], "-help") == 0)) {
         printUsage();
 
         return 0;
     }
 
-    const char *const sfp = argv[1];
+    sds sfp = sdsnew(argv[1]); /* source file path */
+    sds dfp = NULL;            /* destination file path (source + .tmp) */
 
     struct var_t *vars = fseqReadVars(sfp);
 
-    const bool isModifying = argc >= 4;
-
-    if (!isModifying) {
+    // print and exit if not modifying the sequence
+    if (argc < 3) {
         for (size_t i = 0; i < arrlen(vars); i++) {
             const struct var_t var = vars[i];
 
@@ -269,40 +274,48 @@ int main(const int argc, char **const argv) {
         goto exit;
     }
 
-    const char *const dfp = argv[2];
-    const char *const mf = argv[3];
+    // init optional args
+    dfp = sdscatprintf(sdsempty(), "%s.tmp", sfp);
 
-    // find matching `mf` var or insert new
-    ssize_t index = -1;
-
+    // try to find a matching `mf` var to update
     for (ssize_t i = 0; i < arrlen(vars); i++) {
-        const struct var_t var = vars[i];
+        struct var_t *const var = &vars[i];
 
-        if (var.idh == 'm' && var.idl == 'f') {
-            index = i;
-            break;
-        }
-    }
+        if (var->idh != 'm' || var->idl != 'f') continue;
 
-    if (index >= 0) {
-        struct var_t *var = &vars[index];
-
+        // overwrite previous decoded string value
         sdsfree(var->string);
+        var->string = sdsnew(argv[2]);
 
-        var->string = sdsnew(mf);
-    } else {
-        const struct var_t new = {
-                .idh = 'm',
-                .idl = 'f',
-                .string = sdsnew(mf),
-        };
-
-        arrput(vars, new);
+        goto do_copy;
     }
 
+    // no previous matching var, insert new
+    const struct var_t new = {
+            .idh = 'm',
+            .idl = 'f',
+            .string = sdsnew(argv[2]),
+    };
+
+    arrput(vars, new);
+
+do_copy:
     fseqCopySetVars(sfp, dfp, vars);
 
+    // rename files to swap them
+    sds nsfp = sdscatprintf(sdsempty(), "%s.orig", sfp);
+
+    rename(sfp, nsfp);// "$" -> "$.orig"
+    rename(dfp, sfp); // "$.tmp" -> "$"
+
+    printf("renamed `%s` to `%s`\n", sfp, nsfp);
+
+    sdsfree(nsfp);
+
 exit:
+    sdsfree(sfp);
+    sdsfree(dfp);
+
     freeVars(vars);
 
     return 0;
