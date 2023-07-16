@@ -68,6 +68,10 @@ void audioPlayFile(const char *const filepath) {
 
     alSourcePlay(gSource);
     alPrintError("error starting audio source playback");
+
+    // test for any playback failure
+    // unload audio system since it can't be used
+    if (!audioCheckPlaying()) audioExit();
 #endif
 }
 
