@@ -111,7 +111,7 @@ static void fseqCopyConfigBlocks(FILE *const dst,
 
     assert(b != NULL);
 
-    if (fread(b, size, 1, src) != 1) fatalf("error reading config blocks");
+    if (fread(b, size, 1, src) != 1) fatalf("error reading config blocks\n");
 
     fwrite(b, size, 1, dst);
 
@@ -161,16 +161,16 @@ static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
 static void fseqOpen(sds fp, FILE **fd, struct tf_file_header_t *const header) {
     FILE *const f = *fd = fopen(fp, "rb");
 
-    if (f == NULL) fatalf("error opening file `%s`", fd);
+    if (f == NULL) fatalf("error opening file `%s`\n", fd);
 
     uint8_t b[32];
 
-    if (fread(b, sizeof(b), 1, f) != 1) fatalf("error reading header");
+    if (fread(b, sizeof(b), 1, f) != 1) fatalf("error reading header\n");
 
     enum tf_err_t err;
 
     if ((err = tf_read_file_header(b, sizeof(b), header, NULL)) != TF_OK)
-        fatalf("error decoding fseq header: %s", tf_err_str(err));
+        fatalf("error decoding fseq header: %s\n", tf_err_str(err));
 }
 
 static void fseqCopySetVars(sds sfp, sds dfp, const struct var_t *const vars) {
@@ -181,7 +181,7 @@ static void fseqCopySetVars(sds sfp, sds dfp, const struct var_t *const vars) {
 
     FILE *const dst = fopen(dfp, "wb");
 
-    if (dst == NULL) fatalf("error opening file `%s`", dfp);
+    if (dst == NULL) fatalf("error opening file `%s`\n", dfp);
 
     const struct tf_file_header_t header = fseqResize(original, vars);
 
@@ -275,10 +275,10 @@ static void renamePair(sds sfp, sds dfp) {
     sds nsfp = sdscatprintf(sdsempty(), "%s.orig", sfp);
 
     if (rename(sfp, nsfp) != 0)
-        fatalf("error renaming `%s` -> `%s`", sfp, nsfp);// "$" -> "$.orig"
+        fatalf("error renaming `%s` -> `%s`\n", sfp, nsfp);// "$" -> "$.orig"
 
     if (rename(dfp, sfp) != 0)
-        fatalf("error renaming `%s` -> `%s`", dfp, sfp);// "$.tmp" -> "$"
+        fatalf("error renaming `%s` -> `%s`\n", dfp, sfp);// "$.tmp" -> "$"
 
     printf("renamed `%s` to `%s`\n", sfp, nsfp);
 
