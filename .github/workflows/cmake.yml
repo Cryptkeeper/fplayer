@@ -44,7 +44,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: ubuntu-bin.zip
+          name: ubuntu-bin
           path: |
             build/fplayer
             build/mftool
@@ -82,7 +82,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: macos-bin.zip
+          name: macos-bin
           path: |
             build/fplayer
             build/mftool

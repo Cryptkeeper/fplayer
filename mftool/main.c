@@ -1,6 +1,7 @@
 #undef NDEBUG
 #include <assert.h>
 
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,9 +14,16 @@
 
 #include <sds.h>
 
-static inline void fatalf(sds msg) {
-    perror(msg);
-    sdsfree(msg);
+// slimmed down version of fplayer's `fatalf`
+void fatalf(const char *format, ...) {
+    va_list args;
+
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+
+    fflush(stderr);
+
     exit(1);
 }
 
@@ -52,37 +60,45 @@ static struct tf_file_header_t fseqResize(const struct tf_file_header_t header,
     return resized;
 }
 
+#define fwrite_auto(v, f) fwrite(&v, sizeof(v), 1, f)
+
+#define fwrite_literal(v, t, f)                                                \
+    do {                                                                       \
+        assert(sizeof(t) <= 8);                                                \
+        const uint64_t reg = v;                                                \
+        fwrite(&reg, sizeof(t), 1, f);                                         \
+    } while (0)
+
 static void fseqWriteHeader(FILE *const dst,
                             const struct tf_file_header_t header) {
     const uint8_t magic[4] = {'P', 'S', 'E', 'Q'};
 
-    fwrite(magic, sizeof(magic), 1, dst);
+    fwrite_auto(magic, dst);
 
-    fwrite(&header.channelDataOffset, sizeof(header.channelDataOffset), 1, dst);
+    fwrite_auto(header.channelDataOffset, dst);
 
-    const uint8_t version[2] = {0, 2};// 2.0
+    fwrite_literal(0, uint8_t, dst);// minor version
+    fwrite_literal(2, uint8_t, dst);// major version
 
-    fwrite(version, sizeof(version), 1, dst);
+    fwrite_auto(header.variableDataOffset, dst);
 
-    fwrite(&header.variableDataOffset, sizeof(header.variableDataOffset), 1,
-           dst);
+    fwrite_auto(header.channelCount, dst);
+    fwrite_auto(header.frameCount, dst);
 
-    fwrite(&header.channelCount, sizeof(header.channelCount), 1, dst);
-    fwrite(&header.frameCount, sizeof(header.frameCount), 1, dst);
+    fwrite_auto(header.frameStepTimeMillis, dst);
 
-    // several single byte fields wrapped up together for brevity
-    const uint8_t config[6] = {
-            header.frameStepTimeMillis,
-            0,// reserved flags
-            (uint8_t) header.compressionType,
-            header.compressionBlockCount,
-            header.channelRangeCount,
-            0,//reserved empty
-    };
+    fwrite_literal(0, uint8_t, dst);// reserved flags
 
-    fwrite(config, sizeof(config), 1, dst);
+    const uint8_t compression = (uint8_t) header.compressionType;
 
-    fwrite(&header.sequenceUid, sizeof(header.sequenceUid), 1, dst);
+    fwrite_auto(compression, dst);
+
+    fwrite_auto(header.compressionBlockCount, dst);
+    fwrite_auto(header.channelRangeCount, dst);
+
+    fwrite_literal(0, uint8_t, dst);// reserved empty
+
+    fwrite_auto(header.sequenceUid, dst);
 }
 
 static void fseqCopyConfigBlocks(FILE *const dst,
@@ -95,7 +111,8 @@ static void fseqCopyConfigBlocks(FILE *const dst,
 
     assert(b != NULL);
 
-    fread(b, size, 1, src);
+    if (fread(b, size, 1, src) != 1) fatalf("error reading config blocks");
+
     fwrite(b, size, 1, dst);
 
     free(b);
@@ -107,15 +124,14 @@ static void fseqWriteVars(FILE *const dst, const struct var_t *const vars) {
 
         const uint16_t size = sdslen(var.string) + VAR_HEADER_SIZE + 1;
 
-        fwrite(&size, sizeof(size), 1, dst);
+        fwrite_auto(size, dst);
 
-        fwrite(&var.idh, 1, 1, dst);
-        fwrite(&var.idl, 1, 1, dst);
+        fwrite_auto(var.idh, dst);
+        fwrite_auto(var.idl, dst);
 
         fwrite(var.string, sdslen(var.string), 1, dst);
 
-        const uint8_t nb = '\0';
-        fwrite(&nb, sizeof(nb), 1, dst);
+        fwrite_literal('\0', uint8_t, dst);
     }
 }
 
@@ -145,14 +161,16 @@ static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
 static void fseqOpen(sds fp, FILE **fd, struct tf_file_header_t *const header) {
     FILE *const f = *fd = fopen(fp, "rb");
 
-    if (f == NULL)
-        fatalf(sdscatprintf(sdsempty(), "error opening file `%s`", fp));
+    if (f == NULL) fatalf("error opening file `%s`", fd);
 
     uint8_t b[32];
-    fread(b, sizeof(b), 1, f);
 
-    const enum tf_err_t err = tf_read_file_header(b, sizeof(b), header, NULL);
-    assert(err == TF_OK && "error decoding fseq header");
+    if (fread(b, sizeof(b), 1, f) != 1) fatalf("error reading header");
+
+    enum tf_err_t err;
+
+    if ((err = tf_read_file_header(b, sizeof(b), header, NULL)) != TF_OK)
+        fatalf("error decoding fseq header: %s", tf_err_str(err));
 }
 
 static void fseqCopySetVars(sds sfp, sds dfp, const struct var_t *const vars) {
@@ -163,8 +181,7 @@ static void fseqCopySetVars(sds sfp, sds dfp, const struct var_t *const vars) {
 
     FILE *const dst = fopen(dfp, "wb");
 
-    if (dst == NULL)
-        fatalf(sdscatprintf(sdsempty(), "error opening file `%s`", dfp));
+    if (dst == NULL) fatalf("error opening file `%s`", dfp);
 
     const struct tf_file_header_t header = fseqResize(original, vars);
 
@@ -201,7 +218,10 @@ static struct var_t *fseqReadVars(sds fp) {
     uint8_t *const varData = malloc(varDataSize);
     assert(varData != NULL);
 
-    fread(varData, varDataSize, 1, src);
+    if (fread(varData, varDataSize, 1, src) != 1)
+        fatalf(sdscatprintf(sdsempty(),
+                            "error reading var data blob (%d bytes)",
+                            varDataSize));
 
     uint16_t pos = 0;
     struct var_t *vars = NULL;
@@ -248,6 +268,21 @@ static void printUsage(void) {
            "mftool <fseq file>                  Enumerate sequence variables\n"
            "mftool <fseq file> <audio file>     Set sequence `mf` variable "
            "(copies file)\n");
+}
+
+static void renamePair(sds sfp, sds dfp) {
+    // rename files to swap them
+    sds nsfp = sdscatprintf(sdsempty(), "%s.orig", sfp);
+
+    if (rename(sfp, nsfp) != 0)
+        fatalf("error renaming `%s` -> `%s`", sfp, nsfp);// "$" -> "$.orig"
+
+    if (rename(dfp, sfp) != 0)
+        fatalf("error renaming `%s` -> `%s`", dfp, sfp);// "$.tmp" -> "$"
+
+    printf("renamed `%s` to `%s`\n", sfp, nsfp);
+
+    sdsfree(nsfp);
 }
 
 int main(const int argc, char **const argv) {
@@ -302,15 +337,7 @@ int main(const int argc, char **const argv) {
 do_copy:
     fseqCopySetVars(sfp, dfp, vars);
 
-    // rename files to swap them
-    sds nsfp = sdscatprintf(sdsempty(), "%s.orig", sfp);
-
-    rename(sfp, nsfp);// "$" -> "$.orig"
-    rename(dfp, sfp); // "$.tmp" -> "$"
-
-    printf("renamed `%s` to `%s`\n", sfp, nsfp);
-
-    sdsfree(nsfp);
+    renamePair(sfp, dfp);
 
 exit:
     sdsfree(sfp);
