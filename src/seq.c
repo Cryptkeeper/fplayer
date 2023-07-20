@@ -6,8 +6,7 @@
 #include "std/err.h"
 #include "std/mem.h"
 
-FILE *gFile;
-pthread_mutex_t gFileMutex = PTHREAD_MUTEX_INITIALIZER;
+FileMutex gFile;
 
 static struct tf_file_header_t gPlaying;
 
@@ -19,17 +18,18 @@ static sds sequenceLoadAudioFilePath(void) {
     const uint16_t varDataSize =
             gPlaying.channelDataOffset - gPlaying.variableDataOffset;
 
-    pthread_mutex_lock(&gFileMutex);
+    FILE *f;
+    fileMutexLock(&gFile, &f);
 
-    if (fseek(gFile, gPlaying.variableDataOffset, SEEK_SET) < 0)
+    if (fseek(f, gPlaying.variableDataOffset, SEEK_SET) < 0)
         fatalf(E_FILE_IO, NULL);
 
     uint8_t *varTable = mustMalloc(varDataSize);
 
-    if (fread(varTable, 1, varDataSize, gFile) != varDataSize)
+    if (fread(varTable, 1, varDataSize, f) != varDataSize)
         fatalf(E_FILE_IO, NULL);
 
-    pthread_mutex_unlock(&gFileMutex);
+    fileMutexUnlock(&gFile, &f);
 
     struct tf_var_header_t varHeader;
     enum tf_err_t err;
@@ -71,20 +71,29 @@ static sds sequenceLoadAudioFilePath(void) {
 
 #define FSEQ_HEADER_SIZE 32
 
-void sequenceOpen(sds filepath, sds *const audioFilePath) {
-    pthread_mutex_lock(&gFileMutex);
-
-    FILE *const f = gFile = fopen(filepath, "rb");
+static void sequenceInitMutex(sds filepath) {
+    FILE *const f = fopen(filepath, "rb");
 
     if (f == NULL)
         fatalf(E_FILE_NOT_FOUND, "error opening sequence: %s\n", filepath);
+
+    // init FileMutex, this is used to manage file locking across threads
+    // this assumes no `gFile` is already initialized and is now a leaking reference
+    fileMutexInit(&gFile, f);
+}
+
+void sequenceOpen(sds filepath, sds *const audioFilePath) {
+    sequenceInitMutex(filepath);
+
+    FILE *f;
+    fileMutexLock(&gFile, &f);
 
     uint8_t b[FSEQ_HEADER_SIZE];
 
     if (fread(b, 1, FSEQ_HEADER_SIZE, f) != FSEQ_HEADER_SIZE)
         fatalf(E_FILE_IO, NULL);
 
-    pthread_mutex_unlock(&gFileMutex);
+    fileMutexUnlock(&gFile, &f);
 
     enum tf_err_t err;
 
@@ -95,12 +104,9 @@ void sequenceOpen(sds filepath, sds *const audioFilePath) {
 }
 
 void sequenceFree(void) {
-    pthread_mutex_lock(&gFileMutex);
+    fileMutexClose(&gFile);
 
-    freeAndNullWith(&gFile, fclose);
-
-    pthread_mutex_unlock(&gFileMutex);
-
+    gFile = (FileMutex){0};
     gPlaying = (struct tf_file_header_t){0};
 }
 

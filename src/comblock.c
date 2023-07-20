@@ -24,10 +24,11 @@ static void comBlocksLoadAddrs(void) {
 
     if (nBlocks == 0) return;
 
-    pthread_mutex_lock(&gFileMutex);
+    FILE *f;
+    fileMutexLock(&gFile, &f);
 
     // fseq header is fixed to 32 bytes, followed by compression block array
-    if (fseek(gFile, 32, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
+    if (fseek(f, 32, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
 
     const int size = nBlocks * COMPRESSION_BLOCK_SIZE;
 
@@ -35,10 +36,10 @@ static void comBlocksLoadAddrs(void) {
 
     memset(b, 0, size);
 
-    if (fread(b, COMPRESSION_BLOCK_SIZE, nBlocks, gFile) != nBlocks)
+    if (fread(b, COMPRESSION_BLOCK_SIZE, nBlocks, f) != nBlocks)
         fatalf(E_FILE_IO, "unexpected end of compression blocks\n");
 
-    pthread_mutex_unlock(&gFileMutex);
+    fileMutexUnlock(&gFile, &f);
 
     // individually parse and validate each block
     // append to a std_ds.h array to avoid managing the resizing
@@ -88,14 +89,15 @@ static uint8_t **comBlockGetZstd(const int index) {
     ZSTD_DCtx *ctx = ZSTD_createDCtx();
     if (ctx == NULL) fatalf(E_ALLOC_FAIL, NULL);
 
-    pthread_mutex_lock(&gFileMutex);
+    FILE *f;
+    fileMutexLock(&gFile, &f);
 
     // seek to start position of this compression block's frame data
-    if (fseek(gFile, comBlock.addr, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
+    if (fseek(f, comBlock.addr, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
 
-    if (fread(dIn, 1, dInSize, gFile) != dInSize) fatalf(E_FILE_IO, NULL);
+    if (fread(dIn, 1, dInSize, f) != dInSize) fatalf(E_FILE_IO, NULL);
 
-    pthread_mutex_unlock(&gFileMutex);
+    fileMutexUnlock(&gFile, &f);
 
     ZSTD_inBuffer in = {
             .src = dIn,

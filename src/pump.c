@@ -27,15 +27,16 @@ static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
 
     uint8_t *frameData = mustMalloc(frameSize * reqFrameCount);
 
-    pthread_mutex_lock(&gFileMutex);
+    FILE *f;
+    fileMutexLock(&gFile, &f);
 
-    if (fseek(gFile, currentFrame * frameSize, SEEK_SET) < 0)
+    if (fseek(f, currentFrame * frameSize, SEEK_SET) < 0)
         fatalf(E_FILE_IO, NULL);
 
     const unsigned long framesRead =
-            fread(frameData, frameSize, reqFrameCount, gFile);
+            fread(frameData, frameSize, reqFrameCount, f);
 
-    pthread_mutex_unlock(&gFileMutex);
+    fileMutexUnlock(&gFile, &f);
 
     if (framesRead < 1) fatalf(E_FILE_IO, "unexpected end of frame data\n");
 

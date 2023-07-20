@@ -4,13 +4,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <pthread.h>
-
 #include <sds.h>
 #include <tinyfseq.h>
 
-extern FILE *gFile;
-extern pthread_mutex_t gFileMutex;
+#include "std/mutex.h"
+
+extern FileMutex gFile;
 
 void sequenceOpen(sds filepath, sds *audioFilePath);
 
