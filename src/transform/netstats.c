@@ -1,5 +1,6 @@
 #include "netstats.h"
 
+#include <inttypes.h>
 #include <stddef.h>
 
 netstat_t gNSPackets = 0;
@@ -32,10 +33,10 @@ sds nsGetStatus(void) {
 
     const float cr = nsGetCompressionRatio(gNSSaved, gNSWritten);
 
-    sds str = sdscatprintf(
-            sdsempty(),
-            "%.03f KB/s\tfades: %llu\tpackets: %llu\tcompressed: %.02f", kb,
-            gNSFades, gNSPackets, cr);
+    sds str = sdscatprintf(sdsempty(),
+                           "%.03f KB/s\tfades: %" PRInetstat
+                           "\tpackets: %" PRInetstat "\tcompressed: %.02f",
+                           kb, gNSFades, gNSPackets, cr);
 
     for (int i = 0; i < gStatsCount; i++) {
         netstat_t *const last = gStats[i][0];
@@ -53,7 +54,8 @@ sds nsGetSummary(void) {
     const float cr = nsGetCompressionRatio(gNSSavedSum, gNSWrittenSum);
 
     return sdscatprintf(sdsempty(),
-                        "transferred %llu bytes via %llu packets, saved %llu "
+                        "transferred %" PRInetstat " bytes via %" PRInetstat
+                        " packets, saved %llu "
                         "bytes (%.0f%%)",
                         gNSWrittenSum, gNSPacketsSum, gNSSavedSum, cr * 100);
 }

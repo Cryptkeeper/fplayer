@@ -1,6 +1,7 @@
 #include "cmap.h"
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 #include <sds.h>
@@ -35,7 +36,7 @@ static sds channelRangeValidate(const ChannelRange range) {
 
     if (rid != rcircuit)
         return sdscatprintf(sdsempty(),
-                            "ID range (%lld values) must be equal in "
+                            "ID range (%" PRIu64 " values) must be equal in "
                             "length to circuit range (%d values)",
                             rid, rcircuit);
 

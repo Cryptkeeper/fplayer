@@ -3,6 +3,8 @@
 
 #include "sds.h"
 
+#define PRInetstat PRIu64
+
 typedef uint64_t netstat_t;
 
 extern netstat_t gNSPackets; /* # of LOR packets sent last sec. (incl. fades) */
