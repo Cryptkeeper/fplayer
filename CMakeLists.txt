@@ -59,7 +59,7 @@ if (USE_PTHREAD)
     add_compile_definitions(ENABLE_PTHREAD)
 endif ()
 
-add_compile_options(-Wall -Wextra -pedantic)
+add_compile_options(-Wall -Wextra -Werror -pedantic)
 
 # silence macOS OpenAL deprecation warning messages
 if (APPLE)
