@@ -1,6 +1,8 @@
 #ifndef FPLAYER_NETSTATS_H
 #define FPLAYER_NETSTATS_H
 
+#include <inttypes.h>
+
 #include "sds.h"
 
 #define PRInetstat PRIu64

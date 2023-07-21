@@ -1,6 +1,5 @@
 #include "netstats.h"
 
-#include <inttypes.h>
 #include <stddef.h>
 
 netstat_t gNSPackets = 0;
@@ -55,7 +54,6 @@ sds nsGetSummary(void) {
 
     return sdscatprintf(sdsempty(),
                         "transferred %" PRInetstat " bytes via %" PRInetstat
-                        " packets, saved %llu "
-                        "bytes (%.0f%%)",
+                        " packets, saved %" PRInetstat " bytes (%.0f%%)",
                         gNSWrittenSum, gNSPacketsSum, gNSSavedSum, cr * 100);
 }
