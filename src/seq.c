@@ -101,8 +101,10 @@ void sequenceOpen(sds filepath, sds *const audioFilePath) {
 uint32_t sequenceReadFrames(struct seq_read_args_t args, uint8_t *frameData) {
     file_mutex_lock(&gFileMutex);
 
-    if (fseek(gFile, args.startFrame * args.frameSize, SEEK_SET) < 0)
-        fatalf(E_FILE_IO, NULL);
+    const uint32_t pos = sequenceData()->channelDataOffset +
+                         (args.startFrame * args.frameSize);
+
+    if (fseek(gFile, pos, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
 
     const size_t framesRead =
             fread(frameData, args.frameSize, args.frameCount, gFile);
