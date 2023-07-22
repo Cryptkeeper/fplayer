@@ -100,7 +100,7 @@ static void fseqCopyConfigBlocks(FILE *const dst,
     const uint16_t size =
             header.compressionBlockCount * 8 + header.channelRangeCount * 6;
 
-    uint *const b = malloc(size);
+    uint8_t *const b = malloc(size);
 
     assert(b != NULL);
 

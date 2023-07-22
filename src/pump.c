@@ -1,6 +1,7 @@
 #include "pump.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 #ifdef ENABLE_PTHREAD
@@ -27,16 +28,13 @@ static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
 
     uint8_t *frameData = mustMalloc(frameSize * reqFrameCount);
 
-    FILE *f;
-    fileMutexLock(&gFile, &f);
-
-    if (fseek(f, currentFrame * frameSize, SEEK_SET) < 0)
-        fatalf(E_FILE_IO, NULL);
-
-    const unsigned long framesRead =
-            fread(frameData, frameSize, reqFrameCount, f);
-
-    fileMutexUnlock(&gFile, &f);
+    const uint32_t framesRead = sequenceReadFrames(
+            (struct seq_read_args_t){
+                    .startFrame = currentFrame,
+                    .frameSize = frameSize,
+                    .frameCount = reqFrameCount,
+            },
+            frameData);
 
     if (framesRead < 1) fatalf(E_FILE_IO, "unexpected end of frame data\n");
 

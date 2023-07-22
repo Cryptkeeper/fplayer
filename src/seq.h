@@ -2,16 +2,21 @@
 #define FPLAYER_SEQ_H
 
 #include <stdint.h>
-#include <stdio.h>
 
 #include <sds.h>
 #include <tinyfseq.h>
 
-#include "std/mutex.h"
-
-extern FileMutex gFile;
-
 void sequenceOpen(sds filepath, sds *audioFilePath);
+
+struct seq_read_args_t {
+    uint32_t startFrame; /* the frame index to begin reading at */
+    uint32_t frameSize;  /* the byte size of each individual frame */
+    uint32_t frameCount; /* the number of frames to read */
+};
+
+uint32_t sequenceReadFrames(struct seq_read_args_t args, uint8_t *frameData);
+
+void sequenceRead(uint32_t start, uint32_t n, void *data);
 
 void sequenceFree(void);
 

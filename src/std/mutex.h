@@ -1,28 +1,26 @@
 #ifndef FPLAYER_MUTEX_H
 #define FPLAYER_MUTEX_H
 
-#include <stdbool.h>
-#include <stdio.h>
-
 #ifdef ENABLE_PTHREAD
+
 #include <pthread.h>
-#endif
 
-typedef struct file_mutex_t {
-    FILE *file;
-#ifdef ENABLE_PTHREAD
-    pthread_mutex_t mutex;
+typedef pthread_mutex_t file_mutex_t;
+
+#define file_mutex_lock(mutex)   pthread_mutex_lock(mutex)
+#define file_mutex_unlock(mutex) pthread_mutex_unlock(mutex)
+#define file_mutex_init()        ((file_mutex_t) PTHREAD_MUTEX_INITIALIZER)
+
 #else
-    int rc;
+
+#include <assert.h>
+
+typedef int file_mutex_t;
+
+#define file_mutex_lock(mutex)   assert((mutex)->rc++ == 0)
+#define file_mutex_unlock(mutex) assert(--(mutex)->rc == 0)
+#define file_mutex_init()        ((file_mutex_t) 0)
+
 #endif
-} FileMutex;
-
-void fileMutexInit(FileMutex *mutex, FILE *file);
-
-void fileMutexLock(FileMutex *mutex, FILE **file);
-
-void fileMutexUnlock(FileMutex *mutex, FILE **file);
-
-void fileMutexClose(FileMutex *mutex);
 
 #endif//FPLAYER_MUTEX_H

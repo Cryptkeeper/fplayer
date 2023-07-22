@@ -1,12 +1,17 @@
 #include "seq.h"
 
+#include <inttypes.h>
+#include <stdio.h>
+
 #include <sds.h>
 #include <tinyfseq.h>
 
 #include "std/err.h"
 #include "std/mem.h"
+#include "std/mutex.h"
 
-FileMutex gFile;
+static FILE *gFile;
+static file_mutex_t gFileMutex = file_mutex_init();
 
 static struct tf_file_header_t gPlaying;
 
@@ -18,18 +23,17 @@ static sds sequenceLoadAudioFilePath(void) {
     const uint16_t varDataSize =
             gPlaying.channelDataOffset - gPlaying.variableDataOffset;
 
-    FILE *f;
-    fileMutexLock(&gFile, &f);
+    file_mutex_lock(&gFileMutex);
 
-    if (fseek(f, gPlaying.variableDataOffset, SEEK_SET) < 0)
+    if (fseek(gFile, gPlaying.variableDataOffset, SEEK_SET) < 0)
         fatalf(E_FILE_IO, NULL);
 
     uint8_t *varTable = mustMalloc(varDataSize);
 
-    if (fread(varTable, 1, varDataSize, f) != varDataSize)
+    if (fread(varTable, 1, varDataSize, gFile) != varDataSize)
         fatalf(E_FILE_IO, NULL);
 
-    fileMutexUnlock(&gFile, &f);
+    file_mutex_unlock(&gFileMutex);
 
     struct tf_var_header_t varHeader;
     enum tf_err_t err;
@@ -71,29 +75,20 @@ static sds sequenceLoadAudioFilePath(void) {
 
 #define FSEQ_HEADER_SIZE 32
 
-static void sequenceInitMutex(sds filepath) {
-    FILE *const f = fopen(filepath, "rb");
+void sequenceOpen(sds filepath, sds *const audioFilePath) {
+    FILE *const f = gFile = fopen(filepath, "rb");
 
     if (f == NULL)
         fatalf(E_FILE_NOT_FOUND, "error opening sequence: %s\n", filepath);
 
-    // init FileMutex, this is used to manage file locking across threads
-    // this assumes no `gFile` is already initialized and is now a leaking reference
-    fileMutexInit(&gFile, f);
-}
-
-void sequenceOpen(sds filepath, sds *const audioFilePath) {
-    sequenceInitMutex(filepath);
-
-    FILE *f;
-    fileMutexLock(&gFile, &f);
+    file_mutex_lock(&gFileMutex);
 
     uint8_t b[FSEQ_HEADER_SIZE];
 
     if (fread(b, 1, FSEQ_HEADER_SIZE, f) != FSEQ_HEADER_SIZE)
         fatalf(E_FILE_IO, NULL);
 
-    fileMutexUnlock(&gFile, &f);
+    file_mutex_unlock(&gFileMutex);
 
     enum tf_err_t err;
 
@@ -103,10 +98,40 @@ void sequenceOpen(sds filepath, sds *const audioFilePath) {
     *audioFilePath = sequenceLoadAudioFilePath();
 }
 
-void sequenceFree(void) {
-    fileMutexClose(&gFile);
+uint32_t sequenceReadFrames(struct seq_read_args_t args, uint8_t *frameData) {
+    file_mutex_lock(&gFileMutex);
 
-    gFile = (FileMutex){0};
+    if (fseek(gFile, args.startFrame * args.frameSize, SEEK_SET) < 0)
+        fatalf(E_FILE_IO, NULL);
+
+    const size_t framesRead =
+            fread(frameData, args.frameSize, args.frameCount, gFile);
+
+    file_mutex_unlock(&gFileMutex);
+
+    return (uint32_t) framesRead;
+}
+
+void sequenceRead(uint32_t start, uint32_t n, void *data) {
+    file_mutex_lock(&gFileMutex);
+
+    if (fseek(gFile, start, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
+
+    const size_t read = fread(data, 1, n, gFile);
+    if (read != n)
+        fatalf(E_FILE_IO, "read " PRIu64 " bytes, wanted %d", (uint64_t) read,
+               n);
+
+    file_mutex_unlock(&gFileMutex);
+}
+
+void sequenceFree(void) {
+    file_mutex_lock(&gFileMutex);
+
+    freeAndNullWith(&gFile, fclose);
+
+    file_mutex_unlock(&gFileMutex);
+
     gPlaying = (struct tf_file_header_t){0};
 }
 
