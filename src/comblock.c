@@ -1,5 +1,7 @@
 #include "comblock.h"
 
+#include <assert.h>
+
 #include <stb_ds.h>
 
 #ifdef ENABLE_ZSTD
@@ -68,6 +70,8 @@ static void comBlocksLoadAddrs(void) {
 
 #ifdef ENABLE_ZSTD
 static uint8_t **comBlockGetZstd(const int index) {
+    assert(index >= 0 && index < arrlen(gBlocks));
+
     const ComBlock comBlock = gBlocks[index];
 
     const size_t dInSize = comBlock.size;
