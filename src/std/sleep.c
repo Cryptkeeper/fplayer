@@ -30,6 +30,26 @@ sds sleepGetStatus(void) {
                         gAccumulatedLoss);
 }
 
+static int64_t sleepEstimatedNs(int64_t ns);
+
+static void sleepSpinLockNs(int64_t ns);
+
+// This is a modified version of the C++ implementation shown in this article:
+// https://blat-blatnik.github.io/computerBear/making-accurate-sleep-function/
+//
+// This version ports it to C using nanosleep, and makes use of time conversion
+// helper functions provided by fplayer's `time.h`. The two core sleep behaviors:
+//
+// 1. an approximate, repeating millisecond sleep loop
+// and 2. a spin look for nanosecond precision at cost of CPU
+//
+// ...are split into individual functions for readability.
+static inline void sleepPrecise(const int64_t ns) {
+    const int64_t preciseTime = sleepEstimatedNs(ns);
+
+    sleepSpinLockNs(preciseTime);
+}
+
 // The original `preciseSleep` function operates using double representation of
 // seconds. My other functions operate off ns precision using int64_t, so you'll
 // see conversions between the two types at code borders, but the core math
@@ -83,22 +103,6 @@ spin:
     now = timeGetNow();
 
     if (timeElapsedNs(start, now) < ns) goto spin;
-}
-
-// This is a modified version of the C++ implementation shown in this article:
-// https://blat-blatnik.github.io/computerBear/making-accurate-sleep-function/
-//
-// This version ports it to C using nanosleep, and makes use of time conversion
-// helper functions provided by fplayer's `time.h`. The two core sleep behaviors:
-//
-// 1. an approximate, repeating millisecond sleep loop
-// and 2. a spin look for nanosecond precision at cost of CPU
-//
-// ...are split into individual functions for readability.
-static inline void sleepPrecise(const int64_t ns) {
-    const int64_t preciseTime = sleepEstimatedNs(ns);
-
-    sleepSpinLockNs(preciseTime);
 }
 
 static int gNextSampleIdx = 0;
