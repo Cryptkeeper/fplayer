@@ -10,7 +10,7 @@
 static int64_t gSampleNs[gSampleCount];
 static int gLastSampleIdx;
 
-static float gAccumulatedLoss;
+static double gAccumulatedLoss;
 
 sds sleepGetStatus(void) {
     double avg = 0;
@@ -150,7 +150,8 @@ void sleepTimerLoop(struct sleep_loop_config_t config) {
         const int64_t fullLoopTime = timeElapsedNs(start, timeGetNow());
 
         if (fullLoopTime > interval) {
-            const float loss = (fullLoopTime / 1e6) - (interval / 1e6);
+            const double loss =
+                    ((double) fullLoopTime / 1e6) - ((double) interval / 1e6);
 
             gAccumulatedLoss += loss;
 
@@ -163,7 +164,7 @@ void sleepTimerLoop(struct sleep_loop_config_t config) {
                 config.skip((uint32_t) lostFrames);
 
                 gAccumulatedLoss -=
-                        (float) (lostFrames * config.intervalMillis);
+                        (double) (lostFrames * config.intervalMillis);
             }
         }
     }
