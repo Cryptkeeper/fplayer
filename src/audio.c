@@ -1,5 +1,6 @@
 #include "audio.h"
 
+#include <assert.h>
 #include <stdio.h>
 
 #ifdef ENABLE_OPENAL
@@ -23,15 +24,21 @@ static inline void alutPrintError(const char *const msg) {
 
 static ALuint gSource;
 static ALuint gCurrentBuffer = AL_NONE;
+
+static bool gAudioInit;
 #endif
 
 void audioInit(int *const argc, char **const argv) {
 #ifdef ENABLE_OPENAL
+    assert(!gAudioInit);
+
     alutInit(argc, argv);
     alutPrintError("error while initializing ALUT");
 
     alGenSources(1, &gSource);
     alPrintError("error generating default audio source");
+
+    gAudioInit = true;
 #endif
 }
 
@@ -39,13 +46,19 @@ void audioExit(void) {
     audioStop();
 
 #ifdef ENABLE_OPENAL
+    if (!gAudioInit) return;
+
     alutExit();
     alutPrintError("error while exiting ALUT");
+
+    gAudioInit = false;
 #endif
 }
 
 bool audioCheckPlaying(void) {
 #ifdef ENABLE_OPENAL
+    if (!gAudioInit) return false;
+
     ALint state;
     alGetSourcei(gSource, AL_SOURCE_STATE, &state);
     alPrintError("error checking audio source state");
@@ -77,6 +90,8 @@ void audioPlayFile(const char *const filepath) {
 
 void audioStop(void) {
 #ifdef ENABLE_OPENAL
+    if (!gAudioInit) return;
+
     alSourceStop(gSource);
     alPrintError("error stopping audio source playback");
 
