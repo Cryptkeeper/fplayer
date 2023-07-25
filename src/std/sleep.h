@@ -8,10 +8,12 @@
 
 sds sleepGetStatus(void);
 
-typedef bool (*sleep_fn_t)(void);
+struct sleep_loop_config_t {
+    long intervalMillis;
+    bool (*sleep)(void);
+    void (*skip)(uint32_t frames);
+};
 
-typedef void (*overrun_fn_t)(int64_t ns);
-
-void sleepTimerLoop(sleep_fn_t sleep, long millis, overrun_fn_t overrun);
+void sleepTimerLoop(struct sleep_loop_config_t config);
 
 #endif//FPLAYER_SLEEP_H

@@ -1,5 +1,6 @@
 #include "sleep.h"
 
+#include <assert.h>
 #include <math.h>
 
 #include "time.h"
@@ -8,6 +9,8 @@
 
 static int64_t gSampleNs[gSampleCount];
 static int gLastSampleIdx;
+
+static float gAccumulatedLoss;
 
 sds sleepGetStatus(void) {
     double avg = 0;
@@ -23,7 +26,8 @@ sds sleepGetStatus(void) {
     const double ms = avg / 1e6;
     const double fps = ms > 0 ? 1000 / ms : 0;
 
-    return sdscatprintf(sdsempty(), "%.4fms (%.2f fps)", ms, fps);
+    return sdscatprintf(sdsempty(), "%.4fms (%.2f fps) [%.1fms loss]", ms, fps,
+                        gAccumulatedLoss);
 }
 
 // The original `preciseSleep` function operates using double representation of
@@ -116,24 +120,47 @@ static void sleepTimerTick(const int64_t ns) {
     sleepRecordSample(timeElapsedNs(start, end));
 }
 
-void sleepTimerLoop(const sleep_fn_t sleep,
-                    const long millis,
-                    const overrun_fn_t overrun) {
+void sleepTimerLoop(struct sleep_loop_config_t config) {
+    assert(config.intervalMillis > 0);
+    assert(config.sleep != NULL);
+    assert(config.skip != NULL);
+
     timeInstant start;
 
     while (true) {
         start = timeGetNow();
 
-        const bool doContinue = sleep();
-        if (!doContinue) break;
+        if (!config.sleep()) break;
 
+        const int64_t interval = config.intervalMillis * 1000000;
+
+        // if `config.sleep` did not take the full time allowance, calculate
+        // the remaining time budget and sleep for the full duration
         const int64_t remainingTime =
-                (millis * 1000000) - timeElapsedNs(start, timeGetNow());
+                interval - timeElapsedNs(start, timeGetNow());
 
-        if (remainingTime > 0) {
-            sleepTimerTick(remainingTime);
-        } else if (remainingTime < 0) {
-            overrun(-remainingTime);
+        if (remainingTime > 0) sleepTimerTick(remainingTime);
+
+        // measure the full time spent ticking and sleeping, subtracting from the
+        // allowed interval, and notify fplayer of any dropped frames
+        const int64_t fullLoopTime = timeElapsedNs(start, timeGetNow());
+
+        if (fullLoopTime > interval) {
+            const float loss = (fullLoopTime / 1e6) - (interval / 1e6);
+
+            gAccumulatedLoss += loss;
+
+            // check if the loss has accumulated to the value of at least one frame
+            // in duration, and if so, skip the frame(s) and subtract the time gained
+            const int lostFrames = (int) floor(gAccumulatedLoss /
+                                               (double) config.intervalMillis);
+
+            if (lostFrames > 0) {
+                config.skip((uint32_t) lostFrames);
+
+                gAccumulatedLoss -=
+                        (float) (lostFrames * config.intervalMillis);
+            }
         }
     }
 }

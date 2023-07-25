@@ -1,6 +1,5 @@
 #include "player.h"
 
-#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -114,23 +113,13 @@ static bool playerHandleNextFrame(void) {
     return true;
 }
 
-static void playerOverrunSkipFrames(const int64_t ns) {
-    const long millis = ns / 1000000;
-    const uint8_t frameTimeMs = sequenceData()->frameStepTimeMillis;
-
-    if (millis <= frameTimeMs) return;
-
-    const int skippedFrames =
-            (int) ceil((double) (millis - frameTimeMs) / (double) frameTimeMs);
-
-    if (skippedFrames == 0) return;
-
+static void playerSkipFrames(const uint32_t frames) {
     const uint32_t max = sequenceData()->frameCount;
-    const int64_t newFrame = gNextFrame + skippedFrames;
+    const int64_t newFrame = gNextFrame + frames;
 
     gNextFrame = newFrame >= max ? max : (uint32_t) newFrame;
 
-    printf("warning: skipping %d frames\n", skippedFrames);
+    printf("warning: skipping %d frames\n", frames);
 }
 
 static void playerStartPlayback(const PlayerOpts opts, sds audioFilePath) {
@@ -143,8 +132,12 @@ static void playerStartPlayback(const PlayerOpts opts, sds audioFilePath) {
     sdsfree(audioFilePath);
 
     // start sequence timer loop
-    sleepTimerLoop(playerHandleNextFrame, sequenceData()->frameStepTimeMillis,
-                   playerOverrunSkipFrames);
+    // this call blocks until playback is completed
+    sleepTimerLoop((struct sleep_loop_config_t){
+            .intervalMillis = sequenceData()->frameStepTimeMillis,
+            .sleep = playerHandleNextFrame,
+            .skip = playerSkipFrames,
+    });
 
     printf("turning off lights, waiting for end of audio...\n");
 
