@@ -67,8 +67,8 @@ static sds sequenceLoadAudioFilePath(void) {
         remaining -= varHeader.size;
     }
 
-    freeAndNull((void **) &varData);
-    freeAndNull((void **) &varTable);
+    freeAndNull(varData);
+    freeAndNull(varTable);
 
     return audioFilePath;
 }

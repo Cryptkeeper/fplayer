@@ -65,7 +65,7 @@ static void comBlocksLoadAddrs(void) {
         offset += block.size;
     }
 
-    freeAndNull((void **) &b);
+    freeAndNull(b);
 }
 
 #ifdef ENABLE_ZSTD
@@ -133,8 +133,8 @@ static uint8_t **comBlockGetZstd(const int index) {
 
     freeAndNullWith(&ctx, ZSTD_freeDCtx);
 
-    freeAndNull(&dIn);
-    freeAndNull(&dOut);
+    freeAndNull(dIn);
+    freeAndNull(dOut);
 
     return frames;
 }

@@ -186,7 +186,7 @@ static void playerStartPlayback(const PlayerOpts opts, sds audioFilePath) {
 }
 
 static void playerFree(void) {
-    freeAndNull((void **) &gLastFrameData);
+    freeAndNull(gLastFrameData);
 }
 
 void playerRun(const PlayerOpts opts) {

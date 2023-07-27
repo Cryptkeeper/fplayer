@@ -155,7 +155,7 @@ void channelMapInit(const char *const filepath) {
     channelMapParseCSV(b);
 
     // cleanup local resources in same scope as allocation
-    freeAndNull((void **) &b);
+    freeAndNull(b);
 }
 
 bool channelMapFind(const uint32_t id,

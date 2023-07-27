@@ -52,7 +52,7 @@ static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
         arrput(frames, frame);
     }
 
-    freeAndNull((void **) &frameData);
+    freeAndNull(frameData);
 
     return frames;
 }
@@ -172,7 +172,7 @@ static bool framePumpSwapPreload(FramePump *const pump) {
 
     *pump = *nextPump;
 
-    freeAndNull((void **) &nextPump);
+    freeAndNull(nextPump);
 
     return true;
 }
@@ -217,8 +217,10 @@ const uint8_t *framePumpGet(FramePump *const pump,
 
     memcpy(pump->buffer, pump->frames[pump->head], frameSize);
 
+    const uint32_t index = pump->head++;
+
     // free previous frame data, not needed once copied
-    freeAndNull((void **) &pump->frames[pump->head++]);
+    freeAndNull(pump->frames[index]);
 
     return pump->buffer;
 }
@@ -230,8 +232,11 @@ void framePumpSkipFrames(FramePump *const pump, const uint32_t frames) {
     const uint32_t skippedFrames =
             arrlen(pump->frames) < frames ? arrlen(pump->frames) : frames;
 
-    for (uint32_t i = 0; i < skippedFrames; i++)
-        freeAndNull((void **) &pump->frames[pump->head++]);
+    for (uint32_t i = 0; i < skippedFrames; i++) {
+        const uint32_t index = pump->head++;
+
+        freeAndNull(pump->frames[index]);
+    }
 
     // if the pump has been emptied via skipping frames, the normal read routines
     // won't fire and the pump isn't freed (unless it is the last at program exit)
@@ -241,5 +246,5 @@ void framePumpSkipFrames(FramePump *const pump, const uint32_t frames) {
 void framePumpFree(FramePump *const pump) {
     framePumpFreeFrames(pump);
 
-    freeAndNull((void **) &pump->buffer);
+    freeAndNull(pump->buffer);
 }

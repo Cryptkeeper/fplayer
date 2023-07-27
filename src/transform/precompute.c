@@ -217,7 +217,7 @@ void precomputeRun(const char *const fp) {
 
     precomputeHistoryFree();
 
-    freeAndNull((void **) &gLastFrameData);
+    freeAndNull(gLastFrameData);
 
     framePumpFree(&pump);
 
