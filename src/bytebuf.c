@@ -5,7 +5,7 @@
 
 static const int BufHeadDefault = 1;
 
-static unsigned char gWriteBuf[512];
+static unsigned char gWriteBuf[32];
 static int gBufHead = BufHeadDefault;
 
 void bbWrite(unsigned char b) {
