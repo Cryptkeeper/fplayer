@@ -141,6 +141,9 @@ void serialWriteFrame(const uint8_t *const frameData,
 
     minifyStream(frameData, lastFrameData, size, frame);
 
+    // the write buffer should already be cleared after each use
+    assert(bbFlush() == 0);
+
     if (gPort != NULL) spTry(sp_drain(gPort));
 }
 
