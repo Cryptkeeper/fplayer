@@ -14,6 +14,8 @@ void serialOptsFree(SerialOpts *opts);
 
 void serialInit(SerialOpts opts);
 
+void serialWrite(const uint8_t *b, int size);
+
 void serialWriteHeartbeat(void);
 
 void serialWriteAllOff(void);

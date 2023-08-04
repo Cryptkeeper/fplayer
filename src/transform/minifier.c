@@ -7,15 +7,15 @@
 #include "lightorama/lightorama.h"
 #include "stb_ds.h"
 
+#include "../bytebuf.h"
 #include "../cmap.h"
 #include "../seq.h"
 #include "encode.h"
 #include "fade.h"
-#include "lor.h"
 #include "netstats.h"
 
-static inline lor_intensity_t minifyEncodeIntensity(uint8_t abs) {
-    return lor_intensity_curve_vendor((float) (abs / 255.0));
+static inline LorIntensity minifyEncodeIntensity(uint8_t abs) {
+    return LorIntensityCurveVendor((float) (abs / 255.0));
 }
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
@@ -25,13 +25,12 @@ struct encoding_request_t {
     uint8_t groupOffset;
     uint16_t circuits;
     uint8_t nCircuits;
-    lor_effect_t effect;
-    union lor_effect_any_t effectData;
+    LorEffect effect;
+    LorEffectArgs args;
     uint16_t nFrames;
 };
 
-static void minifyEncodeRequest(struct encoding_request_t request,
-                                minify_write_fn_t write) {
+static void minifyEncodeRequest(struct encoding_request_t request) {
     assert(request.circuits > 0);
     assert(request.nCircuits > 0);
 
@@ -41,27 +40,29 @@ static void minifyEncodeRequest(struct encoding_request_t request,
     if (request.nCircuits == 1) {
         assert(request.groupOffset == 0);
 
-        const int size = lor_write_channel_effect(
-                request.effect, &request.effectData, request.circuits - 1,
-                request.unit, bufhead());
+        lorEncodeChannelEffect(request.effect, &request.args,
+                               request.circuits - 1, request.unit, bbWrite);
 
-        bufadv(size);
+        const int written = bbFlush();
+
+        gNSWritten += written;
 
         if (request.effect == LOR_EFFECT_FADE) {
-            // 4 bytes per individual set normally + 2 bytes padding each
+            // 4 bytes per individual set normally
             // +2 to written size since it doesn't include padding yet
-            gNSSaved += request.nFrames * 6 - (size + 2);
+            gNSSaved += request.nFrames * 6 - (written + 2);
         }
     } else {
-        const int size = lor_write_channelset_effect(
-                request.effect, &request.effectData,
-                (lor_channelset_t){
-                        .offset = request.groupOffset,
-                        .channels = request.circuits,
-                },
-                request.unit, bufhead());
+        lorEncodeChannelSetEffect(request.effect, &request.args,
+                                  (LorChannelSet){
+                                          .offset = request.groupOffset,
+                                          .channelBits = request.circuits,
+                                  },
+                                  request.unit, bbWrite);
 
-        bufadv(size);
+        const int written = bbFlush();
+
+        gNSWritten += written;
 
         // N bytes per individual set/fade normally + 2 bytes padding each
         const int ungroupedSize =
@@ -70,23 +71,20 @@ static void minifyEncodeRequest(struct encoding_request_t request,
         // if the effect is sent once, mark the individual step frames as saved
         // +2 to written size since it doesn't include padding yet
         gNSSaved += (request.nFrames * request.nCircuits * ungroupedSize) -
-                    (size + 2);
+                    (written + 2);
     }
-
-    bufflush(false, write);
 }
 
-static inline lor_time_t minifyGetFadeDuration(const Fade fade) {
+static inline LorTime minifyGetFadeDuration(const Fade fade) {
     const uint64_t ms = sequenceData()->frameStepTimeMillis * fade.frames;
 
-    return lor_seconds_to_time((float) ms / 1000.0F);
+    return lorSecondsToTime((float) ms / 1000.0F);
 }
 
 static void minifyEncodeLoopOffset(const uint8_t unit,
                                    const uint8_t groupOffset,
                                    uint8_t alignOffset,
-                                   EncodeChange *const stack,
-                                   const minify_write_fn_t write) {
+                                   EncodeChange *const stack) {
     assert(arrlen(stack) > 0);
 
     do {
@@ -141,7 +139,7 @@ static void minifyEncodeLoopOffset(const uint8_t unit,
                 switch (fade.type) {
                     case FADE_SLOPE:
                         request.effect = LOR_EFFECT_FADE;
-                        request.effectData = (union lor_effect_any_t){
+                        request.args = (LorEffectArgs){
                                 .fade = {
                                         .startIntensity = minifyEncodeIntensity(
                                                 fade.from),
@@ -157,7 +155,7 @@ static void minifyEncodeLoopOffset(const uint8_t unit,
                 }
             } else {
                 request.effect = LOR_EFFECT_SET_INTENSITY;
-                request.effectData = (union lor_effect_any_t){
+                request.args = (LorEffectArgs){
                         .setIntensity = {
                                 .intensity = minifyEncodeIntensity(
                                         change.newIntensity),
@@ -166,7 +164,7 @@ static void minifyEncodeLoopOffset(const uint8_t unit,
 
             request.nFrames = hasFade ? fade.frames : 1;
 
-            minifyEncodeRequest(request, write);
+            minifyEncodeRequest(request);
 
             // detect when all circuits are handled and break early
             if (consumed == 0xFFFFu) break;
@@ -176,22 +174,19 @@ static void minifyEncodeLoopOffset(const uint8_t unit,
     } while (arrlen(stack) > 0);
 }
 
-static void minifyEncodeLoop(const uint8_t unit,
-                             EncodeChange *const stack,
-                             const minify_write_fn_t write) {
+static void minifyEncodeLoop(const uint8_t unit, EncodeChange *const stack) {
     const int firstCircuit = stack[0].circuit - 1;
 
     const uint8_t groupOffset = (uint8_t) (firstCircuit / 16);
     const int alignOffset = firstCircuit % 16;
 
-    minifyEncodeLoopOffset(unit, groupOffset, alignOffset, stack, write);
+    minifyEncodeLoopOffset(unit, groupOffset, alignOffset, stack);
 }
 
 void minifyStream(const uint8_t *const frameData,
                   const uint8_t *const lastFrameData,
                   const uint32_t size,
-                  const uint32_t frame,
-                  const minify_write_fn_t write) {
+                  const uint32_t frame) {
     uint8_t prevUnit = 0;
 
     EncodeChange *stack = NULL;
@@ -206,7 +201,7 @@ void minifyStream(const uint8_t *const frameData,
 
         const bool unitIdChanged = arrlen(stack) > 0 && prevUnit != unit;
 
-        if (unitIdChanged) minifyEncodeLoop(prevUnit, stack, write);
+        if (unitIdChanged) minifyEncodeLoop(prevUnit, stack);
 
         // old stack is flushed, update context to use new unit value
         prevUnit = unit;
@@ -216,7 +211,7 @@ void minifyStream(const uint8_t *const frameData,
         const bool outOfRange =
                 arrlen(stack) > 0 && circuit >= stack[0].circuit + 16;
 
-        if (outOfRange) minifyEncodeLoop(unit, stack, write);
+        if (outOfRange) minifyEncodeLoop(unit, stack);
 
         // record values onto (possibly fresh) stack
         // flush when stack is full
@@ -230,11 +225,11 @@ void minifyStream(const uint8_t *const frameData,
 
         arrput(stack, change);
 
-        if (arrlen(stack) >= 16) minifyEncodeLoop(unit, stack, write);
+        if (arrlen(stack) >= 16) minifyEncodeLoop(unit, stack);
     }
 
     // flush any pending data from the last iteration
-    if (arrlen(stack) > 0) minifyEncodeLoop(prevUnit, stack, write);
+    if (arrlen(stack) > 0) minifyEncodeLoop(prevUnit, stack);
 
     arrfree(stack);
 

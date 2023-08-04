@@ -7,11 +7,11 @@
 #include <lightorama/lightorama.h>
 #include <stb_ds.h>
 
+#include "bytebuf.h"
 #include "cmap.h"
 #include "std/err.h"
 #include "std/mem.h"
 #include "std/time.h"
-#include "transform/lor.h"
 #include "transform/minifier.h"
 #include "transform/netstats.h"
 
@@ -78,9 +78,7 @@ void serialInit(const SerialOpts opts) {
     }
 }
 
-static void serialWrite(const uint8_t *const b, const int size) {
-    gNSWritten += size;
-
+void serialWrite(const uint8_t *const b, const int size) {
     switch (gSrc) {
         case SERIAL_NULL:
             return;
@@ -102,11 +100,10 @@ static void serialWrite(const uint8_t *const b, const int size) {
 }
 
 void serialWriteHeartbeat(void) {
-    bufadv(lor_write_heartbeat(bufhead()));
+    lorEncodeHeartbeat(bbWrite);
 
-    bufflush(false, serialWrite);
-
-    gNSPackets++;
+    gNSWritten += bbFlush();
+    gNSPackets += 1;
 }
 
 static void serialWriteThrottledHeartbeat(void) {
@@ -127,15 +124,13 @@ void serialWriteAllOff(void) {
     uint8_t *uids = channelMapGetUids();
 
     for (int i = 0; i < arrlen(uids); i++) {
-        bufadv(lor_write_unit_effect(LOR_EFFECT_SET_OFF, NULL, uids[i],
-                                     bufhead()));
+        lorEncodeUnitEffect(LOR_EFFECT_SET_OFF, NULL, uids[i], bbWrite);
+
+        gNSWritten += bbFlush();
+        gNSPackets += 1;
     }
 
     arrfree(uids);
-
-    bufflush(true, serialWrite);
-
-    gNSPackets += arrlen(uids);
 }
 
 void serialWriteFrame(const uint8_t *const frameData,
@@ -144,10 +139,7 @@ void serialWriteFrame(const uint8_t *const frameData,
                       const uint32_t frame) {
     serialWriteThrottledHeartbeat();
 
-    minifyStream(frameData, lastFrameData, size, frame, serialWrite);
-
-    // ensure any written LOR packets are flushed
-    bufflush(true, serialWrite);
+    minifyStream(frameData, lastFrameData, size, frame);
 
     if (gPort != NULL) spTry(sp_drain(gPort));
 }
