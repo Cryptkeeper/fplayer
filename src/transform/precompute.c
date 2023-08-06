@@ -86,7 +86,7 @@ static inline bool precomputeHistoryAligned(const int slope, const int dt) {
     return dt >= slope - r && dt <= slope + r;
 }
 
-static inline bool intensityFlash(const uint8_t old, const uint8_t new) {
+static inline bool isIntensityFlash(const uint8_t old, const uint8_t new) {
     const int d = (old > new) ? (old - new) : (new - old);
     return d >= 200;
 }
@@ -108,11 +108,12 @@ static void precomputeHistoryPush(const uint32_t id,
         return;
     }
 
+    const bool isFlash = isIntensityFlash(oldIntensity, newIntensity);
+
     if (history->frames > 0) {
         switch (history->type) {
             case FADE_FLASH:
-                if (!intensityFlash(oldIntensity, newIntensity))
-                    precomputeHistoryFlush(id, history);
+                if (!isFlash) precomputeHistoryFlush(id, history);
                 break;
 
             case FADE_SLOPE:
@@ -130,9 +131,7 @@ static void precomputeHistoryPush(const uint32_t id,
         // -1 since it started with the frame id which owns oldIntensity, not newIntensity
         history->startFrame = frame - 1;
         history->firstIntensity = oldIntensity;
-
-        history->type = intensityFlash(oldIntensity, newIntensity) ? FADE_FLASH
-                                                                   : FADE_SLOPE;
+        history->type = isFlash ? FADE_FLASH : FADE_SLOPE;
     }
 }
 
