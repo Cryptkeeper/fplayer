@@ -6,6 +6,7 @@
 #endif
 
 #include <libserialport.h>
+#include <lightorama/version.h>
 
 #ifdef ENABLE_ZSTD
 #include <zstd.h>
@@ -60,8 +61,9 @@ static void printVersions(void) {
     printf("OpenAL disabled\n");
 #endif
 
-    printf("libtinyfseq %s\n", TINYFSEQ_VERSION);
+    printf("liblightorama %s\n", LIBLIGHTORAMA_VERSION_STRING);
     printf("libserialport %s\n", SP_PACKAGE_VERSION_STRING);
+    printf("libtinyfseq %s\n", TINYFSEQ_VERSION);
 
 #ifdef ENABLE_ZSTD
     printf("zstd %s\n", ZSTD_versionString());
