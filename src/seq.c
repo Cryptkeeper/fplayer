@@ -130,7 +130,7 @@ void sequenceRead(uint32_t start, uint32_t n, void *data) {
 void sequenceFree(void) {
     file_mutex_lock(&gFileMutex);
 
-    freeAndNullWith(&gFile, fclose);
+    freeAndNullWith(gFile, fclose);
 
     file_mutex_unlock(&gFileMutex);
 

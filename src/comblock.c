@@ -131,7 +131,7 @@ static uint8_t **comBlockGetZstd(const int index) {
         }
     }
 
-    freeAndNullWith(&ctx, ZSTD_freeDCtx);
+    freeAndNullWith(ctx, ZSTD_freeDCtx);
 
     freeAndNull(dIn);
     freeAndNull(dOut);

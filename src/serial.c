@@ -25,7 +25,7 @@ static inline void spPrintError(enum sp_return err) {
     if ((msg = sp_last_error_message()) != NULL) {
         fprintf(stderr, "%s\n", msg);
 
-        freeAndNullWith(&msg, sp_free_error_message);
+        freeAndNullWith(msg, sp_free_error_message);
     }
 }
 
@@ -154,7 +154,7 @@ static void serialPortFree(struct sp_port *const port) {
 }
 
 void serialExit(void) {
-    freeAndNullWith(&gPort, serialPortFree);
+    freeAndNullWith(gPort, serialPortFree);
 }
 
 sds *serialEnumPorts(void) {

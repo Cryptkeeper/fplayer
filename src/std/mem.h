@@ -12,8 +12,8 @@
 
 #define freeAndNullWith(p, fn)                                                 \
     do {                                                                       \
-        if (*(p) != NULL) fn(*(p));                                            \
-        *(p) = NULL;                                                           \
+        if (p != NULL) fn(p);                                                  \
+        p = NULL;                                                              \
     } while (0)
 
 void *mustMalloc(size_t size);
