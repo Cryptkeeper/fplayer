@@ -180,9 +180,6 @@ static void playerStartPlayback(const PlayerOpts opts, sds audioFilePath) {
     printf("%s\n", netstats);
 
     sdsfree(netstats);
-
-    // cleanup resources
-    audioStop();
 }
 
 static void playerFree(void) {

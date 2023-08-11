@@ -11,6 +11,4 @@ bool audioCheckPlaying(void);
 
 void audioPlayFile(const char *filepath);
 
-void audioStop(void);
-
 #endif//FPLAYER_AUDIO_H
