@@ -14,10 +14,6 @@
 #include "fade.h"
 #include "netstats.h"
 
-static inline LorIntensity minifyEncodeIntensity(uint8_t abs) {
-    return LorIntensityCurveVendor((float) (abs / 255.0));
-}
-
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
 
 struct encoding_request_t {
@@ -75,17 +71,23 @@ static void minifyEncodeRequest(struct encoding_request_t request) {
     }
 }
 
+static inline LorIntensity minifyEncodeIntensity(uint8_t abs) {
+    return LorIntensityCurveVendor((float) (abs / 255.0));
+}
+
 static inline LorTime minifyGetFadeDuration(const Fade fade) {
     const uint64_t ms = sequenceData()->frameStepTimeMillis * fade.frames;
 
     return lorSecondsToTime((float) ms / 1000.0F);
 }
 
-static void minifyEncodeLoopOffset(const uint8_t unit,
-                                   const uint8_t groupOffset,
-                                   uint8_t alignOffset,
-                                   EncodeChange *const stack) {
+static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
     assert(arrlen(stack) > 0);
+
+    const int firstCircuit = stack[0].circuit - 1;
+    const uint8_t groupOffset = (uint8_t) (firstCircuit / 16);
+
+    int alignOffset = firstCircuit % 16;
 
     do {
         uint16_t consumed = 0;
@@ -174,15 +176,6 @@ static void minifyEncodeLoopOffset(const uint8_t unit,
     } while (arrlen(stack) > 0);
 }
 
-static void minifyEncodeLoop(const uint8_t unit, EncodeChange *const stack) {
-    const int firstCircuit = stack[0].circuit - 1;
-
-    const uint8_t groupOffset = (uint8_t) (firstCircuit / 16);
-    const int alignOffset = firstCircuit % 16;
-
-    minifyEncodeLoopOffset(unit, groupOffset, alignOffset, stack);
-}
-
 void minifyStream(const uint8_t *const frameData,
                   const uint8_t *const lastFrameData,
                   const uint32_t size,
@@ -201,7 +194,7 @@ void minifyStream(const uint8_t *const frameData,
 
         const bool unitIdChanged = arrlen(stack) > 0 && prevUnit != unit;
 
-        if (unitIdChanged) minifyEncodeLoop(prevUnit, stack);
+        if (unitIdChanged) minifyEncodeStack(prevUnit, stack);
 
         // old stack is flushed, update context to use new unit value
         prevUnit = unit;
@@ -211,7 +204,7 @@ void minifyStream(const uint8_t *const frameData,
         const bool outOfRange =
                 arrlen(stack) > 0 && circuit >= stack[0].circuit + 16;
 
-        if (outOfRange) minifyEncodeLoop(unit, stack);
+        if (outOfRange) minifyEncodeStack(unit, stack);
 
         // record values onto (possibly fresh) stack
         // flush when stack is full
@@ -225,11 +218,11 @@ void minifyStream(const uint8_t *const frameData,
 
         arrput(stack, change);
 
-        if (arrlen(stack) >= 16) minifyEncodeLoop(unit, stack);
+        if (arrlen(stack) >= 16) minifyEncodeStack(unit, stack);
     }
 
     // flush any pending data from the last iteration
-    if (arrlen(stack) > 0) minifyEncodeLoop(prevUnit, stack);
+    if (arrlen(stack) > 0) minifyEncodeStack(prevUnit, stack);
 
     arrfree(stack);
 
