@@ -34,8 +34,10 @@ static inline void alutCheckError(const char *const msg) {
     }
 }
 
-static ALuint gSource;
+static ALuint gSource = AL_NONE;
 static ALuint gCurrentBuffer = AL_NONE;
+
+static bool gAlutUnloaded = false;
 
 void audioInit(int *const argc, char **const argv) {
     alutInit(argc, argv);
@@ -46,29 +48,41 @@ void audioInit(int *const argc, char **const argv) {
 }
 
 static void audioStop(void) {
-    alSourceStop(gSource);
-    alCheckError("error stopping audio source playback");
+    if (gSource != AL_NONE) {
+        alSourceStop(gSource);
+        alCheckError("error stopping audio source playback");
 
-    alSourcei(gSource, AL_BUFFER, AL_NONE);
-    alCheckError("error clearing source buffer assignment");
+        alSourcei(gSource, AL_BUFFER, AL_NONE);
+        alCheckError("error clearing source buffer assignment");
 
-    alDeleteSources(1, &gSource);
-    alCheckError("error deleting default audio source");
+        alDeleteSources(1, &gSource);
+        alCheckError("error deleting default audio source");
 
-    if (gCurrentBuffer == AL_NONE) return;
+        gSource = AL_NONE;
+    }
 
-    alDeleteBuffers(1, &gCurrentBuffer);
-    alCheckError("error deleting audio buffer");
+    if (gCurrentBuffer != AL_NONE) {
+        alDeleteBuffers(1, &gCurrentBuffer);
+        alCheckError("error deleting audio buffer");
 
-    gCurrentBuffer = AL_NONE;
+        gCurrentBuffer = AL_NONE;
+    }
 }
 
 void audioExit(void) {
+    if (gAlutUnloaded) return;
+
+    gAlutUnloaded = true;
+
+    audioStop();
+
     alutExit();
     alutCheckError("error while exiting ALUT");
 }
 
 bool audioCheckPlaying(void) {
+    if (gAlutUnloaded) return false;
+
     ALint state;
     alGetSourcei(gSource, AL_SOURCE_STATE, &state);
     alCheckError("error checking audio source state");
