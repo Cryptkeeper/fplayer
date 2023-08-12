@@ -1,6 +1,10 @@
 #include "audio.h"
 
+bool gAudioIgnoreErrors = false;
+
 #ifdef ENABLE_OPENAL
+
+#include <stdio.h>
 
 #include <AL/alut.h>
 
@@ -8,15 +12,26 @@
 
 static inline void alCheckError(const char *const msg) {
     ALenum err;
-    if ((err = alGetError()))
+    if ((err = alGetError()) == AL_NO_ERROR) return;
+
+    if (gAudioIgnoreErrors) {
+        fprintf(stderr, "%s: OpenAL error 0x%02x\n", msg, err);
+    } else {
         fatalf(E_FATAL, "%s: OpenAL error 0x%02x\n", msg, err);
+    }
 }
 
 static inline void alutCheckError(const char *const msg) {
     ALenum err;
-    if ((err = alutGetError()))
+    if ((err = alutGetError()) == ALUT_ERROR_NO_ERROR) return;
+    
+    if (gAudioIgnoreErrors) {
+        fprintf(stderr, "%s: ALUT error 0x%02x (%s)\n", msg, err,
+                alutGetErrorString(err));
+    } else {
         fatalf(E_FATAL, "%s: ALUT error 0x%02x (%s)\n", msg, err,
                alutGetErrorString(err));
+    }
 }
 
 static ALuint gSource;

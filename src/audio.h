@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+extern bool gAudioIgnoreErrors;
+
 void audioInit(int *argc, char **argv);
 
 void audioExit(void);

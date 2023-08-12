@@ -124,7 +124,7 @@ static void sleepTimerTick(const int64_t ns) {
     sleepRecordSample(timeElapsedNs(start, end));
 }
 
-void sleepTimerLoop(struct sleep_loop_config_t config) {
+void sleepTimerLoop(const struct sleep_loop_config_t config) {
     assert(config.intervalMillis > 0);
     assert(config.sleep != NULL);
     assert(config.skip != NULL);
