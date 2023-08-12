@@ -24,7 +24,7 @@ static inline void alCheckError(const char *const msg) {
 static inline void alutCheckError(const char *const msg) {
     ALenum err;
     if ((err = alutGetError()) == ALUT_ERROR_NO_ERROR) return;
-    
+
     if (gAudioIgnoreErrors) {
         fprintf(stderr, "%s: ALUT error 0x%02x (%s)\n", msg, err,
                 alutGetErrorString(err));
@@ -51,6 +51,9 @@ static void audioStop(void) {
 
     alSourcei(gSource, AL_BUFFER, AL_NONE);
     alCheckError("error clearing source buffer assignment");
+
+    alDeleteSources(1, &gSource);
+    alCheckError("error deleting default audio source");
 
     if (gCurrentBuffer == AL_NONE) return;
 

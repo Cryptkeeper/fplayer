@@ -37,7 +37,6 @@ static void printUsage(void) {
            "\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n"
            "\t-p\t\t\tPrecompute fades for smoother playback and reduced "
            "bandwidth (experimental)\n\n"
-           "\t-i\t\t\tPrint audio playback errors instead of exiting\n\n"
 
            "[Controls]\n"
            "\t-a <file>\t\tOverride audio with specified filepath\n"
@@ -48,6 +47,7 @@ static void printUsage(void) {
 
            "[CLI]\n"
            "\t-t <file>\t\tTest load channel map and exit\n"
+           "\t-i\t\t\tPrint audio playback errors instead of exiting\n"
            "\t-l\t\t\tPrint available serial port list and exit\n"
            "\t-h\t\t\tPrint this message and exit\n"
            "\t-v\t\t\tPrint library versions and exit\n");
@@ -105,11 +105,15 @@ static void printSerialEnumPorts(void) {
 
 static bool parseOpts(const int argc, char **const argv, int *const ec) {
     int c;
-    while ((c = getopt(argc, argv, ":t:lhvf:c:a:r:w:pid:b:")) != -1) {
+    while ((c = getopt(argc, argv, ":t:ilhvf:c:a:r:w:pid:b:")) != -1) {
         switch (c) {
             case 't':
                 testConfigurations(optarg);
                 return true;
+
+            case 'i':
+                gAudioIgnoreErrors = true;
+                break;
 
             case 'l':
                 printSerialEnumPorts();
@@ -148,10 +152,6 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
 
             case 'p':
                 gPlayerOpts.precomputeFades = true;
-                break;
-
-            case 'i':
-                gAudioIgnoreErrors = true;
                 break;
 
             case 'd':
