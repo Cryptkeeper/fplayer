@@ -131,7 +131,7 @@ static void fseqWriteVars(FILE *const dst, const struct var_t *const vars) {
 #define CD_CHUNK_SIZE 4096
 
 static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
-    uint *const chunk = malloc(CD_CHUNK_SIZE);
+    uint8_t *const chunk = malloc(CD_CHUNK_SIZE);
 
     uint32_t copied = 0;
 
