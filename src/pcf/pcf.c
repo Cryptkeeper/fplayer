@@ -45,6 +45,11 @@ bool pcfOpen(const char *const fp, pcf_file_t *const file) {
 
         arrput(open.frames, frame);
 
+        // fplayer doesn't encode frames with zero length events, but that doesn't
+        // mean others might — this helps avoid zero length array allocations that
+        // would otherwise require additional NULL checking
+        assert(frame.nEvents > 0);
+
         pcf_event_t *events = NULL;
 
         arrsetcap(events, frame.nEvents);
@@ -52,6 +57,7 @@ bool pcfOpen(const char *const fp, pcf_file_t *const file) {
         if (fread(events, sizeof(pcf_event_t), frame.nEvents, f) !=
             frame.nEvents)
             goto fail;
+
 
         arrput(open.events, events);
     }
