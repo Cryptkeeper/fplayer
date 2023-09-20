@@ -221,10 +221,6 @@ bool fadeTableLoadCache(const char *const fp) {
 
     if (!pcfOpen(fp, &file)) return false;
 
-    printf("loaded: %s\n", fp);
-    printf("frames: %d\n", arrlen(file.frames));
-    printf("events: %d\n", arrlen(file.events));
-
     for (uint32_t i = 0; i < arrlen(file.frames); i++) {
         const pcf_frame_t frame = file.frames[i];
         pcf_event_t *const events = file.events[i];
