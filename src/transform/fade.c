@@ -214,6 +214,8 @@ bool fadeTableCache(const char *const fp) {
     return ok;
 }
 
+#include <stdio.h>
+
 bool fadeTableLoadCache(const char *const fp) {
     pcf_file_t file = {NULL};
 
@@ -226,6 +228,8 @@ bool fadeTableLoadCache(const char *const fp) {
         for (uint32_t j = 0; j < arrlen(events); j++) {
             const pcf_event_t event = events[j];
             const pcf_fade_t fade = file.fades[event.fade];
+
+            printf("fade push: %d - %d - %d\n", event.circuit, i, j);
 
             fadePush(event.circuit,
                      (Fade){
