@@ -13,7 +13,7 @@ file(GLOB_RECURSE SDS_FILES "sds/*.c")
 option(BUILD_MFTOOL "enable building mftool executable" true)
 
 if (BUILD_MFTOOL)
-    add_executable(mftool "mftool/main.c" ${SDS_FILES})
+    add_executable(mftool "mftool-src/main.c" ${SDS_FILES})
 
     target_include_directories(mftool PRIVATE libtinyfseq sds stb)
 endif ()
