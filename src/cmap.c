@@ -146,11 +146,14 @@ void channelMapInit(const char *const filepath) {
 
     rewind(f);
 
-    char *b = mustMalloc(filesize);
+    char *b = mustMalloc(filesize + 1);
 
     if (fread(b, 1, filesize, f) != filesize) fatalf(E_FILE_IO, NULL);
 
     fclose(f);
+
+    // manually NULL terminate string to avoid safety depending solely on sds
+    b[filesize] = '\0';
 
     channelMapParseCSV(b);
 
