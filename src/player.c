@@ -114,38 +114,6 @@ static bool playerHandleNextFrame(void) {
     return true;
 }
 
-static void playerSkipFrames(const uint32_t frames) {
-    const uint32_t max = sequenceData()->frameCount;
-
-    const uint32_t firstFrame =
-            gNextFrame + frames < max ? (gNextFrame + frames) : max;
-
-    printf("warning: skipping %d frame(s), advancing %dms\n", frames,
-           frames * sequenceData()->frameStepTimeMillis);
-
-    bool didRelocateAny = false;
-
-    for (uint32_t frame = gNextFrame; frame < firstFrame; frame++) {
-        // attempt to shift any skipped fades forward by rewriting the duration
-        // this accumulates any valid (i.e. non-overlapping and >= frames in duration)
-        // Fades into the `newFrame` value for each frame skipped
-        didRelocateAny |= fadeRelocateFrameForward(frame);
-
-        // garbage collect the skipped frames, normally handled by `minifier.c`
-        // relocation creates new handles internally so this SHOULD be safe
-        fadeFrameFree(frame);
-    }
-
-    if (didRelocateAny)
-        printf("auto relocated frame %d fades to %d\n", gNextFrame, firstFrame);
-
-    // advance the frame pump forward, manually freeing skipped frame data
-    // may trigger recharging logic internally to start rebuilding at the new queue position
-    framePumpSkipFrames(&gFramePump, firstFrame - gNextFrame);
-
-    gNextFrame = firstFrame;
-}
-
 static void playerStartPlayback(const PlayerOpts opts, sds audioFilePath) {
     // optionally override the sequence's playback rate with the CLI's value
     if (opts.frameStepTimeOverrideMs > 0)
@@ -157,11 +125,7 @@ static void playerStartPlayback(const PlayerOpts opts, sds audioFilePath) {
 
     // start sequence timer loop
     // this call blocks until playback is completed
-    sleepTimerLoop((struct sleep_loop_config_t){
-            .intervalMillis = sequenceData()->frameStepTimeMillis,
-            .sleep = playerHandleNextFrame,
-            .skip = playerSkipFrames,
-    });
+    sleepTimerLoop(sequenceData()->frameStepTimeMillis, playerHandleNextFrame);
 
     printf("turning off lights, waiting for end of audio...\n");
 

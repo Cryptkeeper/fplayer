@@ -229,25 +229,6 @@ const uint8_t *framePumpGet(FramePump *const pump,
     return pump->buffer;
 }
 
-void framePumpSkipFrames(FramePump *const pump, const uint32_t frames) {
-    const uint32_t remaining = framePumpGetRemaining(pump);
-
-    // free the skipped frames and advance the read head
-    // the next main program loop will detect if the pump is low/empty and request
-    // to recharge the queue at the updated frame position
-    const uint32_t skippedFrames = remaining > frames ? frames : remaining;
-
-    for (uint32_t i = 0; i < skippedFrames; i++) {
-        const uint32_t index = pump->head++;
-
-        freeAndNull(pump->frames[index]);
-    }
-
-    // if the pump has been emptied via skipping frames, the normal read routines
-    // won't fire and the pump isn't freed (unless it is the last at program exit)
-    if (skippedFrames < frames) arrfree(pump->frames);
-}
-
 void framePumpFree(FramePump *const pump) {
     framePumpFreeFrames(pump);
 

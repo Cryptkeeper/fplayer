@@ -216,7 +216,7 @@ bool fadeTableCache(const char *const fp) {
 
 bool fadeTableLoadCache(const char *const fp) {
     pcf_file_t file = {NULL};
-    
+
     if (!pcfOpen(fp, &file)) return false;
 
     for (uint32_t i = 0; i < arrlen(file.frames); i++) {
@@ -306,58 +306,4 @@ void fadeGetChange(const uint32_t frame,
         // when they are known to be actively fading
         *finishing = true;
     }
-}
-
-bool fadeRelocateFrameForward(const uint32_t frame) {
-    struct frame_data_kvp_t *const dataKvp = hmgetp_null(gFrames, frame);
-
-    if (dataKvp == NULL) return false;
-
-    for (int i = 0; i < hmlen(dataKvp->value.fades); i++) {
-        const struct frame_fade_kvp_t fadeKvp = dataKvp->value.fades[i];
-
-        struct fade_handle_t handle = hmget(gFades, fadeKvp.value);
-
-        // already running effect, it will be gc collected at end of frame
-        if (handle.fade.startFrame != frame) continue;
-
-        // this is configuration that would allow the function to relocate across
-        // multiple frames, but it isn't used since we would still need to manually
-        // diff each frame one-by-one, so there isn't a use case for this (yet?)
-        const uint32_t frames = 1;
-        const uint32_t newFrame = frame + frames;
-
-        // frame doesn't last longer than the gap, skip it entirely
-        if (handle.fade.frames <= frames) continue;
-
-        {
-            // check if a new fade effect is starting at the upcoming frame
-            // this avoids implicitly overwriting future data that would otherwise
-            // explicitly resync our state
-            int started;
-            bool finishing;
-
-            fadeGetChange(newFrame, fadeKvp.key, &started, &finishing);
-
-            // started is a handle, anything >=0 indicates a valid fade
-            // ignore `finishing` since — given `handle.fade.frames` duration is
-            // >= the skipped duration (`frames`) — refers to finishing "this" fade
-            if (started >= 0) continue;
-        }
-
-        // rewrite the fade effect using a shorter duration and new starting frame
-        // this will auto increment the reference counters internally, so the caller
-        // SHOULD call `fadeFreeFrame` on each skipped frame to GC its unique data
-        const Fade fade = (Fade){
-                .from = handle.fade.from,
-                .to = handle.fade.to,
-                .startFrame = newFrame,
-                .frames = handle.fade.frames - frames,
-                .type = handle.fade.type,
-        };
-
-        fadePush(fadeKvp.key, fade);
-    }
-
-    return true;
 }
