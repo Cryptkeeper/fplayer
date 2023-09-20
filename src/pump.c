@@ -146,10 +146,17 @@ static void framePumpHintPreload(const uint32_t startFrame,
     gThreadArgs.startFrame = startFrame;
     gThreadArgs.consumedComBlocks = consumedComBlocks;
 
+    pthread_attr_t attrs;
+    pthread_attr_init(&attrs);
+
+    pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_DETACHED);
+
     int err;
-    if ((err = pthread_create(&gPumpThread, NULL, framePumpThread,
+    if ((err = pthread_create(&gPumpThread, &attrs, framePumpThread,
                               &gThreadArgs)) != 0)
         fatalf(E_FATAL, "error creating pthread: %d\n", err);
+
+    pthread_attr_destroy(&attrs);
 }
 
 static FramePump *framePumpPreloadGet(void) {
