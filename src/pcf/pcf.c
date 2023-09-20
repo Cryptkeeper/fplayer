@@ -21,7 +21,7 @@ bool pcfOpen(const char *const fp, pcf_file_t *const file) {
     if (f == NULL) return false;
 
     pcf_directory_t dir = {0};
-    if (fread(&dir, sizeof(dir), 1, f) != 1) goto fail;
+    if (fread(&dir, sizeof(pcf_directory_t), 1, f) != 1) goto fail;
 
     if (memcmp(dir.magic, pcfMagicSig4, sizeof(pcfMagicSig4)) != 0) goto fail;
 
@@ -54,9 +54,12 @@ bool pcfOpen(const char *const fp, pcf_file_t *const file) {
 
         arrsetcap(events, frame.nEvents);
 
-        if (fread(events, sizeof(pcf_event_t), frame.nEvents, f) !=
-            frame.nEvents)
-            goto fail;
+        for (uint32_t j = 0; j < frame.nEvents; j++) {
+            pcf_event_t event = {0};
+            if (fread(&event, sizeof(event), 1, f) != 1) goto fail;
+
+            arrput(events, event);
+        }
 
 
         arrput(open.events, events);
@@ -90,8 +93,8 @@ bool pcfSave(const char *const fp, const pcf_file_t *const file) {
 
     if (fwrite(&dir, sizeof(dir), 1, f) != 1) goto fail;
 
-    if (fwrite(&file->fades, sizeof(pcf_fade_t), dir.nFades, f) != dir.nFades)
-        goto fail;
+    for (uint32_t i = 0; i < dir.nFades; i++)
+        if (fwrite(&file->fades[i], sizeof(pcf_fade_t), 1, f) != 1) goto fail;
 
     assert(arrlen(file->frames) == arrlen(file->events));
 
@@ -103,9 +106,9 @@ bool pcfSave(const char *const fp, const pcf_file_t *const file) {
 
         if (fwrite(&frame, sizeof(frame), 1, f) != 1) goto fail;
 
-        if (fwrite(&file->events[i], sizeof(pcf_event_t), frame.nEvents, f) !=
-            frame.nEvents)
-            goto fail;
+        for (uint32_t j = 0; j < frame.nEvents; j++)
+            if (fwrite(&file->events[i][j], sizeof(pcf_event_t), 1, f) != 1)
+                goto fail;
     }
 
     freeAndNullWith(f, fclose);
