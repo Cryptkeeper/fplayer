@@ -21,7 +21,7 @@ bool pcfOpen(const char *const fp, pcf_file_t *const file) {
     if (f == NULL) return false;
 
     pcf_directory_t dir = {0};
-    if (fread(&dir, sizeof(pcf_directory_t), 1, f) != 1) goto fail;
+    if (fread(&dir, sizeof(dir), 1, f) != 1) goto fail;
 
     if (memcmp(dir.magic, pcfMagicSig4, sizeof(pcfMagicSig4)) != 0) goto fail;
 
