@@ -16,8 +16,6 @@ uint32_t framePumpGetRemaining(const FramePump *pump);
 const uint8_t *
 framePumpGet(FramePump *pump, uint32_t currentFrame, bool recharge);
 
-void framePumpSkipFrames(FramePump *pump, uint32_t frames);
-
 void framePumpFree(FramePump *pump);
 
 #endif//FPLAYER_PUMP_H

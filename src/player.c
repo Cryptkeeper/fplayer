@@ -114,26 +114,6 @@ static bool playerHandleNextFrame(void) {
     return true;
 }
 
-static void playerSkipFrames(const uint32_t frames) {
-    const uint32_t max = sequenceData()->frameCount;
-
-    const uint32_t firstFrame =
-            gNextFrame + frames < max ? (gNextFrame + frames) : max;
-
-    printf("warning: skipping %d frame(s), advancing %dms\n", frames,
-           frames * sequenceData()->frameStepTimeMillis);
-
-    // garbage collect the skipped frames, normally handled by `minifier.c`
-    for (uint32_t frame = gNextFrame; frame < firstFrame; frame++)
-        fadeFrameFree(frame);
-
-    // advance the frame pump forward, manually freeing skipped frame data
-    // may trigger recharging logic internally to start rebuilding at the new queue position
-    framePumpSkipFrames(&gFramePump, firstFrame - gNextFrame);
-
-    gNextFrame = firstFrame;
-}
-
 static void playerStartPlayback(const PlayerOpts opts, sds audioFilePath) {
     // optionally override the sequence's playback rate with the CLI's value
     if (opts.frameStepTimeOverrideMs > 0)
@@ -148,7 +128,6 @@ static void playerStartPlayback(const PlayerOpts opts, sds audioFilePath) {
     sleepTimerLoop((struct sleep_loop_config_t){
             .intervalMillis = sequenceData()->frameStepTimeMillis,
             .sleep = playerHandleNextFrame,
-            .skip = playerSkipFrames,
     });
 
     printf("turning off lights, waiting for end of audio...\n");

@@ -127,7 +127,6 @@ static void sleepTimerTick(const int64_t ns) {
 void sleepTimerLoop(const struct sleep_loop_config_t config) {
     assert(config.intervalMillis > 0);
     assert(config.sleep != NULL);
-    assert(config.skip != NULL);
 
     timeInstant start;
 
@@ -154,18 +153,6 @@ void sleepTimerLoop(const struct sleep_loop_config_t config) {
                     ((double) fullLoopTime / 1e6) - ((double) interval / 1e6);
 
             gAccumulatedLoss += loss;
-
-            // check if the loss has accumulated to the value of at least one frame
-            // in duration, and if so, skip the frame(s) and subtract the time gained
-            const int lostFrames = (int) floor(gAccumulatedLoss /
-                                               (double) config.intervalMillis);
-
-            if (lostFrames > 0) {
-                config.skip((uint32_t) lostFrames);
-
-                gAccumulatedLoss -=
-                        (double) (lostFrames * config.intervalMillis);
-            }
         }
     }
 }
