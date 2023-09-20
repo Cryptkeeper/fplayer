@@ -54,12 +54,10 @@ bool pcfOpen(const char *const fp, pcf_file_t *const file) {
 
         arrsetcap(events, frame.nEvents);
 
-        for (uint32_t j = 0; j < frame.nEvents; j++) {
-            pcf_event_t event = {0};
-            if (fread(&event, sizeof(event), 1, f) != 1) goto fail;
+        if (fread(events, sizeof(pcf_event_t), frame.nEvents, f) !=
+            frame.nEvents)
+            goto fail;
 
-            arrput(events, event);
-        }
 
         arrput(open.events, events);
     }
