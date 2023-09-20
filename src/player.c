@@ -125,10 +125,7 @@ static void playerStartPlayback(const PlayerOpts opts, sds audioFilePath) {
 
     // start sequence timer loop
     // this call blocks until playback is completed
-    sleepTimerLoop((struct sleep_loop_config_t){
-            .intervalMillis = sequenceData()->frameStepTimeMillis,
-            .sleep = playerHandleNextFrame,
-    });
+    sleepTimerLoop(sequenceData()->frameStepTimeMillis, playerHandleNextFrame);
 
     printf("turning off lights, waiting for end of audio...\n");
 

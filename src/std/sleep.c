@@ -10,8 +10,6 @@
 static int64_t gSampleNs[gSampleCount];
 static int gLastSampleIdx;
 
-static double gAccumulatedLoss;
-
 sds sleepGetStatus(void) {
     double avg = 0;
     int n = 1;
@@ -26,8 +24,7 @@ sds sleepGetStatus(void) {
     const double ms = avg / 1e6;
     const double fps = ms > 0 ? 1000 / ms : 0;
 
-    return sdscatprintf(sdsempty(), "%.4fms (%.2f fps) [%.1fms loss]", ms, fps,
-                        gAccumulatedLoss);
+    return sdscatprintf(sdsempty(), "%.4fms (%.2f fps)", ms, fps);
 }
 
 static int64_t sleepEstimatedNs(int64_t ns);
@@ -124,35 +121,40 @@ static void sleepTimerTick(const int64_t ns) {
     sleepRecordSample(timeElapsedNs(start, end));
 }
 
-void sleepTimerLoop(const struct sleep_loop_config_t config) {
-    assert(config.intervalMillis > 0);
-    assert(config.sleep != NULL);
+#include <stdio.h>
+
+void sleepTimerLoop(const long intervalMillis, bool (*sleep)(void)) {
+    assert(intervalMillis > 0);
+    assert(sleep != NULL);
 
     timeInstant start;
+
+    static int64_t lostNs = 0;
 
     while (true) {
         start = timeGetNow();
 
-        if (!config.sleep()) break;
+        if (!sleep()) break;
 
-        const int64_t interval = config.intervalMillis * 1000000;
+        const int64_t intervalNs = intervalMillis * 1000000;
 
         // if `config.sleep` did not take the full time allowance, calculate
         // the remaining time budget and sleep for the full duration
-        const int64_t remainingTime =
-                interval - timeElapsedNs(start, timeGetNow());
+        int64_t remainingNs = intervalNs - timeElapsedNs(start, timeGetNow());
 
-        if (remainingTime > 0) sleepTimerTick(remainingTime);
+        // if the previous loop ran too long, attempt to recover some of the lost time
+        // by decreasing the maximum sleep period in this iteration
+        if (lostNs > 0) {
+            printf("decreasing allowed sleep by %lldms\n", lostNs / 1000000);
+            remainingNs -= lostNs;
+        }
+
+        if (remainingNs > 0) sleepTimerTick(remainingNs);
 
         // measure the full time spent ticking and sleeping, subtracting from the
         // allowed interval, and notify fplayer of any dropped frames
-        const int64_t fullLoopTime = timeElapsedNs(start, timeGetNow());
+        const int64_t fullLoopNs = timeElapsedNs(start, timeGetNow());
 
-        if (fullLoopTime > interval) {
-            const double loss =
-                    ((double) fullLoopTime / 1e6) - ((double) interval / 1e6);
-
-            gAccumulatedLoss += loss;
-        }
+        lostNs = fullLoopNs > intervalNs ? fullLoopNs - intervalNs : 0;
     }
 }

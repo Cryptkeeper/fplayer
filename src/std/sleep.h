@@ -8,11 +8,6 @@
 
 sds sleepGetStatus(void);
 
-struct sleep_loop_config_t {
-    long intervalMillis;
-    bool (*sleep)(void);
-};
-
-void sleepTimerLoop(struct sleep_loop_config_t config);
+void sleepTimerLoop(long intervalMillis, bool (*sleep)(void));
 
 #endif//FPLAYER_SLEEP_H
