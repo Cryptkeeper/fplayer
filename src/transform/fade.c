@@ -229,8 +229,6 @@ bool fadeTableLoadCache(const char *const fp) {
         const pcf_frame_t frame = file.frames[i];
         pcf_event_t *const events = file.events[i];
 
-        printf("frame %d - events: %d\n", i, arrlen(events));
-
         for (uint32_t j = 0; j < arrlen(events); j++) {
             const pcf_event_t event = events[j];
             const pcf_fade_t fade = file.fades[event.fade];
