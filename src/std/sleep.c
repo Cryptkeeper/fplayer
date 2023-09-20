@@ -121,8 +121,6 @@ static void sleepTimerTick(const int64_t ns) {
     sleepRecordSample(timeElapsedNs(start, end));
 }
 
-#include <stdio.h>
-
 void sleepTimerLoop(const long intervalMillis, bool (*sleep)(void)) {
     assert(intervalMillis > 0);
     assert(sleep != NULL);
@@ -138,16 +136,13 @@ void sleepTimerLoop(const long intervalMillis, bool (*sleep)(void)) {
 
         const int64_t intervalNs = intervalMillis * 1000000;
 
-        // if `config.sleep` did not take the full time allowance, calculate
+        // if `sleep()` did not take the full time allowance, calculate
         // the remaining time budget and sleep for the full duration
         int64_t remainingNs = intervalNs - timeElapsedNs(start, timeGetNow());
 
         // if the previous loop ran too long, attempt to recover some of the lost time
         // by decreasing the maximum sleep period in this iteration
-        if (lostNs > 0) {
-            printf("decreasing allowed sleep by %lldms\n", lostNs / 1000000);
-            remainingNs -= lostNs;
-        }
+        if (lostNs > 0) remainingNs -= lostNs;
 
         if (remainingNs > 0) sleepTimerTick(remainingNs);
 
