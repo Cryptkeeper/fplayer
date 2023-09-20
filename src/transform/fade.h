@@ -33,6 +33,4 @@ bool fadeGet(int handle, Fade *fade);
 
 void fadeGetChange(uint32_t frame, uint32_t id, int *started, bool *finishing);
 
-bool fadeRelocateFrameForward(uint32_t frame);
-
 #endif//FPLAYER_FADE_H
