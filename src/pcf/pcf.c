@@ -98,6 +98,9 @@ bool pcfSave(const char *const fp, const pcf_file_t *const file) {
     for (uint32_t i = 0; i < dir.nFrames; i++) {
         const pcf_frame_t frame = file->frames[i];
 
+        assert(frame.nEvents > 0);
+        assert(file->events[i] != NULL);
+
         if (fwrite(&frame, sizeof(frame), 1, f) != 1) goto fail;
 
         if (fwrite(&file->events[i], sizeof(pcf_event_t), frame.nEvents, f) !=
