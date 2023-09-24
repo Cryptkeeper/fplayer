@@ -1,8 +1,7 @@
 #include "time.h"
 
 #ifdef _WIN32
-#include <minwinbase.h>
-#include <sysinfoapi.h>
+    #include <windows.h>
 #endif
 
 timeInstant timeGetNow(void) {

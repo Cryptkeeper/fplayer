@@ -3,6 +3,10 @@
 #include <assert.h>
 #include <math.h>
 
+#ifdef _WIN32
+    #include <windows.h>
+#endif
+
 #include "time.h"
 
 #define gSampleCount 20
@@ -67,12 +71,16 @@ static int64_t sleepEstimatedNs(const int64_t ns) {
         // a one millisecond #nanosleep call
         start = timeGetNow();
 
+#ifdef _WIN32
+        Sleep(1);
+#else
         const struct timespec *timeOneMs = &(const struct timespec){
                 .tv_sec = 0,
                 .tv_nsec = 1000000,
         };
 
         nanosleep(timeOneMs, NULL);
+#endif
 
         end = timeGetNow();
 
