@@ -2,17 +2,9 @@
 #define FPLAYER_TIME_H
 
 #include <stdint.h>
+#include <time.h>
 
 #include <sds.h>
-
-#ifdef _WIN32
-struct timespec {
-    long tv_sec;
-    long tv_nsec;
-};
-#else
-    #include <time.h>
-#endif
 
 typedef struct timespec timeInstant;
 

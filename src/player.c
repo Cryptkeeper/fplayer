@@ -13,9 +13,12 @@
 #include "std/mem.h"
 #include "std/sleep.h"
 #include "std/time.h"
-#include "transform/fade.h"
 #include "transform/netstats.h"
 #include "transform/precompute.h"
+
+#ifdef _WIN32
+    #include <windows.h>
+#endif
 
 void playerOptsFree(PlayerOpts *const opts) {
     sdsfree(opts->sequenceFilePath);
@@ -42,12 +45,16 @@ static void playerWaitForConnection(const PlayerOpts opts) {
     for (int toSend = opts.connectionWaitS * 2; toSend > 0; toSend--) {
         serialWriteHeartbeat();
 
+#ifdef _WIN32
+        Sleep(LOR_HEARTBEAT_DELAY_MS);
+#else
         const struct timespec itrSleep = {
                 .tv_sec = 0,
                 .tv_nsec = LOR_HEARTBEAT_DELAY_NS,
         };
 
         nanosleep(&itrSleep, NULL);
+#endif
     }
 }
 
