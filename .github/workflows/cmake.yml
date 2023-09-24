@@ -67,11 +67,11 @@ jobs:
           update: true
           msystem: MINGW64
           install: >-
-            cmake
-            openal
-            freealut
-            libserialport
-            zstd
+            mingw-w64-clang-x86_64-cmake
+            mingw-w64-clang-x86_64-openal
+            mingw-w64-clang-x86_64-freealut
+            mingw-w64-clang-x86_64-libserialport
+            mingw-w64-clang-x86_64-zstd
 
       - uses: actions/checkout@v3
         with:
