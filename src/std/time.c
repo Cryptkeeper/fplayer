@@ -12,10 +12,10 @@ timeInstant timeGetNow(void) {
     GetSystemTimeAsFileTime(&ft);
 
     // convert Widnows' 1-1-1601 start date to 1-1-1970
-    const __int64 abs = ft->QuadPart - 116444736000000000i64;
+    const __int64 abs = ft.QuadPart - 116444736000000000;
 
-    now.tv_sec = abs / 10000000i64;
-    now.tv_nsec = abs % 10000000i64 * 100;
+    now.tv_sec = abs / 10000000;
+    now.tv_nsec = abs % 10000000 * 100;
 #else
     clock_gettime(CLOCK_MONOTONIC_RAW, &now);
 #endif
