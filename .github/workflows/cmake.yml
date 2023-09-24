@@ -68,9 +68,9 @@ jobs:
           msystem: mingw64
           install: >-
             cmake
-            openal
-            freealut
-            libserialport
+            mingw-w64-x86_64-openal
+            mingw-w64-x86_64-freealut
+            mingw-w64-x86_64-libserialport
             zstd
             ninja
             gcc
