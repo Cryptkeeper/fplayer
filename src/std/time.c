@@ -11,8 +11,12 @@ timeInstant timeGetNow(void) {
     FILETIME ft = {0};
     GetSystemTimeAsFileTime(&ft);
 
+    ULARGE_INTEGER lg = {0};
+    lg.LowPart = ft.dwLowDateTime;
+    lg.HighPart = ft.dwHighDateTime;
+
     // convert Widnows' 1-1-1601 start date to 1-1-1970
-    const __int64 abs = ft.QuadPart - 116444736000000000;
+    const __int64 abs = lg.QuadPart - 116444736000000000;
 
     now.tv_sec = abs / 10000000;
     now.tv_nsec = abs % 10000000 * 100;
