@@ -65,13 +65,3 @@ add_compile_options(-Wall -Wextra -Werror -pedantic)
 if (APPLE)
     add_compile_definitions(OPENAL_DEPRECATED=)
 endif ()
-
-# https://stackoverflow.com/questions/14089284/copy-all-dlls-that-an-executable-links-to-to-the-executable-directory
-# The following variable is defined only on DLL systems
-if (CMAKE_IMPORT_LIBRARY_SUFFIX)
-    add_custom_command(
-            TARGET fplayer POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:fplayer> $<TARGET_FILE_DIR:fplayer>
-            COMMAND_EXPAND_LISTS
-    )
-endif ()
