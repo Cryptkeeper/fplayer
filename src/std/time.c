@@ -1,10 +1,27 @@
 #include "time.h"
 
-timeInstant timeGetNow(void) {
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &now);
+#ifdef _WIN32
+#include <minwinbase.h>
+#include <sysinfoapi.h>
+#endif
 
-    return (timeInstant) now;
+timeInstant timeGetNow(void) {
+    timeInstant now = {0};
+
+#ifdef _WIN32
+    FILETIME ft = {0};
+    GetSystemTimeAsFileTime(&ft);
+
+    // convert Widnows' 1-1-1601 start date to 1-1-1970
+    const __int64 abs = ft->QuadPart - 116444736000000000i64;
+
+    now.tv_sec = abs / 10000000i64;
+    now.tv_nsec = abs % 10000000i64 * 100;
+#else
+    clock_gettime(CLOCK_MONOTONIC_RAW, &now);
+#endif
+
+    return now;
 }
 
 int64_t timeElapsedNs(const timeInstant start, const timeInstant end) {
