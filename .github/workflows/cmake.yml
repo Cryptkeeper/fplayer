@@ -65,15 +65,15 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           update: true
-          msystem: MINGW64
+          msystem: mingw64
           install: >-
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-openal
-            mingw-w64-x86_64-freealut
-            mingw-w64-x86_64-libserialport
-            mingw-w64-x86_64-zstd
-            mingw-w64-x86_64-ninja
-            mingw-w64-x86_64-gcc
+            cmake
+            openal
+            freealut
+            libserialport
+            zstd
+            ninja
+            gcc
 
       - uses: actions/checkout@v3
         with:
@@ -86,7 +86,7 @@ jobs:
 
       - name: Build
         # Build your program with the given configuration
-        run: ninja -C ${{github.workspace}}/build
+        run: cmake --build ${{github.workspace}}/build
 
       - name: Test
         working-directory: ${{github.workspace}}/build
