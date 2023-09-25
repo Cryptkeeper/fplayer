@@ -66,17 +66,14 @@ jobs:
         with:
           msystem: mingw64
           pacboy: >-
-            make:p
-            binutils:p
             gcc:p
-            gcc-libs:p
-            winpthreads:p
             cmake:p
             ninja:p
             zstd:p
             openal:p
             freealut:p
             libserialport:p
+            winpthreads:p
 
       - uses: actions/checkout@v3
         with:
