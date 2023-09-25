@@ -71,7 +71,6 @@ jobs:
             gcc:p
             gcc-libs:p
             winpthreads:p
-            libwinpthreads:p
             cmake:p
             ninja:p
             zstd:p
