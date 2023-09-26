@@ -7,7 +7,7 @@
 #include "lightorama/lightorama.h"
 #include "stb_ds.h"
 
-#include "../bytebuf.h"
+#include "../buffer.h"
 #include "../cmap.h"
 #include "../seq.h"
 #include "encode.h"
@@ -36,10 +36,10 @@ static void minifyEncodeRequest(struct encoding_request_t request) {
     if (request.nCircuits == 1) {
         assert(request.groupOffset == 0);
 
-        lorEncodeChannelEffect(request.effect, &request.args,
-                               request.circuits - 1, request.unit, bbWrite);
+        lorAppendChannelEffect(&gWriteBuffer, request.effect, &request.args,
+                               request.circuits - 1, request.unit);
 
-        const int written = bbFlush();
+        const size_t written = writeBufferFlush();
 
         gNSWritten += written;
 
@@ -49,14 +49,14 @@ static void minifyEncodeRequest(struct encoding_request_t request) {
             gNSSaved += request.nFrames * 6 - (written + 2);
         }
     } else {
-        lorEncodeChannelSetEffect(request.effect, &request.args,
+        lorAppendChannelSetEffect(&gWriteBuffer, request.effect, &request.args,
                                   (LorChannelSet){
                                           .offset = request.groupOffset,
                                           .channelBits = request.circuits,
                                   },
-                                  request.unit, bbWrite);
+                                  request.unit);
 
-        const int written = bbFlush();
+        const size_t written = writeBufferFlush();
 
         gNSWritten += written;
 

@@ -1,6 +1,7 @@
 #ifndef FPLAYER_SERIAL_H
 #define FPLAYER_SERIAL_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <sds.h>
@@ -14,7 +15,7 @@ void serialOptsFree(SerialOpts *opts);
 
 void serialInit(SerialOpts opts);
 
-void serialWrite(const uint8_t *b, int size);
+void serialWrite(const uint8_t *b, size_t size);
 
 void serialWriteHeartbeat(void);
 

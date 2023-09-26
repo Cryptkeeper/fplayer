@@ -2,14 +2,14 @@
 #include <stdio.h>
 
 #ifdef ENABLE_OPENAL
-#include <AL/alut.h>
+    #include <AL/alut.h>
 #endif
 
+#include "lightorama/version.h"
 #include <libserialport.h>
-#include <lightorama/version.h>
 
 #ifdef ENABLE_ZSTD
-#include <zstd.h>
+    #include <zstd.h>
 #endif
 
 #define STB_DS_IMPLEMENTATION

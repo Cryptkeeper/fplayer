@@ -1,13 +1,14 @@
 #include "serial.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "lightorama/lightorama.h"
 #include <libserialport.h>
-#include <lightorama/lightorama.h>
 #include <stb_ds.h>
 
-#include "bytebuf.h"
+#include "buffer.h"
 #include "cmap.h"
 #include "std/err.h"
 #include "std/mem.h"
@@ -78,7 +79,7 @@ void serialInit(const SerialOpts opts) {
     }
 }
 
-void serialWrite(const uint8_t *const b, const int size) {
+void serialWrite(const uint8_t *const b, const size_t size) {
     switch (gSrc) {
         case SERIAL_NULL:
             return;
@@ -100,9 +101,9 @@ void serialWrite(const uint8_t *const b, const int size) {
 }
 
 void serialWriteHeartbeat(void) {
-    lorEncodeHeartbeat(bbWrite);
+    lorAppendHeartbeat(&gWriteBuffer);
 
-    gNSWritten += bbFlush();
+    gNSWritten += writeBufferFlush();
     gNSPackets += 1;
 }
 
@@ -124,9 +125,9 @@ void serialWriteAllOff(void) {
     uint8_t *uids = channelMapGetUids();
 
     for (int i = 0; i < arrlen(uids); i++) {
-        lorEncodeUnitEffect(LOR_EFFECT_SET_OFF, NULL, uids[i], bbWrite);
+        lorAppendUnitEffect(&gWriteBuffer, LOR_EFFECT_SET_OFF, NULL, uids[i]);
 
-        gNSWritten += bbFlush();
+        gNSWritten += writeBufferFlush();
         gNSPackets += 1;
     }
 
@@ -142,7 +143,7 @@ void serialWriteFrame(const uint8_t *const frameData,
     minifyStream(frameData, lastFrameData, size, frame);
 
     // the write buffer should already be cleared after each use
-    assert(bbFlush() == 0);
+    assert(writeBufferFlush() == 0);
 
     if (gPort != NULL) spTry(sp_drain(gPort));
 }

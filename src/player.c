@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <lightorama/heartbeat.h>
+#include "lightorama/heartbeat.h"
 
 #include "audio.h"
 #include "comblock.h"
