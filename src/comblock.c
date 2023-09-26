@@ -5,7 +5,7 @@
 #include <stb_ds.h>
 
 #ifdef ENABLE_ZSTD
-#include <zstd.h>
+    #include <zstd.h>
 #endif
 
 #include "seq.h"

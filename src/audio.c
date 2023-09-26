@@ -4,11 +4,11 @@ bool gAudioIgnoreErrors = false;
 
 #ifdef ENABLE_OPENAL
 
-#include <stdio.h>
+    #include <stdio.h>
 
-#include <AL/alut.h>
+    #include <AL/alut.h>
 
-#include "std/err.h"
+    #include "std/err.h"
 
 static inline void alCheckError(const char *const msg) {
     ALenum err;

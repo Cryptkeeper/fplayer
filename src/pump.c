@@ -5,7 +5,7 @@
 #include <string.h>
 
 #ifdef ENABLE_PTHREAD
-#include <pthread.h>
+    #include <pthread.h>
 #endif
 
 #include <stb_ds.h>
@@ -133,8 +133,8 @@ static void *framePumpThread(void *pargs) {
     pthread_exit(framePump);
 }
 
-// https://www.austingroupbugs.net/view.php?id=599
-#define PTHREAD_NULL ((pthread_t) NULL)
+    // https://www.austingroupbugs.net/view.php?id=599
+    #define PTHREAD_NULL ((pthread_t) NULL)
 
 static pthread_t gPumpThread = PTHREAD_NULL;
 static struct frame_pump_thread_args_t gThreadArgs;
