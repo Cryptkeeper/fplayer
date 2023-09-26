@@ -17,8 +17,8 @@ typedef pthread_mutex_t file_mutex_t;
 
 typedef int file_mutex_t;
 
-    #define file_mutex_lock(mutex)   assert((mutex)->rc++ == 0)
-    #define file_mutex_unlock(mutex) assert(--(mutex)->rc == 0)
+    #define file_mutex_lock(mutex)   assert((*mutex)++ == 0)
+    #define file_mutex_unlock(mutex) assert(--(*mutex) == 0)
     #define file_mutex_init()        ((file_mutex_t) 0)
 
 #endif
