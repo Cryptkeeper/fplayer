@@ -22,7 +22,7 @@ struct encoding_request_t {
     uint16_t circuits;
     uint8_t nCircuits;
     LorEffect effect;
-    LorEffectArgs args;
+    union LorEffectArgs args;
     uint16_t nFrames;
 };
 
@@ -141,7 +141,7 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
                 switch (fade.type) {
                     case FADE_SLOPE:
                         request.effect = LOR_EFFECT_FADE;
-                        request.args = (LorEffectArgs){
+                        request.args = (union LorEffectArgs){
                                 .fade = {
                                         .startIntensity = minifyEncodeIntensity(
                                                 fade.from),
@@ -157,7 +157,7 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
                 }
             } else {
                 request.effect = LOR_EFFECT_SET_INTENSITY;
-                request.args = (LorEffectArgs){
+                request.args = (union LorEffectArgs){
                         .setIntensity = {
                                 .intensity = minifyEncodeIntensity(
                                         change.newIntensity),
