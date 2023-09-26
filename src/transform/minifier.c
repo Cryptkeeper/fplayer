@@ -22,7 +22,7 @@ struct encoding_request_t {
     uint16_t circuits;
     uint8_t nCircuits;
     LorEffect effect;
-    union LorEffectArgs args;
+    union LorEffectArgs *args;
     uint16_t nFrames;
 };
 
@@ -36,7 +36,7 @@ static void minifyEncodeRequest(struct encoding_request_t request) {
     if (request.nCircuits == 1) {
         assert(request.groupOffset == 0);
 
-        lorAppendChannelEffect(&gWriteBuffer, request.effect, &request.args,
+        lorAppendChannelEffect(&gWriteBuffer, request.effect, request.args,
                                request.circuits - 1, request.unit);
 
         const size_t written = writeBufferFlush();
@@ -49,7 +49,7 @@ static void minifyEncodeRequest(struct encoding_request_t request) {
             gNSSaved += request.nFrames * 6 - (written + 2);
         }
     } else {
-        lorAppendChannelSetEffect(&gWriteBuffer, request.effect, &request.args,
+        lorAppendChannelSetEffect(&gWriteBuffer, request.effect, request.args,
                                   (LorChannelSet){
                                           .offset = request.groupOffset,
                                           .channelBits = request.circuits,
@@ -128,6 +128,7 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
                     .groupOffset = popcount == 1 ? 0 : groupOffset,
                     .circuits = popcount == 1 ? change.circuit : matches,
                     .nCircuits = popcount,
+                    .args = NULL,
             };
 
             Fade fade;
@@ -137,11 +138,14 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
                 hasFade = fadeGet(change.fadeStarted, &fade);
             }
 
+            // FIXME: allow non-null `request.args` value in downstream encoding
+            //  or allocate a non-static instance each time for true pointers
+            static union LorEffectArgs gEffectArgs;
+
             if (hasFade) {
                 switch (fade.type) {
                     case FADE_SLOPE:
-                        request.effect = LOR_EFFECT_FADE;
-                        request.args = (union LorEffectArgs){
+                        gEffectArgs = (union LorEffectArgs){
                                 .fade = {
                                         .startIntensity = minifyEncodeIntensity(
                                                 fade.from),
@@ -149,19 +153,26 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
                                                 minifyEncodeIntensity(fade.to),
                                         .duration = minifyGetFadeDuration(fade),
                                 }};
+
+                        request.effect = LOR_EFFECT_FADE;
+                        request.args = &gEffectArgs;
+
                         break;
 
                     case FADE_FLASH:
                         request.effect = LOR_EFFECT_SHIMMER;
+
                         break;
                 }
             } else {
-                request.effect = LOR_EFFECT_SET_INTENSITY;
-                request.args = (union LorEffectArgs){
+                gEffectArgs = (union LorEffectArgs){
                         .setIntensity = {
                                 .intensity = minifyEncodeIntensity(
                                         change.newIntensity),
                         }};
+
+                request.effect = LOR_EFFECT_SET_INTENSITY;
+                request.args = &gEffectArgs;
             }
 
             request.nFrames = hasFade ? fade.frames : 1;
