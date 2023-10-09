@@ -13,7 +13,7 @@ if (APPLE)
     add_compile_definitions(OPENAL_DEPRECATED=)
 endif ()
 
-set(PEDANTIC_COMPILER_FLAGS "-Wall -Wextra -Werror -pedantic")
+set(PEDANTIC_COMPILER_FLAGS "-Wall -Werror -Wextra -Wno-unused-value -pedantic")
 
 add_subdirectory(liblightorama)
 
