@@ -54,6 +54,8 @@ static int precomputeHistoryGetMinFrames(const enum fade_type_t type) {
             return 2;
         case FADE_FLASH:
             return 5;
+        default:
+            return -1;
     }
 }
 
