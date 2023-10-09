@@ -179,8 +179,8 @@ static bool framePumpSwapPreload(FramePump *const pump) {
 
 const uint8_t *framePumpGet(FramePump *const pump,
                             const uint32_t currentFrame,
-                            const bool recharge) {
-    if (recharge) {
+                            const bool canHintPreload) {
+    if (canHintPreload) {
         const uint32_t remaining = framePumpGetRemaining(pump);
 
         const uint32_t threshold = sequenceFPS() * 3;
