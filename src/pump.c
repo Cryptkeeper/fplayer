@@ -126,7 +126,7 @@ static void *framePumpThread(void *pargs) {
 
     framePumpRecharge(framePump, args.startFrame, true);
 
-    pthread_exit(framePump);
+    return (void *) framePump;
 }
 
 // https://www.austingroupbugs.net/view.php?id=599
