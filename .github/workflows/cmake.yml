@@ -86,17 +86,6 @@ jobs:
             build\fplayer.exe
             build\mftool.exe
 
-      # Re-run Windows build with USE_PTHREAD option disabled
-      - name: Configure CMake (USE_PTHREAD=NO)
-        run: cmake -B build-no-pthread -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DUSE_PTHREAD=NO -G Ninja
-
-      - name: Build
-        run: cmake --build build-no-pthread --config ${{env.BUILD_TYPE}}
-
-      - name: Test
-        working-directory: ${{github.workspace}}\build-no-pthread
-        run: ctest -C ${{env.BUILD_TYPE}}
-
   macOS:
     runs-on: macos-latest
 

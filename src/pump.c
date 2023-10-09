@@ -1,12 +1,9 @@
 #include "pump.h"
 
 #include <assert.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
-
-#ifdef ENABLE_PTHREAD
-    #include <pthread.h>
-#endif
 
 #include <stb_ds.h>
 
@@ -112,7 +109,6 @@ static void framePumpRecharge(FramePump *const pump,
     sdsfree(time);
 }
 
-#ifdef ENABLE_PTHREAD
 struct frame_pump_thread_args_t {
     uint32_t startFrame;
     int16_t consumedComBlocks;
@@ -133,8 +129,8 @@ static void *framePumpThread(void *pargs) {
     pthread_exit(framePump);
 }
 
-    // https://www.austingroupbugs.net/view.php?id=599
-    #define PTHREAD_NULL ((pthread_t) NULL)
+// https://www.austingroupbugs.net/view.php?id=599
+#define PTHREAD_NULL ((pthread_t) NULL)
 
 static pthread_t gPumpThread = PTHREAD_NULL;
 static struct frame_pump_thread_args_t gThreadArgs;
@@ -180,13 +176,11 @@ static bool framePumpSwapPreload(FramePump *const pump) {
 
     return true;
 }
-#endif
 
 const uint8_t *framePumpGet(FramePump *const pump,
                             const uint32_t currentFrame,
                             const bool recharge) {
     if (recharge) {
-#ifdef ENABLE_PTHREAD
         const uint32_t remaining = framePumpGetRemaining(pump);
 
         const uint32_t threshold = sequenceFPS() / 5;
@@ -199,18 +193,13 @@ const uint8_t *framePumpGet(FramePump *const pump,
             if (startFrame < sequenceData()->frameCount)
                 framePumpHintPreload(startFrame, pump->consumedComBlocks);
         }
-#endif
     }
 
     if (framePumpGetRemaining(pump) == 0) {
-#ifdef ENABLE_PTHREAD
         // attempt to swap to the preloaded frame pump, if any
         // otherwise block the playback loop while the next frames are loaded
         if (!framePumpSwapPreload(pump))
             framePumpRecharge(pump, currentFrame, false);
-#else
-        framePumpRecharge(pump, currentFrame, false);
-#endif
     }
 
     const uint32_t frameSize = sequenceData()->channelCount;

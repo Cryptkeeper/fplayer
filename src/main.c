@@ -71,12 +71,6 @@ static void printVersions(void) {
 #else
     printf("zstd disabled\n");
 #endif
-
-#ifdef ENABLE_PTHREAD
-    printf("pthread\n");
-#else
-    printf("pthread disabled\n");
-#endif
 }
 
 static PlayerOpts gPlayerOpts;

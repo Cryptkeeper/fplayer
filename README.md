@@ -63,15 +63,15 @@ I have included a few package manager commands below to install the dependencies
 ## Setup
 
 1. Clone the repository and its submodules: `git clone --recursive git@github.com:Cryptkeeper/fplayer.git`
-2. Build the CMake project with `cmake . -DUSE_OPENAL=true -DUSE_ZSTD=true -DUSE_PTHREAD=true`
+2. Build the CMake project with `cmake . -DUSE_OPENAL=true -DUSE_ZSTD=true`
 3. Compile the project with `make`
 
-`-DUSE_OPENAL=true`, `-DUSE_ZSTD=true`, and `-DUSE_PTHREAD=true` are optional arguments (default to true) that allow you to strip out the specified dependencies. This enables easier build customization for environments where the user may not benefit from the inclusion of either dependency. For hardware that doesn't benefit from multithreading, disabling pthread usage will make cause the async frame buffer pre-loading to run sync/blocking within the main program loop.
+`-DUSE_OPENAL=true` and `-DUSE_ZSTD=true` are optional arguments (both default to true) that allow you to strip out the specified dependencies. This enables easier build customization for environments where the user may not benefit from the inclusion of either dependency.
 
 `fplayer -v` will print the dependency versions used, and if any are disabled in the CMake configuration, they will be marked with a "disabled" tag.
 
 ## Artifacts
-macOS and Ubuntu build downloads are available as artifacts via [Actions](https://github.com/Cryptkeeper/fplayer/actions).
+macOS, Ubuntu and Windows build downloads are available as artifacts via [Actions](https://github.com/Cryptkeeper/fplayer/actions).
 
 ## Channel Maps
 Somewhat unique to fplayer as a requirement is a "channel map". FSEQ files provide a 0-indexed array of frame data, each key a "channel", and the interpreting program is responsible for passing off its value ("brightness") to the corresponding device I/O driver. The main consumers of the fseq file format (e.g. xLights and Falcon Player) accomplish this via a lookup operation using additional context provided by your "show directory" files. 
