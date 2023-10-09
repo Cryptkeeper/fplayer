@@ -110,6 +110,8 @@ void audioPlayFile(const char *const filepath) {
 #else
 
 void audioInit(int *const argc, char **const argv) {
+    (void) argc;
+    (void) argv;
 }
 
 void audioExit(void) {
@@ -120,6 +122,7 @@ bool audioCheckPlaying(void) {
 }
 
 void audioPlayFile(const char *const filepath) {
+    (void) filepath;
 }
 
 #endif
