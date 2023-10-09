@@ -39,7 +39,7 @@ static struct tf_file_header_t fseqResize(const struct tf_file_header_t header,
                                           const struct var_t *const vars) {
     uint16_t varDataSize = 0;
 
-    for (size_t i = 0; i < arrlen(vars); i++)
+    for (size_t i = 0; i < arrlenu(vars); i++)
         varDataSize += sdslen(vars[i].string) + VAR_HEADER_SIZE + 1;
 
     // round to nearest product of 4 for 32-bit alignment
@@ -112,7 +112,7 @@ static void fseqCopyConfigBlocks(FILE *const dst,
 }
 
 static void fseqWriteVars(FILE *const dst, const struct var_t *const vars) {
-    for (size_t i = 0; i < arrlen(vars); i++) {
+    for (size_t i = 0; i < arrlenu(vars); i++) {
         const struct var_t var = vars[i];
 
         const uint16_t size = sdslen(var.string) + VAR_HEADER_SIZE + 1;
@@ -255,7 +255,7 @@ static struct var_t *fseqReadVars(sds fp) {
 }
 
 static void freeVars(struct var_t *vars) {
-    for (size_t i = 0; i < arrlen(vars); i++) sdsfree(vars[i].string);
+    for (size_t i = 0; i < arrlenu(vars); i++) sdsfree(vars[i].string);
 
     arrfree(vars);
 }
@@ -297,7 +297,7 @@ int main(const int argc, char **const argv) {
 
     // print and exit if not modifying the sequence
     if (argc < 3) {
-        for (size_t i = 0; i < arrlen(vars); i++) {
+        for (size_t i = 0; i < arrlenu(vars); i++) {
             const struct var_t var = vars[i];
 
             printf("%c%c\t%s\n", var.idh, var.idl, var.string);

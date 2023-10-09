@@ -77,7 +77,7 @@ static struct tf_file_header_t fseqResize(const struct tf_file_header_t header,
                                           const struct var_t *const vars) {
     uint16_t varDataSize = 0;
 
-    for (size_t i = 0; i < arrlen(vars); i++)
+    for (size_t i = 0; i < arrlenu(vars); i++)
         varDataSize += sdslen(vars[i].string) + VAR_HEADER_SIZE + 1;
 
     // round to nearest product of 4 for 32-bit alignment
@@ -136,7 +136,7 @@ static void fseqWriteHeader(FILE *const dst,
 
 // TODO: copy from mftool-src/main.c, merge into libtinyfseq?
 static void fseqWriteVars(FILE *const dst, const struct var_t *const vars) {
-    for (size_t i = 0; i < arrlen(vars); i++) {
+    for (size_t i = 0; i < arrlenu(vars); i++) {
         const struct var_t var = vars[i];
 
         const uint16_t size = sdslen(var.string) + VAR_HEADER_SIZE + 1;
@@ -154,7 +154,7 @@ static void fseqWriteVars(FILE *const dst, const struct var_t *const vars) {
 
 // TODO: copy from mftool-src/main.c, merge into libtinyfseq?
 static void freeVars(struct var_t *vars) {
-    for (size_t i = 0; i < arrlen(vars); i++) sdsfree(vars[i].string);
+    for (size_t i = 0; i < arrlenu(vars); i++) sdsfree(vars[i].string);
 
     arrfree(vars);
 }

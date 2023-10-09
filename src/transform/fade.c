@@ -104,7 +104,7 @@ struct handle_remap_t {
 };
 
 bool fadeTableCache(const char *const fp) {
-    pcf_file_t file = {NULL};
+    pcf_file_t file = {0};
 
     struct handle_remap_t *remaps = NULL;
 
@@ -215,7 +215,7 @@ bool fadeTableCache(const char *const fp) {
 }
 
 bool fadeTableLoadCache(const char *const fp) {
-    pcf_file_t file = {NULL};
+    pcf_file_t file = {0};
 
     if (!pcfOpen(fp, &file)) return false;
 

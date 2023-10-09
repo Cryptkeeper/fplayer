@@ -141,7 +141,7 @@ static void precomputeHistoryFree(void) {
 
 static uint8_t *gLastFrameData;
 
-static int gNextFrame;
+static int64_t gNextFrame;
 
 static bool precomputeHandleNextFrame(FramePump *const pump) {
     if (gNextFrame >= sequenceData()->frameCount) return false;

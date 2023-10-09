@@ -125,8 +125,8 @@ static void channelMapParseCSV(const char *const b) {
 
     sdsfreesplitres(rows, nRows);
 
-    printf("configured %d valid channel map %s\n",
-           (int) arrlen(gRanges), arrlen(gRanges) == 1 ? "entry" : "entries");
+    printf("configured %d valid channel map %s\n", (int) arrlen(gRanges),
+           arrlen(gRanges) == 1 ? "entry" : "entries");
 
     if (ignoredRows > 0)
         fprintf(stderr, "warning: %d invalid channel map entries ignored\n",
@@ -148,7 +148,8 @@ void channelMapInit(const char *const filepath) {
 
     char *b = mustMalloc(filesize + 1);
 
-    if (fread(b, 1, filesize, f) != filesize) fatalf(E_FILE_IO, NULL);
+    if (fread(b, 1, filesize, f) != (unsigned long) filesize)
+        fatalf(E_FILE_IO, NULL);
 
     fclose(f);
 

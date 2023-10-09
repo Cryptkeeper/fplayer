@@ -5,8 +5,6 @@ set(CMAKE_C_STANDARD 99)
 
 enable_testing()
 
-add_compile_options(-Wall -Wextra -Werror -pedantic)
-
 if (APPLE)
     include_directories(/usr/local/include)
     link_directories(/usr/local/lib)
@@ -16,6 +14,8 @@ if (APPLE)
 endif ()
 
 add_subdirectory(liblightorama)
+
+add_compile_options(-Wall -Wextra -Werror -pedantic)
 
 file(GLOB_RECURSE SDS_FILES "sds/*.c")
 file(GLOB_RECURSE SRC_FILES "src/*.[ch]")

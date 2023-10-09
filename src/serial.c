@@ -89,7 +89,7 @@ void serialWrite(const uint8_t *const b, const size_t size) {
             break;
 
         case SERIAL_STDIO:
-            for (int i = 0; i < size; i++) {
+            for (size_t i = 0; i < size; i++) {
                 const uint8_t c = b[i];
 
                 if (c == '\0') printf("\n");
