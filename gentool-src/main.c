@@ -75,7 +75,7 @@ struct var_t {
 // TODO: copy from mftool-src/main.c, merge into libtinyfseq?
 static struct tf_file_header_t fseqResize(const struct tf_file_header_t header,
                                           const struct var_t *const vars) {
-    uint16_t varDataSize = 0;
+    unsigned int varDataSize = 0;
 
     for (size_t i = 0; i < arrlenu(vars); i++)
         varDataSize += sdslen(vars[i].string) + VAR_HEADER_SIZE + 1;
