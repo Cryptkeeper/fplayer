@@ -17,7 +17,7 @@ jobs:
       - name: Install libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y libserialport-dev libzstd-dev
+          sudo apt-get install -y libserialport-dev libzstd-dev valgrind
 
       - uses: actions/checkout@v3
         with:
@@ -33,25 +33,21 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: ctest -C ${{env.BUILD_TYPE}}
 
-      - name: Install valgrind
-        run: sudo apt-get install -y valgrind
-
       - name: Test channel map
         run: |
           valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -t channels.csv
 
-      - name: Run generated sequences
+      - name: Run generated sequences (no precompute)
         run: |
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/5fps_10s.fseq -c channels.csv
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/25fps_10s.fseq -c channels.csv
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/40fps_10s.fseq -c channels.csv
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/60fps_10s.fseq -c channels.csv
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/1000fps_10s.fseq -c channels.csv
+          for fps in 5 25 40 60 1000
+          do
+            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test/${fps}fps_10s.fseq -c channels.csv
+          done
 
-      - name: Run generated sequences (precomputed)
+      - name: Run generated sequences (with precompute)
         run: |
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/5fps_10s.fseq -c channels.csv
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/25fps_10s.fseq -c channels.csv
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/40fps_10s.fseq -c channels.csv
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/60fps_10s.fseq -c channels.csv
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/1000fps_10s.fseq -c channels.csv
+          for fps in 5 25 40 60 1000
+          do
+            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/${fps}fps_10s.fseq -c channels.csv
+            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/${fps}fps_10s.fseq -c channels.csv
+          done
