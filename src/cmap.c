@@ -1,6 +1,5 @@
 #include "cmap.h"
 
-#include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
 
@@ -41,20 +40,6 @@ static sds channelRangeValidate(const ChannelRange range) {
                             rid, rcircuit);
 
     return NULL;
-}
-
-static ChannelRange channelRangeParseColumns(sds *cols, int nCols) {
-    ChannelRange cr;
-
-    assert(nCols == 5);
-
-    parseLong(cols[0], &cr.sid, sizeof(cr.sid), 0, UINT32_MAX);
-    parseLong(cols[1], &cr.eid, sizeof(cr.eid), 0, UINT32_MAX);
-    parseLong(cols[2], &cr.unit, sizeof(cr.unit), 0, UINT8_MAX);
-    parseLong(cols[3], &cr.scircuit, sizeof(cr.scircuit), 0, UINT16_MAX);
-    parseLong(cols[4], &cr.ecircuit, sizeof(cr.ecircuit), 0, UINT16_MAX);
-
-    return cr;
 }
 
 static ChannelRange *gRanges;
@@ -103,9 +88,15 @@ static void channelMapParseCSV(const char *const b) {
             }
         }
 
-        const ChannelRange channelRange = channelRangeParseColumns(cols, nCols);
+        ChannelRange cr = {0};
 
-        sds error = channelRangeValidate(channelRange);
+        parseLong(cols[0], &cr.sid, sizeof(cr.sid), 0, UINT32_MAX);
+        parseLong(cols[1], &cr.eid, sizeof(cr.eid), 0, UINT32_MAX);
+        parseLong(cols[2], &cr.unit, sizeof(cr.unit), 0, UINT8_MAX);
+        parseLong(cols[3], &cr.scircuit, sizeof(cr.scircuit), 0, UINT16_MAX);
+        parseLong(cols[4], &cr.ecircuit, sizeof(cr.ecircuit), 0, UINT16_MAX);
+
+        sds error = channelRangeValidate(cr);
 
         if (error != NULL) {
             fprintf(stderr, "unmappable channel range L%d: %s\n", i, error);
@@ -117,7 +108,7 @@ static void channelMapParseCSV(const char *const b) {
             goto continue_free;
         }
 
-        arrput(gRanges, channelRange);
+        arrput(gRanges, cr);
 
     continue_free:
         sdsfreesplitres(cols, nCols);
