@@ -13,18 +13,19 @@ if (APPLE)
     add_compile_definitions(OPENAL_DEPRECATED=)
 endif ()
 
+set(PEDANTIC_COMPILER_FLAGS "-Wall -Wextra -Werror -pedantic")
+
 add_subdirectory(liblightorama)
 
-add_compile_options(-Wall -Wextra -Werror -pedantic)
-
 file(GLOB_RECURSE SDS_FILES "sds/*.c")
-file(GLOB_RECURSE SRC_FILES "src/*.[ch]")
-file(GLOB_RECURSE TEST_FILES "test/*.c")
 
 option(BUILD_MFTOOL "enable building mftool executable" true)
 
 if (BUILD_MFTOOL)
-    add_executable(mftool "mftool-src/main.c" ${SDS_FILES})
+    file(GLOB_RECURSE MFTOOL_FILES "mftool-src/*.c")
+    set_source_files_properties(${MFTOOL_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COMPILER_FLAGS})
+
+    add_executable(mftool ${MFTOOL_FILES} ${SDS_FILES})
 
     target_include_directories(mftool PRIVATE libtinyfseq sds stb)
 endif ()
@@ -32,13 +33,19 @@ endif ()
 option(BUILD_GENTOOL "enable building gentool executable" true)
 
 if (BUILD_GENTOOL)
-    add_executable(gentool "gentool-src/main.c" ${SDS_FILES})
+    file(GLOB_RECURSE GENTOOL_FILES "gentool-src/*.c")
+    set_source_files_properties(${GENTOOL_FILES} PROPERTIES COMPILER_FLAGS ${PEDANTIC_COMPILER_FLAGS})
+
+    add_executable(gentool ${GENTOOL_FILES} ${SDS_FILES})
 
     target_include_directories(gentool PRIVATE libtinyfseq sds stb)
     target_link_libraries(gentool lightorama)
 endif ()
 
-add_executable(fplayer ${SRC_FILES} ${TEST_FILES} ${SDS_FILES})
+file(GLOB_RECURSE SRC_FILES "src/*.[ch]")
+set_source_files_properties(${SRC_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COMPILER_FLAGS})
+
+add_executable(fplayer ${SRC_FILES} ${SDS_FILES})
 
 target_include_directories(fplayer PRIVATE libtinyfseq sds stb)
 target_link_libraries(fplayer lightorama m serialport)
