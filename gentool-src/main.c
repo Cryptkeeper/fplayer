@@ -262,8 +262,8 @@ int main(const int argc, char **const argv) {
     if (f == NULL) fatalf("error opening output filepath: %s\n", outputPath);
 
     printf("generating test sequence (%d frames @ %d FPS)\n", frameCount, fps);
-    printf("using %d bytes per frame (%dkb total)\n", channelCount,
-           (channelCount * frameCount) / 1024);
+    printf("using %d bytes per frame (%.2fkb total)\n", channelCount,
+           (float) (channelCount * frameCount) / 1024.0f);
 
     // generate a customized valid header for playback
     struct tf_file_header_t header = {

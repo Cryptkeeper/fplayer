@@ -4,7 +4,7 @@
 # local devenv files
 *.mp3
 *.wav
-*.fseq
+/*.fseq
 *.pcf
 
 # CMake
