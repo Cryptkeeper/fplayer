@@ -7,12 +7,12 @@
 #include <stdlib.h>
 
 #define TINYFSEQ_IMPLEMENTATION
-#include <tinyfseq.h>
+#include "tinyfseq.h"
 
 #define STB_DS_IMPLEMENTATION
-#include <stb_ds.h>
+#include "stb_ds.h"
 
-#include <sds.h>
+#include "sds.h"
 
 // slimmed down version of fplayer's `fatalf`
 static void fatalf(const char *format, ...) {

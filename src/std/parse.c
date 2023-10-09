@@ -6,16 +6,9 @@
 
 #include "err.h"
 
-static inline long clampLong(const long l, const long min, const long max) {
-    if (l <= min) return min;
-    else if (l >= max)
-        return max;
-    return l;
-}
-
 void parseLong(const char *const s,
                void *const i,
-               const int n,
+               const size_t n,
                const long min,
                const long max) {
     if (s == NULL || strlen(s) == 0) goto fail;
@@ -32,7 +25,7 @@ void parseLong(const char *const s,
     //     function return value is clamped according to the following table."
     if (l == 0 && errno == ERANGE) goto fail;
 
-    const long clamped = clampLong(l, min, max);
+    const long clamped = l < min ? min : (l > max ? max : l);
 
     memcpy(i, (void *) &clamped, n);
 

@@ -3,10 +3,14 @@ project(fplayer C)
 
 set(CMAKE_C_STANDARD 99)
 
+enable_testing()
+
 if (APPLE)
     include_directories(/usr/local/include)
     link_directories(/usr/local/lib)
 endif ()
+
+add_subdirectory(liblightorama)
 
 file(GLOB_RECURSE SDS_FILES "sds/*.c")
 
@@ -18,14 +22,19 @@ if (BUILD_MFTOOL)
     target_include_directories(mftool PRIVATE libtinyfseq sds stb)
 endif ()
 
+option(BUILD_GENTOOL "enable building gentool executable" true)
+
+if (BUILD_GENTOOL)
+    add_executable(gentool "gentool-src/main.c" ${SDS_FILES})
+
+    target_include_directories(gentool PRIVATE libtinyfseq sds stb)
+    target_link_libraries(gentool lightorama)
+endif ()
+
 file(GLOB_RECURSE SRC_FILES "src/*.[ch]")
 file(GLOB_RECURSE TEST_FILES "test/*.c")
 
 add_executable(fplayer ${SRC_FILES} ${TEST_FILES} ${SDS_FILES})
-
-enable_testing()
-
-add_subdirectory(liblightorama)
 
 target_include_directories(fplayer PRIVATE libtinyfseq sds stb)
 
