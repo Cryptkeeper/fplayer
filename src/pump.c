@@ -183,7 +183,7 @@ const uint8_t *framePumpGet(FramePump *const pump,
     if (recharge) {
         const uint32_t remaining = framePumpGetRemaining(pump);
 
-        const uint32_t threshold = sequenceFPS() / 5;
+        const uint32_t threshold = sequenceFPS() * 3;
 
         // once we hit the `threshold` frames remaining warning, hint at starting
         // a job thread for pre-loading the next frame pump chunk
