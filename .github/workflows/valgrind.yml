@@ -42,8 +42,16 @@ jobs:
 
       - name: Run generated sequences
         run: |
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test/5fps_10s.fseq -c channels.csv
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test/25fps_10s.fseq -c channels.csv
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test/40fps_10s.fseq -c channels.csv
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test/60fps_10s.fseq -c channels.csv
-          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test/1000fps_10s.fseq -c channels.csv
+          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/5fps_10s.fseq -c channels.csv
+          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/25fps_10s.fseq -c channels.csv
+          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/40fps_10s.fseq -c channels.csv
+          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/60fps_10s.fseq -c channels.csv
+          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/1000fps_10s.fseq -c channels.csv
+
+      - name: Run generated sequences (precomputed)
+        run: |
+          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/5fps_10s.fseq -c channels.csv
+          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/25fps_10s.fseq -c channels.csv
+          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/40fps_10s.fseq -c channels.csv
+          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/60fps_10s.fseq -c channels.csv
+          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/1000fps_10s.fseq -c channels.csv
