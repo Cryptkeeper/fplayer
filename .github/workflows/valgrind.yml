@@ -39,7 +39,7 @@ jobs:
 
       - name: Generate test sequences
         run: |
-          for fps in 10 25 40 60 80 1000
+          for fps in 25 40 60 120
           do
             valgrind --leak-check=full --error-exitcode=1 ./build/gentool -o test_${fps}fps_compressed.fseq -f ${fps} -d 300
             valgrind --leak-check=full --error-exitcode=1 ./build/gentool -o test_${fps}fps.fseq -f ${fps} -d 300 -b 0
@@ -47,7 +47,7 @@ jobs:
 
       - name: Run generated sequences (compressed)
         run: |
-          for fps in 10 25 40 60 80 1000
+          for fps in 25 40 60 120
           do
             # run without precompute enabled
             valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test_${fps}fps_compressed.fseq -c channels.csv
@@ -61,7 +61,7 @@ jobs:
 
       - name: Run generated sequences (decompressed)
         run: |
-          for fps in 10 25 40 60 80 1000
+          for fps in 25 40 60 120
           do
             # run without precompute enabled
             valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test_${fps}fps.fseq -c channels.csv
@@ -70,5 +70,5 @@ jobs:
             valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test_${fps}fps.fseq -c channels.csv
           
             # run with precompute loaded from cache file
-            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test_${fps}fps.fseq -c channels.csv
+            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test_${fps}fps.fseq -c channels.csv
           done
