@@ -184,6 +184,10 @@ static void fseqCopySetVars(sds sfp, sds dfp, const struct var_t *const vars) {
 
     fseqWriteHeader(dst, header);
     fseqCopyConfigBlocks(dst, header, src);
+
+    // vars may have been re-aligned by `fseqResize`
+    fseek(dst, header.variableDataOffset, SEEK_SET);
+
     fseqWriteVars(dst, vars);
 
     // ensure the channel data is aligned on both files before bulk copying
