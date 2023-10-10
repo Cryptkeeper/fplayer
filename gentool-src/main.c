@@ -295,10 +295,10 @@ generateChannelData(FILE *const dst,
             for (uint32_t offset = 0;
                  offset < framesPerBlock && remainingFrameCount > 0;
                  offset++, remainingFrameCount--) {
-                const uint32_t frame = firstFrameId + offset;
+                const uint8_t frameData = intensityOscillatorRampVendorNext();
 
-                memset(&channelData[frame * channelCount],
-                       intensityOscillatorRampVendorNext(), channelCount);
+                memset(&channelData[offset * channelCount], frameData,
+                       channelCount);
             }
 
             // compress the entire block of channel data
