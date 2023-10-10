@@ -68,5 +68,7 @@ option(USE_ZSTD "enable zstd decompression at playback" true)
 
 if (USE_ZSTD)
     target_link_libraries(fplayer zstd)
+    target_link_libraries(gentool zstd)
+    
     add_compile_definitions(ENABLE_ZSTD)
 endif ()
