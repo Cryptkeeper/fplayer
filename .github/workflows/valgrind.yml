@@ -56,7 +56,7 @@ jobs:
             valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test_${fps}fps_compressed.fseq -c channels.csv
           
             # run with precompute loaded from cache file
-            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test_${fps}fps_compressed.fseq -c channels.csv
+            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test_${fps}fps_compressed.fseq -c channels.csv
           done
 
       - name: Run generated sequences (decompressed)
