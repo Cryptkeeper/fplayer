@@ -37,17 +37,38 @@ jobs:
         run: |
           valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -t channels.csv
 
-      - name: Run generated sequences (no precompute)
+      - name: Generate test sequences
         run: |
-          for fps in 5 25 40 60 1000
+          for fps in 10 25 40 60 80 1000
           do
-            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test/${fps}fps_10s.fseq -c channels.csv
+            valgrind --leak-check=full --error-exitcode=1 ./build/gentool -o test_${fps}fps_compressed.fseq -f ${fps} -d 300
+            valgrind --leak-check=full --error-exitcode=1 ./build/gentool -o test_${fps}fps.fseq -f ${fps} -d 300 -b 0
           done
 
-      - name: Run generated sequences (with precompute)
+      - name: Run generated sequences (compressed)
         run: |
-          for fps in 5 25 40 60 1000
+          for fps in 10 25 40 60 80 1000
           do
-            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/${fps}fps_10s.fseq -c channels.csv
-            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test/${fps}fps_10s.fseq -c channels.csv
+            # run without precompute enabled
+            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test_${fps}fps_compressed.fseq -c channels.csv
+          
+            # run with precompute calculated at runtime, data is saved for next run
+            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test_${fps}fps_compressed.fseq -c channels.csv
+          
+            # run with precompute loaded from cache file
+            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test_${fps}fps_compressed.fseq -c channels.csv
+          done
+
+      - name: Run generated sequences (decompressed)
+        run: |
+          for fps in 10 25 40 60 80 1000
+          do
+            # run without precompute enabled
+            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test_${fps}fps.fseq -c channels.csv
+          
+            # run with precompute calculated at runtime, data is saved for next run
+            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test_${fps}fps.fseq -c channels.csv
+          
+            # run with precompute loaded from cache file
+            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test_${fps}fps.fseq -c channels.csv
           done
