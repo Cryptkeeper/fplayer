@@ -98,8 +98,15 @@ void sequenceOpen(sds filepath, sds *const audioFilePath) {
     *audioFilePath = sequenceLoadAudioFilePath();
 }
 
-uint32_t sequenceReadFrames(struct seq_read_args_t args, uint8_t *frameData) {
+uint32_t sequenceReadFrames(const struct seq_read_args_t args,
+                            uint8_t *const frameData) {
     pthread_mutex_lock(&gFileMutex);
+
+    uint32_t frameCount = args.frameCount;
+
+    // ensure the requested frame count does not exceed the total frame count
+    if (args.startFrame + args.frameCount > gPlaying.frameCount)
+        frameCount = gPlaying.frameCount - args.startFrame;
 
     const uint32_t pos = sequenceData()->channelDataOffset +
                          (args.startFrame * args.frameSize);
@@ -107,14 +114,14 @@ uint32_t sequenceReadFrames(struct seq_read_args_t args, uint8_t *frameData) {
     if (fseek(gFile, pos, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
 
     const size_t framesRead =
-            fread(frameData, args.frameSize, args.frameCount, gFile);
+            fread(frameData, args.frameSize, frameCount, gFile);
 
     pthread_mutex_unlock(&gFileMutex);
 
     return (uint32_t) framesRead;
 }
 
-void sequenceRead(uint32_t start, uint32_t n, void *data) {
+void sequenceRead(const uint32_t start, const uint32_t n, void *const data) {
     pthread_mutex_lock(&gFileMutex);
 
     if (fseek(gFile, start, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
