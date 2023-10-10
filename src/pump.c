@@ -120,6 +120,8 @@ static void *framePumpThread(void *pargs) {
 
     FramePump *const framePump = mustMalloc(sizeof(FramePump));
 
+    memset(framePump, 0, sizeof(FramePump));
+
     *framePump = (FramePump){
             .consumedComBlocks = args.consumedComBlocks,
     };
