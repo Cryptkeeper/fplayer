@@ -68,7 +68,7 @@ static uint8_t **framePumpChargeCompressionBlock(FramePump *const pump) {
 static void framePumpFreeFrames(FramePump *const pump) {
     // by the time a pump is freed, all frames should have already
     // been consumed and freed by `framePumpGet` calls
-    for (int i = 0; i < arrlen(pump->frames); i++)
+    for (size_t i = 0; i < arrlenu(pump->frames); i++)
         assert(pump->frames[i] == NULL);
 
     arrfree(pump->frames);
