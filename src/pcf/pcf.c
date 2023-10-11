@@ -5,7 +5,7 @@
 
 #include "stb_ds.h"
 
-#include "../std/mem.h"
+#include "std/mem.h"
 
 // (p)re-computed (c)ache (f)file v(1)
 // OR

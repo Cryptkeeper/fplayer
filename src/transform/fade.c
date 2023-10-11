@@ -5,7 +5,7 @@
 #include "stb_ds.h"
 
 #include "../pcf/pcf.h"
-#include "../std/mem.h"
+#include "std/mem.h"
 
 struct frame_fade_kvp_t {
     uint32_t key;// circuit id

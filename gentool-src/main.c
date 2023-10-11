@@ -1,10 +1,8 @@
 #undef NDEBUG
 #include <assert.h>
 
-#include <errno.h>
 #include <getopt.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #define TINYFSEQ_IMPLEMENTATION
@@ -12,6 +10,9 @@
 
 #include "lightorama/intensity.h"
 #include "sds.h"
+#include "std/err.h"
+#include "std/mem.h"
+#include "std/parse.h"
 
 #define STB_DS_IMPLEMENTATION
 #include <stb_ds.h>
@@ -19,52 +20,6 @@
 #ifdef ENABLE_ZSTD
     #include <zstd.h>
 #endif
-
-// slimmed down version of fplayer's `fatalf`
-static void fatalf(const char *format, ...) {
-    va_list args;
-
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-
-    fflush(stderr);
-
-    exit(1);
-}
-
-static void parseLong(const char *const s,
-                      void *const i,
-                      const size_t n,
-                      const long min,
-                      const long max) {
-    if (s == NULL || strlen(s) == 0) goto fail;
-
-    char *endptr = NULL;
-
-    const long l = strtol(s, &endptr, 10);
-
-    // "If there were no digits at
-    //     all, however, strtol() stores the original value of str in *endptr."
-    if (s == endptr) goto fail;
-
-    // "If an overflow or underflow occurs, errno is set to ERANGE and the
-    //     function return value is clamped according to the following table."
-    if (l == 0 && errno == ERANGE) goto fail;
-
-    const long clamped = l < min ? min : (l > max ? max : l);
-
-    memcpy(i, (void *) &clamped, n);
-
-    return;
-
-fail:
-    // auto exit due to parsing fail
-    // this is an opinionated decision, built on the assumption that
-    // input is only parsed once at program start and is otherwise not at risk
-    // of hurting the program during active runtime
-    fatalf("error parsing number: %s\n", s);
-}
 
 // TODO: copy from mftool-src/main.c, merge into libtinyfseq?
 #define VAR_HEADER_SIZE 4
@@ -221,9 +176,7 @@ static void *compressZstd(const char *const src,
                           const size_t srcSize,
                           size_t *const dstSize) {
     const size_t dstCapacity = ZSTD_compressBound(srcSize);
-    void *const dst = malloc(dstCapacity);
-
-    if (dst == NULL) fatalf("error allocating zstd buffer\n");
+    void *const dst = mustMalloc(dstCapacity);
 
     const int compressionLevel = 1;
 
@@ -231,7 +184,7 @@ static void *compressZstd(const char *const src,
             ZSTD_compress(dst, dstCapacity, src, srcSize, compressionLevel);
 
     if (ZSTD_isError(dstCompressed))
-        fatalf("error compressing zstd stream: %s (%zu)\n",
+        fatalf(E_FATAL, "error compressing zstd stream: %s (%zu)\n",
                ZSTD_getErrorName(dstCompressed), dstCompressed);
 
     *dstSize = dstCompressed;
@@ -246,15 +199,13 @@ static void generateChannelDataUncompressed(FILE *const dst,
                                             const uint32_t channelCount) {
     // generate each individual frame
     // all channels are set to the same value for each frame via a memory block
-    uint8_t *const channelData = malloc(channelCount);
-
-    if (channelData == NULL) fatalf("error allocating channel data buffer\n");
+    uint8_t *const channelData = mustMalloc(channelCount);
 
     for (uint32_t frame = 0; frame <= frameCount; frame++) {
         memset(channelData, intensityOscillatorRampVendorNext(), channelCount);
 
         if (fwrite(channelData, channelCount, 1, dst) != 1)
-            fatalf("error writing frame %d\n", frame);
+            fatalf(E_FILE_IO, "error writing frame %d\n", frame);
 
         if (frame > 0 && frame % fps == 0)
             printf("wrote frame bundle %d\n", frame / fps);
@@ -281,10 +232,7 @@ generateChannelData(FILE *const dst,
 
         // allocate a single block of channel data memory that will be compressed
         const size_t channelDataSize = framesPerBlock * channelCount;
-        uint8_t *const channelData = malloc(channelDataSize);
-
-        if (channelData == NULL)
-            fatalf("error allocating channel data buffer\n");
+        uint8_t *const channelData = mustMalloc(channelDataSize);
 
         // generate each frame, all channels are set to the same value per frame
         uint32_t remainingFrameCount = frameCount;
@@ -369,22 +317,20 @@ int main(const int argc, char **const argv) {
             case 'f':
                 // minimum 4 FPS = 250ms sleep time (stored in uint8_t, <= 255)
                 // maximum 1000 FPS = 1ms sleep time
-                parseLong(optarg, &fps, sizeof(fps), 4, 1000);
+                fps = (uint16_t) parseLong(optarg, 4, 1000);
                 break;
 
             case 'c':
-                parseLong(optarg, &channelCount, sizeof(channelCount), 1,
-                          UINT32_MAX);
+                channelCount = (uint32_t) parseLong(optarg, 1, UINT32_MAX);
                 break;
 
             case 'd':
-                parseLong(optarg, &frameCount, sizeof(frameCount), 1,
-                          UINT32_MAX);
+                frameCount = (uint32_t) parseLong(optarg, 1, UINT32_MAX);
                 break;
 
             case 'b':
-                parseLong(optarg, &compressionBlockCount,
-                          sizeof(compressionBlockCount), 0, UINT8_MAX);
+                compressionBlockCount =
+                        (uint8_t) parseLong(optarg, 1, UINT8_MAX);
                 break;
 
             case ':':
@@ -403,7 +349,8 @@ int main(const int argc, char **const argv) {
 
     FILE *const f = fopen(outputPath, "wb");
 
-    if (f == NULL) fatalf("error opening output filepath: %s\n", outputPath);
+    if (f == NULL)
+        fatalf(E_FILE_IO, "error opening output filepath: %s\n", outputPath);
 
     printf("generating test sequence (%d frames @ %d FPS)\n", frameCount, fps);
     printf("using %d bytes per frame (%.2fkb total)\n", channelCount,

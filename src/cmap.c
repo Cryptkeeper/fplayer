@@ -90,11 +90,11 @@ static void channelMapParseCSV(const char *const b) {
 
         ChannelRange cr = {0};
 
-        parseLong(cols[0], &cr.sid, sizeof(cr.sid), 0, UINT32_MAX);
-        parseLong(cols[1], &cr.eid, sizeof(cr.eid), 0, UINT32_MAX);
-        parseLong(cols[2], &cr.unit, sizeof(cr.unit), 0, UINT8_MAX);
-        parseLong(cols[3], &cr.scircuit, sizeof(cr.scircuit), 0, UINT16_MAX);
-        parseLong(cols[4], &cr.ecircuit, sizeof(cr.ecircuit), 0, UINT16_MAX);
+        cr.sid = (uint32_t) parseLong(cols[0], 0, UINT32_MAX);
+        cr.eid = (uint32_t) parseLong(cols[1], 0, UINT32_MAX);
+        cr.unit = (uint8_t) parseLong(cols[2], 0, UINT8_MAX);
+        cr.scircuit = (uint16_t) parseLong(cols[3], 0, UINT16_MAX);
+        cr.ecircuit = (uint16_t) parseLong(cols[4], 0, UINT16_MAX);
 
         sds error = channelRangeValidate(cr);
 

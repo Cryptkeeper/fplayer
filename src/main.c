@@ -134,14 +134,13 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
                 break;
 
             case 'r':
-                parseLong(optarg, &gPlayerOpts.frameStepTimeOverrideMs,
-                          sizeof(gPlayerOpts.frameStepTimeOverrideMs), 1,
-                          UINT8_MAX);
+                gPlayerOpts.frameStepTimeOverrideMs =
+                        (uint8_t) parseLong(optarg, 1, UINT8_MAX);
                 break;
 
             case 'w':
-                parseLong(optarg, &gPlayerOpts.connectionWaitS,
-                          sizeof(gPlayerOpts.connectionWaitS), 0, UINT8_MAX);
+                gPlayerOpts.connectionWaitS =
+                        (uint8_t) parseLong(optarg, 0, UINT8_MAX);
                 break;
 
             case 'p':
@@ -153,8 +152,7 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
                 break;
 
             case 'b':
-                parseLong(optarg, &gSerialOpts.baudRate,
-                          sizeof(gSerialOpts.baudRate), 0, UINT32_MAX);
+                gSerialOpts.baudRate = (int) parseLong(optarg, 0, UINT32_MAX);
                 break;
 
             case ':':

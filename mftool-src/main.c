@@ -1,7 +1,6 @@
 #undef NDEBUG
 #include <assert.h>
 
-#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,19 +12,8 @@
 #include "stb_ds.h"
 
 #include "sds.h"
-
-// slimmed down version of fplayer's `fatalf`
-static void fatalf(const char *format, ...) {
-    va_list args;
-
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-
-    fflush(stderr);
-
-    exit(1);
-}
+#include "std/err.h"
+#include "std/mem.h"
 
 #define VAR_HEADER_SIZE 4
 
@@ -100,11 +88,10 @@ static void fseqCopyConfigBlocks(FILE *const dst,
     const uint16_t size =
             header.compressionBlockCount * 8 + header.channelRangeCount * 6;
 
-    uint8_t *const b = malloc(size);
+    uint8_t *const b = mustMalloc(size);
 
-    assert(b != NULL);
-
-    if (fread(b, size, 1, src) != 1) fatalf("error reading config blocks\n");
+    if (fread(b, size, 1, src) != 1)
+        fatalf(E_FILE_IO, "error reading config blocks\n");
 
     fwrite(b, size, 1, dst);
 
@@ -131,7 +118,7 @@ static void fseqWriteVars(FILE *const dst, const struct var_t *const vars) {
 #define CD_CHUNK_SIZE 4096
 
 static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
-    uint8_t *const chunk = malloc(CD_CHUNK_SIZE);
+    uint8_t *const chunk = mustMalloc(CD_CHUNK_SIZE);
 
     uint32_t copied = 0;
 
@@ -154,20 +141,21 @@ static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
 static void fseqOpen(sds fp, FILE **fd, struct tf_file_header_t *const header) {
     FILE *const f = *fd = fopen(fp, "rb");
 
-    if (f == NULL) fatalf("error opening file `%s`\n", fp);
+    if (f == NULL) fatalf(E_FATAL, "error opening file `%s`\n", fp);
 
     uint8_t b[32];
 
-    if (fread(b, sizeof(b), 1, f) != 1) fatalf("error reading header\n");
+    if (fread(b, sizeof(b), 1, f) != 1)
+        fatalf(E_FILE_IO, "error reading header\n");
 
     enum tf_err_t err;
 
     if ((err = tf_read_file_header(b, sizeof(b), header, NULL)) != TF_OK)
-        fatalf("error decoding fseq header: %s\n", tf_err_str(err));
+        fatalf(E_FATAL, "error decoding fseq header: %s\n", tf_err_str(err));
 
     if (!(header->majorVersion == 2 && header->minorVersion == 0))
-        fatalf("unsupported fseq file version: %d.%d\n", header->majorVersion,
-               header->minorVersion);
+        fatalf(E_FATAL, "unsupported fseq file version: %d.%d\n",
+               header->majorVersion, header->minorVersion);
 }
 
 static void fseqCopySetVars(sds sfp, sds dfp, const struct var_t *const vars) {
@@ -178,7 +166,7 @@ static void fseqCopySetVars(sds sfp, sds dfp, const struct var_t *const vars) {
 
     FILE *const dst = fopen(dfp, "wb");
 
-    if (dst == NULL) fatalf("error opening file `%s`\n", dfp);
+    if (dst == NULL) fatalf(E_FATAL, "error opening file `%s`\n", dfp);
 
     const struct tf_file_header_t header = fseqResize(original, vars);
 
@@ -216,13 +204,12 @@ static struct var_t *fseqReadVars(sds fp) {
 
     assert(varDataSize > VAR_HEADER_SIZE);
 
-    uint8_t *const varData = malloc(varDataSize);
-    assert(varData != NULL);
+    uint8_t *const varData = mustMalloc(varDataSize);
 
     if (fread(varData, varDataSize, 1, src) != 1)
-        fatalf(sdscatprintf(sdsempty(),
-                            "error reading var data blob (%d bytes)",
-                            varDataSize));
+        fatalf(E_FILE_IO, sdscatprintf(sdsempty(),
+                                       "error reading var data blob (%d bytes)",
+                                       varDataSize));
 
     uint16_t pos = 0;
     struct var_t *vars = NULL;
@@ -276,10 +263,12 @@ static void renamePair(sds sfp, sds dfp) {
     sds nsfp = sdscatprintf(sdsempty(), "%s.orig", sfp);
 
     if (rename(sfp, nsfp) != 0)
-        fatalf("error renaming `%s` -> `%s`\n", sfp, nsfp);// "$" -> "$.orig"
+        fatalf(E_FATAL, "error renaming `%s` -> `%s`\n", sfp,
+               nsfp);// "$" -> "$.orig"
 
     if (rename(dfp, sfp) != 0)
-        fatalf("error renaming `%s` -> `%s`\n", dfp, sfp);// "$.tmp" -> "$"
+        fatalf(E_FATAL, "error renaming `%s` -> `%s`\n", dfp,
+               sfp);// "$.tmp" -> "$"
 
     printf("renamed `%s` to `%s`\n", sfp, nsfp);
 

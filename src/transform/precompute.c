@@ -8,9 +8,9 @@
 
 #include "../pump.h"
 #include "../seq.h"
-#include "../std/mem.h"
 #include "../std/time.h"
 #include "fade.h"
+#include "std/mem.h"
 
 struct precompute_history_t {
     uint32_t startFrame;
