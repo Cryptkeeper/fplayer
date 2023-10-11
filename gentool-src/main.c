@@ -318,10 +318,10 @@ generateChannelData(FILE *const dst,
                     .size = compressedDataSize,
             };
 
+            arrpush(blocks, newBlock);
+
             printf("wrote compressed frame bundle %d (%zu bytes)\n", idx,
                    compressedDataSize);
-
-            arrpush(blocks, newBlock);
         }
 
         // free the original channel data memory
@@ -356,7 +356,7 @@ int main(const int argc, char **const argv) {
     uint8_t compressionBlockCount = 2;
 
     int c;
-    while ((c = getopt(argc, argv, ":o:f:n:d:hb:")) != -1) {
+    while ((c = getopt(argc, argv, ":o:f:c:d:hb:")) != -1) {
         switch (c) {
             case 'h':
                 printUsage();
