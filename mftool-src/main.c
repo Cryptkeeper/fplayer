@@ -42,38 +42,6 @@ static struct tf_file_header_t fseqResize(const struct tf_file_header_t header,
 
 #define fwrite_auto(v, f) fwrite(&v, sizeof(v), 1, f)
 
-static void fseqWriteHeader(FILE *const dst,
-                            const struct tf_file_header_t header) {
-    const uint8_t magic[4] = {'P', 'S', 'E', 'Q'};
-
-    fwrite_auto(magic, dst);
-
-    fwrite_auto(header.channelDataOffset, dst);
-
-    fputc(0, dst);// minor version
-    fputc(2, dst);// major version
-
-    fwrite_auto(header.variableDataOffset, dst);
-
-    fwrite_auto(header.channelCount, dst);
-    fwrite_auto(header.frameCount, dst);
-
-    fwrite_auto(header.frameStepTimeMillis, dst);
-
-    fputc(0, dst);// reserved flags
-
-    const uint8_t compression = (uint8_t) header.compressionType;
-
-    fwrite_auto(compression, dst);
-
-    fwrite_auto(header.compressionBlockCount, dst);
-    fwrite_auto(header.channelRangeCount, dst);
-
-    fputc(0, dst);// reserved empty
-
-    fwrite_auto(header.sequenceUid, dst);
-}
-
 static void fseqCopyConfigBlocks(FILE *const dst,
                                  const struct tf_file_header_t header,
                                  FILE *const src) {
