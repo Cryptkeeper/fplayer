@@ -22,6 +22,8 @@ file(GLOB_RECURSE SDS_FILES "sds/*.c")
 
 add_library(common STATIC ${COMMON_FILES} ${SDS_FILES})
 
+target_include_directories(common PUBLIC libtinyfseq sds stb)
+
 option(BUILD_MFTOOL "enable building mftool executable" true)
 
 if (BUILD_MFTOOL)
@@ -30,7 +32,7 @@ if (BUILD_MFTOOL)
 
     add_executable(mftool ${MFTOOL_FILES})
 
-    target_include_directories(mftool PRIVATE common libtinyfseq sds stb)
+    target_include_directories(mftool PRIVATE common)
     target_link_libraries(mftool common)
 endif ()
 
@@ -42,7 +44,7 @@ if (BUILD_GENTOOL)
 
     add_executable(gentool ${GENTOOL_FILES})
 
-    target_include_directories(gentool PRIVATE common libtinyfseq sds stb)
+    target_include_directories(gentool PRIVATE common)
     target_link_libraries(gentool common lightorama)
 endif ()
 

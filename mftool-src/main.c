@@ -5,26 +5,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define TINYFSEQ_IMPLEMENTATION
-#include "tinyfseq.h"
-
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
 
 #include "sds.h"
 #include "std/err.h"
+#include "std/fseq.h"
 #include "std/mem.h"
 
 #define VAR_HEADER_SIZE 4
 
-struct var_t {
-    uint8_t idh;
-    uint8_t idl;
-    sds string;
-};
-
 static struct tf_file_header_t fseqResize(const struct tf_file_header_t header,
-                                          const struct var_t *const vars) {
+                                          const fseq_var_t *const vars) {
     unsigned int varDataSize = 0;
 
     for (size_t i = 0; i < arrlenu(vars); i++)
@@ -98,9 +90,9 @@ static void fseqCopyConfigBlocks(FILE *const dst,
     free(b);
 }
 
-static void fseqWriteVars(FILE *const dst, const struct var_t *const vars) {
+static void fseqWriteVars(FILE *const dst, const fseq_var_t *const vars) {
     for (size_t i = 0; i < arrlenu(vars); i++) {
-        const struct var_t var = vars[i];
+        const fseq_var_t var = vars[i];
 
         const uint16_t size = sdslen(var.string) + VAR_HEADER_SIZE + 1;
 
@@ -158,7 +150,7 @@ static void fseqOpen(sds fp, FILE **fd, struct tf_file_header_t *const header) {
                header->majorVersion, header->minorVersion);
 }
 
-static void fseqCopySetVars(sds sfp, sds dfp, const struct var_t *const vars) {
+static void fseqCopySetVars(sds sfp, sds dfp, const fseq_var_t *const vars) {
     FILE *src;
     struct tf_file_header_t original;
 
@@ -191,7 +183,7 @@ static void fseqCopySetVars(sds sfp, sds dfp, const struct var_t *const vars) {
     fclose(dst);
 }
 
-static struct var_t *fseqReadVars(sds fp) {
+static fseq_var_t *fseqReadVars(sds fp) {
     FILE *src;
     struct tf_file_header_t header;
 
@@ -212,7 +204,7 @@ static struct var_t *fseqReadVars(sds fp) {
                                        varDataSize));
 
     uint16_t pos = 0;
-    struct var_t *vars = NULL;
+    fseq_var_t *vars = NULL;
 
     // ignore padding bytes at end (<=3), or ending 0-length value
     // 0-length values could be technically supported?
@@ -226,7 +218,7 @@ static struct var_t *fseqReadVars(sds fp) {
         assert(varLen > 0);
 
         // let sds do the dirty work of reading and terminating the string
-        const struct var_t var = {
+        const fseq_var_t var = {
                 .idh = head[2],
                 .idl = head[3],
                 .string = sdsnewlen(&head[4], varLen),
@@ -243,12 +235,6 @@ static struct var_t *fseqReadVars(sds fp) {
     fclose(src);
 
     return vars;
-}
-
-static void freeVars(struct var_t *vars) {
-    for (size_t i = 0; i < arrlenu(vars); i++) sdsfree(vars[i].string);
-
-    arrfree(vars);
 }
 
 static void printUsage(void) {
@@ -286,12 +272,12 @@ int main(const int argc, char **const argv) {
     sds sfp = sdsnew(argv[1]); /* source file path */
     sds dfp = NULL;            /* destination file path (source + .tmp) */
 
-    struct var_t *vars = fseqReadVars(sfp);
+    fseq_var_t *vars = fseqReadVars(sfp);
 
     // print and exit if not modifying the sequence
     if (argc < 3) {
         for (size_t i = 0; i < arrlenu(vars); i++) {
-            const struct var_t var = vars[i];
+            const fseq_var_t var = vars[i];
 
             printf("%c%c\t%s\n", var.idh, var.idl, var.string);
         }
@@ -304,7 +290,7 @@ int main(const int argc, char **const argv) {
 
     // try to find a matching `mf` var to update
     for (ssize_t i = 0; i < arrlen(vars); i++) {
-        struct var_t *const var = &vars[i];
+        fseq_var_t *const var = &vars[i];
 
         if (var->idh != 'm' || var->idl != 'f') continue;
 
@@ -316,7 +302,7 @@ int main(const int argc, char **const argv) {
     }
 
     // no previous matching var, insert new
-    const struct var_t new = {
+    const fseq_var_t new = {
             .idh = 'm',
             .idl = 'f',
             .string = sdsnew(argv[2]),
@@ -333,7 +319,7 @@ exit:
     sdsfree(sfp);
     sdsfree(dfp);
 
-    freeVars(vars);
+    fseqVarsFree(vars);
 
     return 0;
 }

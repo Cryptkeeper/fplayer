@@ -5,17 +5,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#define TINYFSEQ_IMPLEMENTATION
-#include "tinyfseq.h"
-
 #include "lightorama/intensity.h"
 #include "sds.h"
 #include "std/err.h"
+#include "std/fseq.h"
 #include "std/mem.h"
 #include "std/parse.h"
 
 #define STB_DS_IMPLEMENTATION
-#include <stb_ds.h>
+#include "stb_ds.h"
 
 #ifdef ENABLE_ZSTD
     #include <zstd.h>
@@ -25,15 +23,8 @@
 #define VAR_HEADER_SIZE 4
 
 // TODO: copy from mftool-src/main.c, merge into libtinyfseq?
-struct var_t {
-    uint8_t idh;
-    uint8_t idl;
-    sds string;
-};
-
-// TODO: copy from mftool-src/main.c, merge into libtinyfseq?
 static struct tf_file_header_t fseqResize(const struct tf_file_header_t header,
-                                          const struct var_t *const vars) {
+                                          const fseq_var_t *const vars) {
     unsigned int varDataSize = 0;
 
     for (size_t i = 0; i < arrlenu(vars); i++)
@@ -107,9 +98,9 @@ fseqWriteCompressionBlocks(FILE *const dst,
 }
 
 // TODO: copy from mftool-src/main.c, merge into libtinyfseq?
-static void fseqWriteVars(FILE *const dst, const struct var_t *const vars) {
+static void fseqWriteVars(FILE *const dst, const fseq_var_t *const vars) {
     for (size_t i = 0; i < arrlenu(vars); i++) {
-        const struct var_t var = vars[i];
+        const fseq_var_t var = vars[i];
 
         const uint16_t size = sdslen(var.string) + VAR_HEADER_SIZE + 1;
 
@@ -124,17 +115,10 @@ static void fseqWriteVars(FILE *const dst, const struct var_t *const vars) {
     }
 }
 
-// TODO: copy from mftool-src/main.c, merge into libtinyfseq?
-static void freeVars(struct var_t *vars) {
-    for (size_t i = 0; i < arrlenu(vars); i++) sdsfree(vars[i].string);
+static fseq_var_t *fseqCreateProgramVars(void) {
+    fseq_var_t *vars = NULL;
 
-    arrfree(vars);
-}
-
-static struct var_t *fseqCreateProgramVars(void) {
-    struct var_t *vars = NULL;
-
-    const struct var_t sequenceProducer = {
+    const fseq_var_t sequenceProducer = {
             .idh = 's',
             .idl = 'p',
             .string = sdsnew("fplayer/gentool"),
@@ -142,7 +126,7 @@ static struct var_t *fseqCreateProgramVars(void) {
 
     arrpush(vars, sequenceProducer);
 
-    const struct var_t generationMode = {
+    const fseq_var_t generationMode = {
             .idh = 'g',
             .idl = 'm',
             .string = sdsnew("intensity_oscillator_ramp_vendor"),
@@ -366,7 +350,7 @@ int main(const int argc, char **const argv) {
             .compressionBlockCount = compressionBlockCount,
     };
 
-    struct var_t *const vars = fseqCreateProgramVars();
+    fseq_var_t *const vars = fseqCreateProgramVars();
 
     const struct tf_file_header_t header = fseqResize(initialHeader, vars);
 
@@ -395,7 +379,7 @@ int main(const int argc, char **const argv) {
 
     fseqWriteVars(f, vars);
 
-    freeVars(vars);
+    fseqVarsFree(vars);
 
     // done writing file
     fclose(f);
