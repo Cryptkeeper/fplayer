@@ -1,7 +1,6 @@
 #undef NDEBUG
 #include <assert.h>
 
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -12,35 +11,6 @@
 #include "std/err.h"
 #include "std/fseq.h"
 #include "std/mem.h"
-
-#define VAR_HEADER_SIZE 4
-
-static struct tf_file_header_t fseqResize(const struct tf_file_header_t header,
-                                          const fseq_var_t *const vars) {
-    unsigned int varDataSize = 0;
-
-    for (size_t i = 0; i < arrlenu(vars); i++)
-        varDataSize += sdslen(vars[i].string) + VAR_HEADER_SIZE + 1;
-
-    // round to nearest product of 4 for 32-bit alignment
-    const size_t rem = varDataSize % 4;
-    if (rem != 0) varDataSize += 4 - rem;
-
-    // ensure the value can be safely downcasted to what the file format expects
-    assert(varDataSize <= UINT16_MAX);
-
-    const uint16_t firstVarOffset = 32 + header.compressionBlockCount * 8 +
-                                    header.channelRangeCount * 6;
-
-    struct tf_file_header_t resized = header;
-
-    resized.variableDataOffset = firstVarOffset;
-    resized.channelDataOffset = firstVarOffset + varDataSize;
-
-    return resized;
-}
-
-#define fwrite_auto(v, f) fwrite(&v, sizeof(v), 1, f)
 
 static void fseqCopyConfigBlocks(FILE *const dst,
                                  const struct tf_file_header_t header,
@@ -56,23 +26,6 @@ static void fseqCopyConfigBlocks(FILE *const dst,
     fwrite(b, size, 1, dst);
 
     free(b);
-}
-
-static void fseqWriteVars(FILE *const dst, const fseq_var_t *const vars) {
-    for (size_t i = 0; i < arrlenu(vars); i++) {
-        const fseq_var_t var = vars[i];
-
-        const uint16_t size = sdslen(var.string) + VAR_HEADER_SIZE + 1;
-
-        fwrite_auto(size, dst);
-
-        fwrite_auto(var.idh, dst);
-        fwrite_auto(var.idl, dst);
-
-        fwrite(var.string, sdslen(var.string), 1, dst);
-
-        fputc('\0', dst);
-    }
 }
 
 #define CD_CHUNK_SIZE 4096
@@ -128,15 +81,14 @@ static void fseqCopySetVars(sds sfp, sds dfp, const fseq_var_t *const vars) {
 
     if (dst == NULL) fatalf(E_FATAL, "error opening file `%s`\n", dfp);
 
-    const struct tf_file_header_t header = fseqResize(original, vars);
+    struct tf_file_header_t header = original;// copy original header
+
+    fseqAlignOffsets(&header, vars);
 
     fseqWriteHeader(dst, header);
     fseqCopyConfigBlocks(dst, header, src);
 
-    // vars may have been re-aligned by `fseqResize`
-    fseek(dst, header.variableDataOffset, SEEK_SET);
-
-    fseqWriteVars(dst, vars);
+    fseqWriteVars(dst, header, vars);
 
     // ensure the channel data is aligned on both files before bulk copying
     fseek(src, original.channelDataOffset, SEEK_SET);
@@ -150,6 +102,8 @@ static void fseqCopySetVars(sds sfp, sds dfp, const fseq_var_t *const vars) {
     fclose(src);
     fclose(dst);
 }
+
+#define VAR_HEADER_SIZE 4
 
 static fseq_var_t *fseqReadVars(sds fp) {
     FILE *src;

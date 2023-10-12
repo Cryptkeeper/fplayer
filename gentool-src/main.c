@@ -19,69 +19,6 @@
     #include <zstd.h>
 #endif
 
-// TODO: copy from mftool-src/main.c, merge into libtinyfseq?
-#define VAR_HEADER_SIZE 4
-
-// TODO: copy from mftool-src/main.c, merge into libtinyfseq?
-static struct tf_file_header_t fseqResize(const struct tf_file_header_t header,
-                                          const fseq_var_t *const vars) {
-    unsigned int varDataSize = 0;
-
-    for (size_t i = 0; i < arrlenu(vars); i++)
-        varDataSize += sdslen(vars[i].string) + VAR_HEADER_SIZE + 1;
-
-    // round to nearest product of 4 for 32-bit alignment
-    const size_t rem = varDataSize % 4;
-    if (rem != 0) varDataSize += 4 - rem;
-
-    // ensure the value can be safely downcasted to what the file format expects
-    assert(varDataSize <= UINT16_MAX);
-
-    const uint16_t firstVarOffset = 32 + header.compressionBlockCount * 8 +
-                                    header.channelRangeCount * 6;
-
-    struct tf_file_header_t resized = header;
-
-    resized.variableDataOffset = firstVarOffset;
-    resized.channelDataOffset = firstVarOffset + varDataSize;
-
-    return resized;
-}
-
-// TODO: copy from mftool-src/main.c, merge into libtinyfseq?
-#define fwrite_auto(v, f) fwrite(&v, sizeof(v), 1, f)
-
-static void
-fseqWriteCompressionBlocks(FILE *const dst,
-                           const struct tf_compression_block_t *const blocks) {
-    fseek(dst, 32, SEEK_SET);
-
-    for (size_t i = 0; i < arrlenu(blocks); i++) {
-        const struct tf_compression_block_t block = blocks[i];
-
-        fwrite_auto(block.firstFrameId, dst);
-        fwrite_auto(block.size, dst);
-    }
-}
-
-// TODO: copy from mftool-src/main.c, merge into libtinyfseq?
-static void fseqWriteVars(FILE *const dst, const fseq_var_t *const vars) {
-    for (size_t i = 0; i < arrlenu(vars); i++) {
-        const fseq_var_t var = vars[i];
-
-        const uint16_t size = sdslen(var.string) + VAR_HEADER_SIZE + 1;
-
-        fwrite_auto(size, dst);
-
-        fwrite_auto(var.idh, dst);
-        fwrite_auto(var.idl, dst);
-
-        fwrite(var.string, sdslen(var.string), 1, dst);
-
-        fputc('\0', dst);
-    }
-}
-
 static fseq_var_t *fseqCreateProgramVars(void) {
     fseq_var_t *vars = NULL;
 
@@ -308,7 +245,7 @@ int main(const int argc, char **const argv) {
            (float) (channelCount * frameCount) / 1024.0f);
 
     // generate a customized valid header for playback
-    struct tf_file_header_t initialHeader = {
+    struct tf_file_header_t header = {
             .minorVersion = 0,
             .majorVersion = 2,
             .channelCount = channelCount,
@@ -321,7 +258,7 @@ int main(const int argc, char **const argv) {
 
     fseq_var_t *const vars = fseqCreateProgramVars();
 
-    const struct tf_file_header_t header = fseqResize(initialHeader, vars);
+    fseqAlignOffsets(&header, vars);
 
     fseqWriteHeader(f, header);
 
@@ -337,16 +274,12 @@ int main(const int argc, char **const argv) {
     assert(arrlenu(compressionBlocks) == compressionBlockCount);
 
     if (compressionBlockCount > 0) {
-        fseqWriteCompressionBlocks(f, compressionBlocks);
+        fseqWriteCompressionBlocks(f, header, compressionBlocks);
 
         arrfree(compressionBlocks);
     }
 
-    // encode variable data last
-    // space is pre-allocated using `fseqResize`
-    fseek(f, header.variableDataOffset, SEEK_SET);
-
-    fseqWriteVars(f, vars);
+    fseqWriteVars(f, header, vars);
 
     fseqVarsFree(vars);
 
