@@ -4,6 +4,7 @@ bool gAudioIgnoreErrors = false;
 
 #ifdef ENABLE_OPENAL
 
+    #include <assert.h>
     #include <stdio.h>
 
     #include <AL/alut.h>
@@ -37,14 +38,9 @@ static inline void alutCheckError(const char *const msg) {
 static ALuint gSource = AL_NONE;
 static ALuint gCurrentBuffer = AL_NONE;
 
-static bool gAlutUnloaded = false;
-
 void audioInit(int *const argc, char **const argv) {
     alutInit(argc, argv);
     alutCheckError("error initializing ALUT");
-
-    alGenSources(1, &gSource);
-    alCheckError("error generating default audio source");
 }
 
 static void audioStop(void) {
@@ -70,10 +66,6 @@ static void audioStop(void) {
 }
 
 void audioExit(void) {
-    if (gAlutUnloaded) return;
-
-    gAlutUnloaded = true;
-
     audioStop();
 
     alutExit();
@@ -81,7 +73,7 @@ void audioExit(void) {
 }
 
 bool audioCheckPlaying(void) {
-    if (gAlutUnloaded) return false;
+    assert(gSource != AL_NONE);
 
     ALint state;
     alGetSourcei(gSource, AL_SOURCE_STATE, &state);
@@ -96,15 +88,18 @@ void audioPlayFile(const char *const filepath) {
     gCurrentBuffer = alutCreateBufferFromFile(filepath);
     alutCheckError("error decoding file into buffer");
 
+    if (gCurrentBuffer == AL_NONE) return;
+
+    assert(gSource == AL_NONE);
+
+    alGenSources(1, &gSource);
+    alCheckError("error generating default audio source");
+
     alSourcei(gSource, AL_BUFFER, (ALint) gCurrentBuffer);
     alCheckError("error assigning source buffer");
 
     alSourcePlay(gSource);
     alCheckError("error starting audio source playback");
-
-    // test for any playback failure
-    // unload audio system since it can't be used
-    if (!audioCheckPlaying()) audioExit();
 }
 
 #else
