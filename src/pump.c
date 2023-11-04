@@ -224,4 +224,7 @@ void framePumpFree(FramePump *const pump) {
     framePumpFreeFrames(pump);
 
     freeAndNull(pump->buffer);
+
+    pump->head = 0;
+    pump->consumedComBlocks = 0;
 }
