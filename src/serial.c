@@ -36,10 +36,6 @@ static inline void spPrintError(enum sp_return err) {
         if (_err != SP_OK) spPrintError(_err);                                 \
     } while (0)
 
-void serialOptsFree(SerialOpts *opts) {
-    sdsfree(opts->devName);
-}
-
 static struct sp_port *gPort;
 
 enum serial_src_t {
@@ -50,32 +46,32 @@ enum serial_src_t {
 
 static enum serial_src_t gSrc;
 
-static void serialOpenPort(const SerialOpts opts) {
-    spTry(sp_get_port_by_name(opts.devName, &gPort));
+static void serialOpenPort(const char *const devName, const int baudRate) {
+    spTry(sp_get_port_by_name(devName, &gPort));
 
     // NULL indicates a failure to open, which is the only seriously "fatal"
     // error that can occur during setup
     if (gPort == NULL)
-        fatalf(E_FATAL, "error opening serial port: %s\n", opts.devName);
+        fatalf(E_FATAL, "error opening serial port: %s\n", devName);
 
     // smaller errors from configuring the device connection are not fatal since
     // it may likely work anyway or otherwise disregard these values
     spTry(sp_open(gPort, SP_MODE_WRITE));
-    spTry(sp_set_baudrate(gPort, opts.baudRate));
+    spTry(sp_set_baudrate(gPort, baudRate));
     spTry(sp_set_parity(gPort, SP_PARITY_NONE));
     spTry(sp_set_bits(gPort, 8));
     spTry(sp_set_stopbits(gPort, 1));
 }
 
-void serialInit(const SerialOpts opts) {
-    if (opts.devName == NULL || strcasecmp(opts.devName, "null") == 0) {
+void serialInit(const char *const devName, const int baudRate) {
+    if (devName == NULL || strcasecmp(devName, "null") == 0) {
         gSrc = SERIAL_NULL;
-    } else if (strcasecmp(opts.devName, "stdout") == 0) {
+    } else if (strcasecmp(devName, "stdout") == 0) {
         gSrc = SERIAL_STDIO;
     } else {
         gSrc = SERIAL_PORT;
 
-        serialOpenPort(opts);
+        serialOpenPort(devName, baudRate);
     }
 }
 

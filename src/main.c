@@ -73,11 +73,15 @@ static void printVersions(void) {
 #endif
 }
 
+static sds gSequenceFilePath;
+static sds gAudioOverrideFilePath;
+
+static sds gChannelMapFilePath;
+
 static PlayerOpts gPlayerOpts;
 
-static SerialOpts gSerialOpts = {
-        .baudRate = 19200,
-};
+static sds gSerialDevName;
+static int gSerialBaudRate = 19200;
 
 static void testConfigurations(const char *const filepath) {
     channelMapInit(filepath);
@@ -122,15 +126,15 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
                 return true;
 
             case 'f':
-                gPlayerOpts.sequenceFilePath = sdsnew(optarg);
+                gSequenceFilePath = sdsnew(optarg);
                 break;
 
             case 'c':
-                gPlayerOpts.channelMapFilePath = sdsnew(optarg);
+                gChannelMapFilePath = sdsnew(optarg);
                 break;
 
             case 'a':
-                gPlayerOpts.audioOverrideFilePath = sdsnew(optarg);
+                gAudioOverrideFilePath = sdsnew(optarg);
                 break;
 
             case 'r':
@@ -148,11 +152,11 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
                 break;
 
             case 'd':
-                gSerialOpts.devName = sdsnew(optarg);
+                gSerialDevName = sdsnew(optarg);
                 break;
 
             case 'b':
-                gSerialOpts.baudRate = (int) parseLong(optarg, 0, UINT32_MAX);
+                gSerialBaudRate = (int) parseLong(optarg, 0, INT32_MAX);
                 break;
 
             case ':':
@@ -168,8 +172,7 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
         }
     }
 
-    if (gPlayerOpts.sequenceFilePath == NULL ||
-        gPlayerOpts.channelMapFilePath == NULL) {
+    if (gSequenceFilePath == NULL || gChannelMapFilePath == NULL) {
         printUsage();
 
         *ec = EXIT_FAILURE;
@@ -177,6 +180,13 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
     }
 
     return false;
+}
+
+static void freeArgs(void) {
+    sdsfree(gSequenceFilePath);
+    sdsfree(gAudioOverrideFilePath);
+    sdsfree(gChannelMapFilePath);
+    sdsfree(gSerialDevName);
 }
 
 int main(int argc, char **argv) {
@@ -187,14 +197,14 @@ int main(int argc, char **argv) {
     argv += optind;
 
     // load required app context configs
-    channelMapInit(gPlayerOpts.channelMapFilePath);
+    channelMapInit(gChannelMapFilePath);
 
     // initialize core subsystems
     audioInit(&argc, argv);
-    serialInit(gSerialOpts);
+    serialInit(gSerialDevName, gSerialBaudRate);
 
     // start the player as configured, this will start playback automatically
-    playerRun(gPlayerOpts);
+    playerRun(gSequenceFilePath, gAudioOverrideFilePath, gPlayerOpts);
 
     // teardown in reverse order
     serialExit();
@@ -202,8 +212,7 @@ int main(int argc, char **argv) {
 
     channelMapFree();
 
-    serialOptsFree(&gSerialOpts);
-    playerOptsFree(&gPlayerOpts);
+    freeArgs();
 
     return 0;
 }

@@ -6,14 +6,7 @@
 
 #include <sds.h>
 
-typedef struct serial_opts_t {
-    sds devName;
-    int baudRate;
-} SerialOpts;
-
-void serialOptsFree(SerialOpts *opts);
-
-void serialInit(SerialOpts opts);
+void serialInit(const char *devName, int baudRate);
 
 void serialWrite(const uint8_t *b, size_t size);
 

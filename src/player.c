@@ -20,12 +20,6 @@
     #include <windows.h>
 #endif
 
-void playerOptsFree(PlayerOpts *const opts) {
-    sdsfree(opts->sequenceFilePath);
-    sdsfree(opts->channelMapFilePath);
-    sdsfree(opts->audioOverrideFilePath);
-}
-
 static FramePump gFramePump;
 
 static uint32_t gNextFrame;
@@ -121,15 +115,7 @@ static bool playerHandleNextFrame(void) {
     return true;
 }
 
-static void playerStartPlayback(const PlayerOpts opts, sds audioFilePath) {
-    // optionally override the sequence's playback rate with the CLI's value
-    if (opts.frameStepTimeOverrideMs > 0)
-        sequenceData()->frameStepTimeMillis = opts.frameStepTimeOverrideMs;
-
-    playerPlayFirstAudioFile(opts.audioOverrideFilePath, audioFilePath);
-
-    sdsfree(audioFilePath);
-
+static void playerStartPlayback(void) {
     // start sequence timer loop
     // this call blocks until playback is completed
     sleepTimerLoop(sequenceData()->frameStepTimeMillis, playerHandleNextFrame);
@@ -159,17 +145,17 @@ static void playerFree(void) {
     gNextFrame = 0;
 }
 
-void playerRun(const PlayerOpts opts) {
-    playerWaitForConnection(opts);
-
+void playerRun(sds sequenceFilePath,
+               sds audioOverrideFilePath,
+               const PlayerOpts opts) {
     sds audioFilePath = NULL;
-    sequenceOpen(opts.sequenceFilePath, &audioFilePath);
+    sequenceOpen(sequenceFilePath, &audioFilePath);
 
     comBlocksInit();
 
     if (opts.precomputeFades) {
         sds cacheFilePath =
-                sdscatprintf(sdsempty(), "%s.pcf", opts.sequenceFilePath);
+                sdscatprintf(sdsempty(), "%s.pcf", sequenceFilePath);
 
         // load existing data or precompute and save new data
         precomputeRun(cacheFilePath);
@@ -177,7 +163,16 @@ void playerRun(const PlayerOpts opts) {
         sdsfree(cacheFilePath);
     }
 
-    playerStartPlayback(opts, audioFilePath);
+    playerWaitForConnection(opts);
+    playerPlayFirstAudioFile(audioOverrideFilePath, audioFilePath);
+
+    sdsfree(audioFilePath);// only needed to init playback
+
+    // optionally override the sequence's playback rate with the CLI's value
+    if (opts.frameStepTimeOverrideMs > 0)
+        sequenceData()->frameStepTimeMillis = opts.frameStepTimeOverrideMs;
+
+    playerStartPlayback();
 
     // playback finished, free resources and exit cleanly
     precomputeFree();
