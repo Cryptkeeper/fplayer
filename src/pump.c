@@ -37,7 +37,7 @@ static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
             },
             frameData);
 
-    if (framesRead < 1) fatalf(E_FILE_IO, "unexpected end of frame data\n");
+    if (framesRead < 1) fatalf(E_APP, "unexpected end of frame data\n");
 
     // most of this is a modified copy of how `comblock.c` handles generating
     // the frames list of all individually free-able frames
@@ -93,7 +93,7 @@ static void framePumpRecharge(FramePump *const pump,
     }
 
     if (frames == NULL || arrlen(frames) == 0)
-        fatalf(E_FATAL, "unexpected end of frame pump\n");
+        fatalf(E_APP, "unexpected end of frame pump\n");
 
     if (pump->frames != NULL) framePumpFreeFrames(pump);
 
@@ -147,7 +147,7 @@ static void framePumpHintPreload(const uint32_t startFrame,
     int err;
     if ((err = pthread_create(&gPumpThread, NULL, framePumpThread,
                               &gThreadArgs)) != 0)
-        fatalf(E_FATAL, "error creating pthread: %d\n", err);
+        fatalf(E_SYS, "error creating pthread: %d\n", err);
 }
 
 static FramePump *framePumpPreloadGet(void) {
@@ -157,7 +157,7 @@ static FramePump *framePumpPreloadGet(void) {
 
     int err;
     if ((err = pthread_join(gPumpThread, &args)) != 0)
-        fatalf(E_FATAL, "error joining pthread: %d\n", err);
+        fatalf(E_SYS, "error joining pthread: %d\n", err);
 
     gPumpThread = PTHREAD_NULL;
 

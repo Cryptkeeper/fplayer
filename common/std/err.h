@@ -1,14 +1,13 @@
 #ifndef FPLAYER_ERR_H
 #define FPLAYER_ERR_H
 
-typedef enum err_t {
+enum err_t {
     E_OK,
-    E_FATAL,
-    E_FILE_NOT_FOUND,
-    E_FILE_IO,
-    E_ALLOC_FAIL,
-} Err;
+    E_APP,// error in application layer
+    E_SYS,// error in OS/stdlib layer
+    E_FIO,// error in file I/O operation
+};
 
-void fatalf(Err err, const char *format, ...);
+void fatalf(enum err_t err, const char *format, ...);
 
 #endif//FPLAYER_ERR_H

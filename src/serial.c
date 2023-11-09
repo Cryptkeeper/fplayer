@@ -52,7 +52,7 @@ static void serialOpenPort(const char *const devName, const int baudRate) {
     // NULL indicates a failure to open, which is the only seriously "fatal"
     // error that can occur during setup
     if (gPort == NULL)
-        fatalf(E_FATAL, "error opening serial port: %s\n", devName);
+        fatalf(E_APP, "error opening serial port: %s\n", devName);
 
     // smaller errors from configuring the device connection are not fatal since
     // it may likely work anyway or otherwise disregard these values

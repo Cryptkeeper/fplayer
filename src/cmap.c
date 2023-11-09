@@ -127,20 +127,19 @@ static void channelMapParseCSV(const char *const b) {
 void channelMapInit(const char *const filepath) {
     FILE *f = fopen(filepath, "rb");
 
-    if (f == NULL)
-        fatalf(E_FILE_NOT_FOUND, "error opening channel map: %s\n", filepath);
+    if (f == NULL) fatalf(E_FIO, "error opening channel map: %s\n", filepath);
 
-    if (fseek(f, 0, SEEK_END) < 0) fatalf(E_FILE_IO, NULL);
+    if (fseek(f, 0, SEEK_END) < 0) fatalf(E_FIO, NULL);
 
     const long filesize = ftell(f);
-    if (filesize <= 0) fatalf(E_FILE_IO, NULL);
+    if (filesize <= 0) fatalf(E_FIO, NULL);
 
     rewind(f);
 
     char *b = mustMalloc(filesize + 1);
 
     if (fread(b, 1, filesize, f) != (unsigned long) filesize)
-        fatalf(E_FILE_IO, NULL);
+        fatalf(E_FIO, NULL);
 
     fclose(f);
 

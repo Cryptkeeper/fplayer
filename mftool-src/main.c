@@ -21,7 +21,7 @@ static void fseqCopyConfigBlocks(FILE *const dst,
     uint8_t *const b = mustMalloc(size);
 
     if (fread(b, size, 1, src) != 1)
-        fatalf(E_FILE_IO, "error reading config blocks\n");
+        fatalf(E_FIO, "error reading config blocks\n");
 
     fwrite(b, size, 1, dst);
 
@@ -58,8 +58,7 @@ static void fseqOpen(sds fp, FILE **fd, struct tf_file_header_t *const header) {
 
     uint8_t b[32];
 
-    if (fread(b, sizeof(b), 1, f) != 1)
-        fatalf(E_FILE_IO, "error reading header\n");
+    if (fread(b, sizeof(b), 1, f) != 1) fatalf(E_FIO, "error reading header\n");
 
     enum tf_err_t err;
 
@@ -121,9 +120,9 @@ static fseq_var_t *fseqReadVars(sds fp) {
     uint8_t *const varData = mustMalloc(varDataSize);
 
     if (fread(varData, varDataSize, 1, src) != 1)
-        fatalf(E_FILE_IO, sdscatprintf(sdsempty(),
-                                       "error reading var data blob (%d bytes)",
-                                       varDataSize));
+        fatalf(E_FIO, sdscatprintf(sdsempty(),
+                                   "error reading var data blob (%d bytes)",
+                                   varDataSize));
 
     uint16_t pos = 0;
     fseq_var_t *vars = NULL;

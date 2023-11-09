@@ -93,7 +93,7 @@ static void generateChannelDataUncompressed(FILE *const dst,
         memset(channelData, intensityOscillatorRampVendorNext(), channelCount);
 
         if (fwrite(channelData, channelCount, 1, dst) != 1)
-            fatalf(E_FILE_IO, "error writing frame %d\n", frame);
+            fatalf(E_FIO, "error writing frame %d\n", frame);
 
         if (frame > 0 && frame % fps == 0)
             printf("wrote frame bundle %d\n", frame / fps);
@@ -238,7 +238,7 @@ int main(const int argc, char **const argv) {
     FILE *const f = fopen(outputPath, "wb");
 
     if (f == NULL)
-        fatalf(E_FILE_IO, "error opening output filepath: %s\n", outputPath);
+        fatalf(E_FIO, "error opening output filepath: %s\n", outputPath);
 
     printf("generating test sequence (%d frames @ %d FPS)\n", frameCount, fps);
     printf("using %d bytes per frame (%.2fkb total)\n", channelCount,

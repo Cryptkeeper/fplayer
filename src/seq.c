@@ -26,12 +26,12 @@ static sds sequenceLoadAudioFilePath(void) {
     pthread_mutex_lock(&gFileMutex);
 
     if (fseek(gFile, gPlaying.variableDataOffset, SEEK_SET) < 0)
-        fatalf(E_FILE_IO, NULL);
+        fatalf(E_FIO, NULL);
 
     uint8_t *varTable = mustMalloc(varDataSize);
 
     if (fread(varTable, 1, varDataSize, gFile) != varDataSize)
-        fatalf(E_FILE_IO, NULL);
+        fatalf(E_FIO, NULL);
 
     pthread_mutex_unlock(&gFileMutex);
 
@@ -48,7 +48,7 @@ static sds sequenceLoadAudioFilePath(void) {
         if ((err = tf_read_var_header(readIdx, remaining, &varHeader,
                                       (uint8_t *) varData, MAX_VAR_VALUE_SIZE,
                                       &readIdx)) != TF_OK)
-            fatalf(E_FATAL, "error parsing sequence variable: %s\n",
+            fatalf(E_APP, "error parsing sequence variable: %s\n",
                    tf_err_str(err));
 
         // ensure the variable string value is null terminated
@@ -78,22 +78,21 @@ static sds sequenceLoadAudioFilePath(void) {
 void sequenceOpen(sds filepath, sds *const audioFilePath) {
     FILE *const f = gFile = fopen(filepath, "rb");
 
-    if (f == NULL)
-        fatalf(E_FILE_NOT_FOUND, "error opening sequence: %s\n", filepath);
+    if (f == NULL) fatalf(E_FIO, "error opening sequence: %s\n", filepath);
 
     pthread_mutex_lock(&gFileMutex);
 
     uint8_t b[FSEQ_HEADER_SIZE];
 
     if (fread(b, 1, FSEQ_HEADER_SIZE, f) != FSEQ_HEADER_SIZE)
-        fatalf(E_FILE_IO, NULL);
+        fatalf(E_FIO, NULL);
 
     pthread_mutex_unlock(&gFileMutex);
 
     enum tf_err_t err;
 
     if ((err = tf_read_file_header(b, sizeof(b), &gPlaying, NULL)) != TF_OK)
-        fatalf(E_FATAL, "error parsing sequence header: %s\n", tf_err_str(err));
+        fatalf(E_APP, "error parsing sequence header: %s\n", tf_err_str(err));
 
     *audioFilePath = sequenceLoadAudioFilePath();
 }
@@ -111,7 +110,7 @@ uint32_t sequenceReadFrames(const struct seq_read_args_t args,
     const uint32_t pos = sequenceData()->channelDataOffset +
                          (args.startFrame * args.frameSize);
 
-    if (fseek(gFile, pos, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
+    if (fseek(gFile, pos, SEEK_SET) < 0) fatalf(E_FIO, NULL);
 
     const size_t framesRead =
             fread(frameData, args.frameSize, frameCount, gFile);
@@ -124,12 +123,11 @@ uint32_t sequenceReadFrames(const struct seq_read_args_t args,
 void sequenceRead(const uint32_t start, const uint32_t n, void *const data) {
     pthread_mutex_lock(&gFileMutex);
 
-    if (fseek(gFile, start, SEEK_SET) < 0) fatalf(E_FILE_IO, NULL);
+    if (fseek(gFile, start, SEEK_SET) < 0) fatalf(E_FIO, NULL);
 
     const size_t read = fread(data, 1, n, gFile);
     if (read != n)
-        fatalf(E_FILE_IO, "read " PRIu64 " bytes, wanted %d", (uint64_t) read,
-               n);
+        fatalf(E_FIO, "read " PRIu64 " bytes, wanted %d", (uint64_t) read, n);
 
     pthread_mutex_unlock(&gFileMutex);
 }

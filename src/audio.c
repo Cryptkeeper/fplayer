@@ -18,7 +18,7 @@ static inline void alCheckError(const char *const msg) {
     if (gAudioIgnoreErrors) {
         fprintf(stderr, "%s: OpenAL error 0x%02x\n", msg, err);
     } else {
-        fatalf(E_FATAL, "%s: OpenAL error 0x%02x\n", msg, err);
+        fatalf(E_APP, "%s: OpenAL error 0x%02x\n", msg, err);
     }
 }
 
@@ -30,7 +30,7 @@ static inline void alutCheckError(const char *const msg) {
         fprintf(stderr, "%s: ALUT error 0x%02x (%s)\n", msg, err,
                 alutGetErrorString(err));
     } else {
-        fatalf(E_FATAL, "%s: ALUT error 0x%02x (%s)\n", msg, err,
+        fatalf(E_APP, "%s: ALUT error 0x%02x (%s)\n", msg, err,
                alutGetErrorString(err));
     }
 }

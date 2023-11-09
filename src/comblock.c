@@ -48,7 +48,7 @@ static void comBlocksLoadAddrs(void) {
         if ((err = tf_read_compression_block(
                      head, size - (i * COMPRESSION_BLOCK_SIZE), &block,
                      &head)) != TF_OK)
-            fatalf(E_FATAL, "error parsing compression block: %s\n",
+            fatalf(E_APP, "error parsing compression block: %s\n",
                    tf_err_str(err));
 
         // a fseq file may include multiple empty compression blocks for padding purposes
@@ -81,7 +81,7 @@ static uint8_t **comBlockGetZstd(const int index) {
     void *dOut = mustMalloc(dOutSize);
 
     ZSTD_DCtx *ctx = ZSTD_createDCtx();
-    if (ctx == NULL) fatalf(E_ALLOC_FAIL, NULL);
+    if (ctx == NULL) fatalf(E_SYS, NULL);
 
     // read full compression block entry
     sequenceRead(comBlock.addr, dInSize, dIn);
@@ -104,8 +104,7 @@ static uint8_t **comBlockGetZstd(const int index) {
         const size_t err = ZSTD_decompressStream(ctx, &out, &in);
 
         if (ZSTD_isError(err))
-            fatalf(E_FILE_IO,
-                   "error while decompressing zstd stream: %s (%zu)\n",
+            fatalf(E_APP, "error while decompressing zstd stream: %s (%zu)\n",
                    ZSTD_getErrorName(err), err);
 
         const uint32_t frameSize = sequenceData()->channelCount;
@@ -113,7 +112,7 @@ static uint8_t **comBlockGetZstd(const int index) {
         // the decompressed size should be a product of the frameSize
         // otherwise the data (is most likely) decompressed incorrectly
         if (out.pos % frameSize != 0)
-            fatalf(E_FATAL,
+            fatalf(E_APP,
                    "decompressed frame data size (%d) is not multiple of frame "
                    "size (%d)\n",
                    out.pos, frameSize);
@@ -153,7 +152,7 @@ uint8_t **comBlockGet(const int index) {
             return comBlockGetZstd(index);
 #endif
         default:
-            fatalf(E_FATAL, "cannot decompress type: %d\n", compression);
+            fatalf(E_APP, "cannot decompress type: %d\n", compression);
             return NULL;
     }
 }
