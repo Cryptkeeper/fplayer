@@ -4,8 +4,8 @@
 #include <pthread.h>
 #include <stdio.h>
 
-#include <sds.h>
-#include <tinyfseq.h>
+#include "sds.h"
+#include "tinyfseq.h"
 
 #include "std/err.h"
 #include "std/mem.h"

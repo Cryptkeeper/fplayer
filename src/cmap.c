@@ -3,8 +3,8 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-#include <sds.h>
-#include <stb_ds.h>
+#include "sds.h"
+#include "stb_ds.h"
 
 #include "std/err.h"
 #include "std/mem.h"

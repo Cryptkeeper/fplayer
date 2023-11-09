@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <stb_ds.h>
+#include "stb_ds.h"
 
 #include "comblock.h"
 #include "seq.h"

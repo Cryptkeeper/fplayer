@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <sds.h>
+#include "sds.h"
 
 void serialInit(const char *devName, int baudRate);
 

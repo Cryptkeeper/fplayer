@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#include <sds.h>
-#include <tinyfseq.h>
+#include "sds.h"
+#include "tinyfseq.h"
 
 void sequenceOpen(sds filepath, sds *audioFilePath);
 

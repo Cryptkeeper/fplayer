@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-#include <stb_ds.h>
+#include "stb_ds.h"
 
 #ifdef ENABLE_ZSTD
     #include <zstd.h>

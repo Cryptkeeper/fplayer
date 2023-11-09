@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <sds.h>
+#include "sds.h"
 
 typedef struct player_opts_t {
     uint8_t frameStepTimeOverrideMs;

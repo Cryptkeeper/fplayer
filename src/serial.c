@@ -4,9 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "lightorama/lightorama.h"
 #include <libserialport.h>
-#include <stb_ds.h>
+
+#include "lightorama/lightorama.h"
+#include "stb_ds.h"
 
 #include "buffer.h"
 #include "cmap.h"

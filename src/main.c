@@ -5,18 +5,19 @@
     #include <AL/alut.h>
 #endif
 
-#include "lightorama/version.h"
-#include <libserialport.h>
-
 #ifdef ENABLE_ZSTD
     #include <zstd.h>
 #endif
 
+#include <libserialport.h>
+
+#include "lightorama/version.h"
+
 #define STB_DS_IMPLEMENTATION
-#include <stb_ds.h>
+#include "stb_ds.h"
 
 #define TINYFSEQ_IMPLEMENTATION
-#include <tinyfseq.h>
+#include "tinyfseq.h"
 
 #include "audio.h"
 #include "cmap.h"
