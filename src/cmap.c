@@ -10,7 +10,15 @@
 #include "std/mem.h"
 #include "std/parse.h"
 
-static sds channelRangeValidate(const ChannelRange range) {
+struct channel_range_t {
+    uint32_t sid;
+    uint32_t eid;
+    uint8_t unit;
+    uint16_t scircuit;
+    uint16_t ecircuit;
+};
+
+static sds channelRangeValidate(const struct channel_range_t range) {
     const int64_t rid = range.eid - range.sid;
 
     if (rid < 0)
@@ -42,7 +50,7 @@ static sds channelRangeValidate(const ChannelRange range) {
     return NULL;
 }
 
-static ChannelRange *gRanges;
+static struct channel_range_t *gRanges;
 
 static void channelMapParseCSV(const char *const b) {
     sds buf = sdsnew(b);
@@ -88,13 +96,13 @@ static void channelMapParseCSV(const char *const b) {
             }
         }
 
-        ChannelRange cr = {0};
-
-        cr.sid = (uint32_t) parseLong(cols[0], 0, UINT32_MAX);
-        cr.eid = (uint32_t) parseLong(cols[1], 0, UINT32_MAX);
-        cr.unit = (uint8_t) parseLong(cols[2], 0, UINT8_MAX);
-        cr.scircuit = (uint16_t) parseLong(cols[3], 0, UINT16_MAX);
-        cr.ecircuit = (uint16_t) parseLong(cols[4], 0, UINT16_MAX);
+        const struct channel_range_t cr = {
+                .sid = (uint32_t) parseLong(cols[0], 0, UINT32_MAX),
+                .eid = (uint32_t) parseLong(cols[1], 0, UINT32_MAX),
+                .unit = (uint8_t) parseLong(cols[2], 0, UINT8_MAX),
+                .scircuit = (uint16_t) parseLong(cols[3], 0, UINT16_MAX),
+                .ecircuit = (uint16_t) parseLong(cols[4], 0, UINT16_MAX),
+        };
 
         sds error = channelRangeValidate(cr);
 
@@ -156,7 +164,7 @@ bool channelMapFind(const uint32_t id,
                     uint8_t *const unit,
                     uint16_t *const circuit) {
     for (int i = 0; i < arrlen(gRanges); i++) {
-        const ChannelRange range = gRanges[i];
+        const struct channel_range_t range = gRanges[i];
 
         if (id >= range.sid && id <= range.eid) {
             *unit = range.unit;
@@ -188,7 +196,7 @@ uint8_t *channelMapGetUids(void) {
     uint8_t *uids = NULL;
 
     for (int i = 0; i < arrlen(gRanges); i++) {
-        const ChannelRange range = gRanges[i];
+        const struct channel_range_t range = gRanges[i];
 
         if (!channelMapContainsUid(uids, range.unit)) arrput(uids, range.unit);
     }
