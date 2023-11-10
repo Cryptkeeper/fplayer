@@ -180,7 +180,8 @@ bool channelMapFind(const uint32_t id,
     return false;
 }
 
-static inline bool channelMapContainsUid(const uint8_t *set, uint8_t value) {
+static inline bool channelMapContainsUid(const uint8_t *const set,
+                                         const uint8_t value) {
     const int size = arrlen(set);
 
     if (size == 0) return false;

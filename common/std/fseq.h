@@ -11,7 +11,6 @@
 bool fseqWriteHeader(FILE *dst, struct tf_file_header_t header);
 
 bool fseqWriteCompressionBlocks(FILE *dst,
-                                struct tf_file_header_t header,
                                 const struct tf_compression_block_t *blocks);
 
 typedef struct fseq_var_t {

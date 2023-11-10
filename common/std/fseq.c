@@ -40,7 +40,6 @@ bool fseqWriteHeader(FILE *const dst, const struct tf_file_header_t header) {
 
 bool fseqWriteCompressionBlocks(
         FILE *const dst,
-        const struct tf_file_header_t header,
         const struct tf_compression_block_t *const blocks) {
     if (fseek(dst, HEADER_SIZE, SEEK_SET) != 0) return false;
 

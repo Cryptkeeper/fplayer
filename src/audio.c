@@ -1,7 +1,5 @@
 #include "audio.h"
 
-bool gAudioIgnoreErrors = false;
-
 #ifdef ENABLE_OPENAL
 
     #include <assert.h>
@@ -9,37 +7,26 @@ bool gAudioIgnoreErrors = false;
 
     #include <AL/alut.h>
 
-    #include "std/err.h"
-
 static inline void alCheckError(const char *const msg) {
     ALenum err;
     if ((err = alGetError()) == AL_NO_ERROR) return;
 
-    if (gAudioIgnoreErrors) {
-        fprintf(stderr, "%s: OpenAL error 0x%02x\n", msg, err);
-    } else {
-        fatalf(E_APP, "%s: OpenAL error 0x%02x\n", msg, err);
-    }
+    fprintf(stderr, "%s: OpenAL error 0x%02x\n", msg, err);
 }
 
 static inline void alutCheckError(const char *const msg) {
     ALenum err;
     if ((err = alutGetError()) == ALUT_ERROR_NO_ERROR) return;
 
-    if (gAudioIgnoreErrors) {
-        fprintf(stderr, "%s: ALUT error 0x%02x (%s)\n", msg, err,
-                alutGetErrorString(err));
-    } else {
-        fatalf(E_APP, "%s: ALUT error 0x%02x (%s)\n", msg, err,
-               alutGetErrorString(err));
-    }
+    fprintf(stderr, "%s: ALUT error 0x%02x (%s)\n", msg, err,
+            alutGetErrorString(err));
 }
 
 static ALuint gSource = AL_NONE;
 static ALuint gCurrentBuffer = AL_NONE;
 
-void audioInit(int *const argc, char **const argv) {
-    alutInit(argc, argv);
+void audioInit(void) {
+    alutInit(0, NULL);
     alutCheckError("error initializing ALUT");
 }
 
@@ -104,9 +91,7 @@ void audioPlayFile(const char *const filepath) {
 
 #else
 
-void audioInit(int *const argc, char **const argv) {
-    (void) argc;
-    (void) argv;
+void audioInit(void) {
 }
 
 void audioExit(void) {

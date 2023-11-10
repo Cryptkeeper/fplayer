@@ -48,7 +48,6 @@ static void printUsage(void) {
 
            "[CLI]\n"
            "\t-t <file>\t\tTest load channel map and exit\n"
-           "\t-i\t\t\tPrint audio playback errors instead of exiting\n"
            "\t-l\t\t\tPrint available serial port list and exit\n"
            "\t-h\t\t\tPrint this message and exit\n"
            "\t-v\t\t\tPrint library versions and exit\n");
@@ -84,12 +83,6 @@ static PlayerOpts gPlayerOpts;
 static sds gSerialDevName;
 static int gSerialBaudRate = 19200;
 
-static void testConfigurations(const char *const filepath) {
-    channelMapInit(filepath);
-
-    channelMapFree();
-}
-
 static void printSerialEnumPorts(void) {
     sds *ports = serialEnumPorts();
 
@@ -104,15 +97,12 @@ static void printSerialEnumPorts(void) {
 
 static bool parseOpts(const int argc, char **const argv, int *const ec) {
     int c;
-    while ((c = getopt(argc, argv, ":t:ilhvf:c:a:r:w:pid:b:")) != -1) {
+    while ((c = getopt(argc, argv, ":t:ilhvf:c:a:r:w:pd:b:")) != -1) {
         switch (c) {
             case 't':
-                testConfigurations(optarg);
+                channelMapInit(optarg);
+                channelMapFree();
                 return true;
-
-            case 'i':
-                gAudioIgnoreErrors = true;
-                break;
 
             case 'l':
                 printSerialEnumPorts();
@@ -194,14 +184,11 @@ int main(int argc, char **argv) {
     int ec = EXIT_SUCCESS;
     if (parseOpts(argc, argv, &ec)) return ec;
 
-    argc -= optind;
-    argv += optind;
-
     // load required app context configs
     channelMapInit(gChannelMapFilePath);
 
     // initialize core subsystems
-    audioInit(&argc, argv);
+    audioInit();
     serialInit(gSerialDevName, gSerialBaudRate);
 
     // start the player as configured, this will start playback automatically
