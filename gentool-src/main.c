@@ -274,7 +274,7 @@ int main(const int argc, char **const argv) {
     assert(arrlenu(compressionBlocks) == compressionBlockCount);
 
     if (compressionBlockCount > 0) {
-        fseqWriteCompressionBlocks(f, header, compressionBlocks);
+        fseqWriteCompressionBlocks(f, compressionBlocks);
 
         arrfree(compressionBlocks);
     }
