@@ -72,7 +72,7 @@ static void *compressZstd(const char *const src,
             ZSTD_compress(dst, dstCapacity, src, srcSize, compressionLevel);
 
     if (ZSTD_isError(dstCompressed))
-        fatalf(E_FATAL, "error compressing zstd stream: %s (%zu)\n",
+        fatalf(E_APP, "error compressing zstd stream: %s (%zu)\n",
                ZSTD_getErrorName(dstCompressed), dstCompressed);
 
     *dstSize = dstCompressed;

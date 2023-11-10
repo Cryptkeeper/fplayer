@@ -36,7 +36,7 @@ static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
     uint32_t copied = 0;
 
     while (1) {
-        const unsigned long read = fread(chunk, 1, CD_CHUNK_SIZE, src);
+        const size_t read = fread(chunk, 1, CD_CHUNK_SIZE, src);
 
         // test for error or EOF
         if (read == 0) break;
@@ -54,7 +54,7 @@ static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
 static void fseqOpen(sds fp, FILE **fd, struct tf_file_header_t *const header) {
     FILE *const f = *fd = fopen(fp, "rb");
 
-    if (f == NULL) fatalf(E_FATAL, "error opening file `%s`\n", fp);
+    if (f == NULL) fatalf(E_FIO, "error opening file `%s`\n", fp);
 
     uint8_t b[32];
 
@@ -63,10 +63,10 @@ static void fseqOpen(sds fp, FILE **fd, struct tf_file_header_t *const header) {
     enum tf_err_t err;
 
     if ((err = tf_read_file_header(b, sizeof(b), header, NULL)) != TF_OK)
-        fatalf(E_FATAL, "error decoding fseq header: %s\n", tf_err_str(err));
+        fatalf(E_APP, "error decoding fseq header: %s\n", tf_err_str(err));
 
     if (!(header->majorVersion == 2 && header->minorVersion == 0))
-        fatalf(E_FATAL, "unsupported fseq file version: %d.%d\n",
+        fatalf(E_APP, "unsupported fseq file version: %d.%d\n",
                header->majorVersion, header->minorVersion);
 }
 
@@ -78,7 +78,7 @@ static void fseqCopySetVars(sds sfp, sds dfp, const fseq_var_t *const vars) {
 
     FILE *const dst = fopen(dfp, "wb");
 
-    if (dst == NULL) fatalf(E_FATAL, "error opening file `%s`\n", dfp);
+    if (dst == NULL) fatalf(E_FIO, "error opening file `%s`\n", dfp);
 
     struct tf_file_header_t header = original;// copy original header
 
@@ -170,11 +170,11 @@ static void renamePair(sds sfp, sds dfp) {
     sds nsfp = sdscatprintf(sdsempty(), "%s.orig", sfp);
 
     if (rename(sfp, nsfp) != 0)
-        fatalf(E_FATAL, "error renaming `%s` -> `%s`\n", sfp,
+        fatalf(E_SYS, "error renaming `%s` -> `%s`\n", sfp,
                nsfp);// "$" -> "$.orig"
 
     if (rename(dfp, sfp) != 0)
-        fatalf(E_FATAL, "error renaming `%s` -> `%s`\n", dfp,
+        fatalf(E_SYS, "error renaming `%s` -> `%s`\n", dfp,
                sfp);// "$.tmp" -> "$"
 
     printf("renamed `%s` to `%s`\n", sfp, nsfp);
