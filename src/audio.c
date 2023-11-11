@@ -60,7 +60,7 @@ void audioExit(void) {
 }
 
 bool audioCheckPlaying(void) {
-    assert(gSource != AL_NONE);
+    if (gSource == AL_NONE) return false;
 
     ALint state;
     alGetSourcei(gSource, AL_SOURCE_STATE, &state);
