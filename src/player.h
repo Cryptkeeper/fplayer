@@ -16,6 +16,4 @@ void playerRun(sds sequenceFilePath,
                sds audioOverrideFilePath,
                PlayerOpts opts);
 
-sds playerGetRemaining(void);
-
 #endif//FPLAYER_PLAYER_H

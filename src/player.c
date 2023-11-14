@@ -66,6 +66,14 @@ static void playerPlayFirstAudioFile(const sds override, const sds sequence) {
     }
 }
 
+static sds playerGetRemaining(void) {
+    const uint32_t framesRemaining = sequenceData()->frameCount - gNextFrame;
+    const long seconds = framesRemaining / sequenceFPS();
+
+    return sdscatprintf(sdsempty(), "%02ldm %02lds", seconds / 60,
+                        seconds % 60);
+}
+
 static void playerLogStatus(void) {
     static timeInstant gLastLog;
 
@@ -184,12 +192,4 @@ void playerRun(const sds sequenceFilePath,
     framePumpFree(&gFramePump);
 
     playerFree();
-}
-
-sds playerGetRemaining(void) {
-    const uint32_t framesRemaining = sequenceData()->frameCount - gNextFrame;
-    const long seconds = framesRemaining / sequenceFPS();
-
-    return sdscatprintf(sdsempty(), "%02ldm %02lds", seconds / 60,
-                        seconds % 60);
 }
