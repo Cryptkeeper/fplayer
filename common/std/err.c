@@ -65,6 +65,8 @@ void *checked_malloc(const size_t size) {
 long checked_strtol(const char *const str, const long min, const long max) {
     char *endptr = NULL;
 
+    errno = 0;
+
     const long parsed = strtol(str, &endptr, 10);
 
     if (errno != 0 || endptr == str || *endptr != '\0')
