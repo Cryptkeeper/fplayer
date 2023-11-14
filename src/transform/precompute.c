@@ -10,7 +10,7 @@
 #include "../seq.h"
 #include "../std/time.h"
 #include "fade.h"
-#include "std/mem.h"
+#include "std/err.h"
 
 struct precompute_history_t {
     uint32_t startFrame;
@@ -152,7 +152,7 @@ static bool precomputeHandleNextFrame(FramePump *const pump) {
     const bool hasPrevFrame = gLastFrameData != NULL;
 
     if (gLastFrameData == NULL) {
-        gLastFrameData = mustMalloc(frameSize);
+        gLastFrameData = checked_malloc(frameSize);
 
         // zero out the array to represent all existing intensity values as off
         memset(gLastFrameData, 0, frameSize);
@@ -217,7 +217,7 @@ void precomputeRun(const char *const fp) {
 
     precomputeHistoryFree();
 
-    freeAndNull(gLastFrameData);
+    free(gLastFrameData);
 
     framePumpFree(&pump);
 

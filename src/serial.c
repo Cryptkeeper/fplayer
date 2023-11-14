@@ -12,7 +12,6 @@
 #include "buffer.h"
 #include "cmap.h"
 #include "std/err.h"
-#include "std/mem.h"
 #include "std/time.h"
 #include "transform/minifier.h"
 #include "transform/netstats.h"
@@ -27,7 +26,7 @@ static void spPrintError(const enum sp_return err) {
     if ((msg = sp_last_error_message()) != NULL) {
         fprintf(stderr, "%s\n", msg);
 
-        freeAndNullWith(msg, sp_free_error_message);
+        sp_free_error_message(msg);
     }
 }
 
@@ -145,14 +144,13 @@ void serialWriteFrame(const uint8_t *const frameData,
     if (gPort != NULL) spTry(sp_drain(gPort));
 }
 
-static void serialPortFree(struct sp_port *const port) {
-    spTry(sp_close(port));
-
-    sp_free_port(port);
-}
-
 void serialExit(void) {
-    freeAndNullWith(gPort, serialPortFree);
+    if (gPort == NULL) return;
+
+    sp_close(gPort);
+    sp_free_port(gPort);
+
+    gPort = NULL;
 }
 
 sds *serialEnumPorts(void) {

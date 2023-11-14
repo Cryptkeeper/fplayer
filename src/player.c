@@ -11,7 +11,7 @@
 #include "pump.h"
 #include "seq.h"
 #include "serial.h"
-#include "std/mem.h"
+#include "std/err.h"
 #include "std/sleep.h"
 #include "std/time.h"
 #include "transform/netstats.h"
@@ -93,7 +93,7 @@ static bool playerHandleNextFrame(void) {
     const uint32_t frameSize = sequenceData()->channelCount;
 
     if (gLastFrameData == NULL) {
-        gLastFrameData = mustMalloc(frameSize);
+        gLastFrameData = checked_malloc(frameSize);
 
         // zero out the array to represent all existing intensity values as off
         memset(gLastFrameData, 0, frameSize);
@@ -141,7 +141,9 @@ static void playerStartPlayback(void) {
 }
 
 static void playerFree(void) {
-    freeAndNull(gLastFrameData);
+    free(gLastFrameData);
+
+    gLastFrameData = NULL;
     gNextFrame = 0;
 }
 

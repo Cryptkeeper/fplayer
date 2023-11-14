@@ -10,7 +10,6 @@
 #include "sds.h"
 #include "std/err.h"
 #include "std/fseq.h"
-#include "std/mem.h"
 
 static void fseqCopyConfigBlocks(FILE *const dst,
                                  const struct tf_file_header_t header,
@@ -18,7 +17,7 @@ static void fseqCopyConfigBlocks(FILE *const dst,
     const uint16_t size =
             header.compressionBlockCount * 8 + header.channelRangeCount * 6;
 
-    uint8_t *const b = mustMalloc(size);
+    uint8_t *const b = checked_malloc(size);
 
     if (fread(b, size, 1, src) != 1)
         fatalf(E_FIO, "error reading config blocks\n");
@@ -31,7 +30,7 @@ static void fseqCopyConfigBlocks(FILE *const dst,
 #define CD_CHUNK_SIZE 4096
 
 static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
-    uint8_t *const chunk = mustMalloc(CD_CHUNK_SIZE);
+    uint8_t *const chunk = checked_malloc(CD_CHUNK_SIZE);
 
     uint32_t copied = 0;
 
@@ -119,7 +118,7 @@ static fseq_var_t *fseqReadVars(const sds fp) {
 
     assert(varDataSize > VAR_HEADER_SIZE);
 
-    uint8_t *const varData = mustMalloc(varDataSize);
+    uint8_t *const varData = checked_malloc(varDataSize);
 
     if (fread(varData, varDataSize, 1, src) != 1)
         fatalf(E_FIO, sdscatprintf(sdsempty(),

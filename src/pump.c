@@ -10,7 +10,6 @@
 #include "comblock.h"
 #include "seq.h"
 #include "std/err.h"
-#include "std/mem.h"
 #include "std/time.h"
 
 uint32_t framePumpGetRemaining(const FramePump *pump) {
@@ -27,7 +26,7 @@ static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
     // generates a frame data buffer of 5 seconds worth of playback
     const uint32_t reqFrameCount = sequenceFPS() * 5;
 
-    uint8_t *frameData = mustMalloc(frameSize * reqFrameCount);
+    uint8_t *const frameData = checked_malloc(frameSize * reqFrameCount);
 
     const uint32_t framesRead = sequenceReadFrames(
             (struct seq_read_args_t){
@@ -46,14 +45,14 @@ static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
     arrsetcap(frames, framesRead);
 
     for (uint32_t i = 0; i < framesRead; i++) {
-        uint8_t *const frame = mustMalloc(frameSize);
+        uint8_t *const frame = checked_malloc(frameSize);
 
         memcpy(frame, &frameData[i * frameSize], frameSize);
 
         arrput(frames, frame);
     }
 
-    freeAndNull(frameData);
+    free(frameData);
 
     return frames;
 }
@@ -118,7 +117,7 @@ static void *framePumpThread(void *pargs) {
     const struct frame_pump_thread_args_t args =
             *(struct frame_pump_thread_args_t *) pargs;
 
-    FramePump *const framePump = mustMalloc(sizeof(FramePump));
+    FramePump *const framePump = checked_malloc(sizeof(FramePump));
 
     memset(framePump, 0, sizeof(FramePump));
 
@@ -174,7 +173,7 @@ static bool framePumpSwapPreload(FramePump *const pump) {
 
     *pump = *nextPump;
 
-    freeAndNull(nextPump);
+    free(nextPump);
 
     return true;
 }
@@ -208,14 +207,16 @@ const uint8_t *framePumpGet(FramePump *const pump,
 
     // copy the frame data entry to a central buffer that is exposed
     // this enables us to internally free the frame allocation without another callback
-    if (pump->buffer == NULL) pump->buffer = mustMalloc(frameSize);
+    if (pump->buffer == NULL) pump->buffer = checked_malloc(frameSize);
 
     memcpy(pump->buffer, pump->frames[pump->head], frameSize);
 
     const uint32_t index = pump->head++;
 
     // free previous frame data, not needed once copied
-    freeAndNull(pump->frames[index]);
+    free(pump->frames[index]);
+
+    pump->frames[index] = NULL;
 
     return pump->buffer;
 }
@@ -223,8 +224,9 @@ const uint8_t *framePumpGet(FramePump *const pump,
 void framePumpFree(FramePump *const pump) {
     framePumpFreeFrames(pump);
 
-    freeAndNull(pump->buffer);
+    free(pump->buffer);
 
     pump->head = 0;
+    pump->buffer = NULL;
     pump->consumedComBlocks = 0;
 }

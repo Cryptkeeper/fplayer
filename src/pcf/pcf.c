@@ -5,7 +5,7 @@
 
 #include "stb_ds.h"
 
-#include "std/mem.h"
+#include "std/err.h"
 
 // (p)re-computed (c)ache (f)file v(1)
 // OR
@@ -67,12 +67,12 @@ bool pcfOpen(const char *const fp, pcf_file_t *const file) {
 
     *file = open;
 
-    freeAndNullWith(f, fclose);
+    fclose(f);
 
     return true;
 
 fail:
-    freeAndNullWith(f, fclose);
+    fclose(f);
 
     // caller isn't responsible for freeing resources in fail return
     pcfFree(file);
@@ -111,12 +111,12 @@ bool pcfSave(const char *const fp, const pcf_file_t *const file) {
                 goto fail;
     }
 
-    freeAndNullWith(f, fclose);
+    fclose(f);
 
     return true;
 
 fail:
-    freeAndNullWith(f, fclose);
+    fclose(f);
 
     // quick attempt at trying to delete corrupt file
     remove(fp);

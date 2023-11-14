@@ -23,7 +23,7 @@
 #include "cmap.h"
 #include "player.h"
 #include "serial.h"
-#include "std/parse.h"
+#include "std/err.h"
 
 static void printUsage(void) {
     printf("Usage: fplayer -f=FILE -c=FILE [options] ...\n\n"
@@ -130,12 +130,12 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
 
             case 'r':
                 gPlayerOpts.frameStepTimeOverrideMs =
-                        (uint8_t) parseLong(optarg, 1, UINT8_MAX);
+                        (uint8_t) checked_strtol(optarg, 1, UINT8_MAX);
                 break;
 
             case 'w':
                 gPlayerOpts.connectionWaitS =
-                        (uint8_t) parseLong(optarg, 0, UINT8_MAX);
+                        (uint8_t) checked_strtol(optarg, 0, UINT8_MAX);
                 break;
 
             case 'p':
@@ -147,7 +147,7 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
                 break;
 
             case 'b':
-                gSerialBaudRate = (int) parseLong(optarg, 0, INT32_MAX);
+                gSerialBaudRate = (int) checked_strtol(optarg, 0, INT_MAX);
                 break;
 
             case ':':

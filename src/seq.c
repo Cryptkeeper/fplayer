@@ -9,7 +9,6 @@
 #include "tinyfseq.h"
 
 #include "std/err.h"
-#include "std/mem.h"
 
 static FILE *gFile;
 static pthread_mutex_t gFileMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -29,7 +28,7 @@ static sds sequenceLoadAudioFilePath(void) {
     if (fseek(gFile, gPlaying.variableDataOffset, SEEK_SET) < 0)
         fatalf(E_FIO, NULL);
 
-    uint8_t *varTable = mustMalloc(varDataSize);
+    uint8_t *varTable = checked_malloc(varDataSize);
 
     if (fread(varTable, 1, varDataSize, gFile) != varDataSize)
         fatalf(E_FIO, NULL);
@@ -41,7 +40,7 @@ static sds sequenceLoadAudioFilePath(void) {
 
     uint8_t *readIdx = &varTable[0];
 
-    void *varData = mustMalloc(MAX_VAR_VALUE_SIZE);
+    void *varData = checked_malloc(MAX_VAR_VALUE_SIZE);
 
     sds audioFilePath = NULL;
 
@@ -68,8 +67,8 @@ static sds sequenceLoadAudioFilePath(void) {
         remaining -= varHeader.size;
     }
 
-    freeAndNull(varData);
-    freeAndNull(varTable);
+    free(varData);
+    free(varTable);
 
     return audioFilePath;
 }
@@ -136,7 +135,11 @@ void sequenceRead(const uint32_t start, const uint32_t n, void *const data) {
 void sequenceFree(void) {
     pthread_mutex_lock(&gFileMutex);
 
-    freeAndNullWith(gFile, fclose);
+    if (gFile != NULL) {
+        fclose(gFile);
+
+        gFile = NULL;
+    }
 
     pthread_mutex_unlock(&gFileMutex);
 

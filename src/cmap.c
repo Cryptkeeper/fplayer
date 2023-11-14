@@ -7,8 +7,6 @@
 #include "stb_ds.h"
 
 #include "std/err.h"
-#include "std/mem.h"
-#include "std/parse.h"
 
 struct channel_range_t {
     uint32_t sid;
@@ -97,11 +95,11 @@ static void channelMapParseCSV(const char *const b) {
         }
 
         const struct channel_range_t cr = {
-                .sid = (uint32_t) parseLong(cols[0], 0, UINT32_MAX),
-                .eid = (uint32_t) parseLong(cols[1], 0, UINT32_MAX),
-                .unit = (uint8_t) parseLong(cols[2], 0, UINT8_MAX),
-                .scircuit = (uint16_t) parseLong(cols[3], 0, UINT16_MAX),
-                .ecircuit = (uint16_t) parseLong(cols[4], 0, UINT16_MAX),
+                .sid = (uint32_t) checked_strtol(cols[0], 0, UINT32_MAX),
+                .eid = (uint32_t) checked_strtol(cols[1], 0, UINT32_MAX),
+                .unit = (uint8_t) checked_strtol(cols[2], 0, UINT8_MAX),
+                .scircuit = (uint16_t) checked_strtol(cols[3], 0, UINT16_MAX),
+                .ecircuit = (uint16_t) checked_strtol(cols[4], 0, UINT16_MAX),
         };
 
         const sds error = channelRangeValidate(cr);
@@ -144,10 +142,9 @@ void channelMapInit(const char *const filepath) {
 
     rewind(f);
 
-    char *b = mustMalloc(filesize + 1);
+    char *const b = checked_malloc(filesize + 1);
 
-    if (fread(b, 1, filesize, f) != (unsigned long) filesize)
-        fatalf(E_FIO, NULL);
+    if (fread(b, 1, filesize, f) != (size_t) filesize) fatalf(E_FIO, NULL);
 
     fclose(f);
 
@@ -155,9 +152,7 @@ void channelMapInit(const char *const filepath) {
     b[filesize] = '\0';
 
     channelMapParseCSV(b);
-
-    // cleanup local resources in same scope as allocation
-    freeAndNull(b);
+    free(b);
 }
 
 bool channelMapFind(const uint32_t id,

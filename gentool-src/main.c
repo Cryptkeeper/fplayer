@@ -9,8 +9,6 @@
 #include "sds.h"
 #include "std/err.h"
 #include "std/fseq.h"
-#include "std/mem.h"
-#include "std/parse.h"
 
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
@@ -64,7 +62,7 @@ static void *compressZstd(const char *const src,
                           const size_t srcSize,
                           size_t *const dstSize) {
     const size_t dstCapacity = ZSTD_compressBound(srcSize);
-    void *const dst = mustMalloc(dstCapacity);
+    void *const dst = checked_malloc(dstCapacity);
 
     const int compressionLevel = 1;
 
@@ -87,7 +85,7 @@ static void generateChannelDataUncompressed(FILE *const dst,
                                             const uint32_t channelCount) {
     // generate each individual frame
     // all channels are set to the same value for each frame via a memory block
-    uint8_t *const channelData = mustMalloc(channelCount);
+    uint8_t *const channelData = checked_malloc(channelCount);
 
     for (uint32_t frame = 0; frame <= frameCount; frame++) {
         memset(channelData, intensityOscillatorRampVendorNext(), channelCount);
@@ -119,7 +117,7 @@ generateChannelData(FILE *const dst,
 
         // allocate a single block of channel data memory that will be compressed
         const size_t channelDataSize = framesPerBlock * channelCount;
-        uint8_t *const channelData = mustMalloc(channelDataSize);
+        uint8_t *const channelData = checked_malloc(channelDataSize);
 
         // generate each frame, all channels are set to the same value per frame
         uint32_t remainingFrameCount = frameCount;

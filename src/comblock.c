@@ -10,7 +10,6 @@
 
 #include "seq.h"
 #include "std/err.h"
-#include "std/mem.h"
 
 #define COMPRESSION_BLOCK_SIZE 8
 
@@ -28,7 +27,7 @@ static void comBlocksLoadAddrs(void) {
 
     const int size = nBlocks * COMPRESSION_BLOCK_SIZE;
 
-    uint8_t *b = mustMalloc(size);
+    uint8_t *const b = checked_malloc(size);
 
     // fseq header is fixed to 32 bytes, followed by compression block array
     sequenceRead(32, COMPRESSION_BLOCK_SIZE * nBlocks, b);
@@ -65,7 +64,7 @@ static void comBlocksLoadAddrs(void) {
         offset += block.size;
     }
 
-    freeAndNull(b);
+    free(b);
 }
 
 #ifdef ENABLE_ZSTD
@@ -75,10 +74,10 @@ static uint8_t **comBlockGetZstd(const int index) {
     const ComBlock comBlock = gBlocks[index];
 
     const size_t dInSize = comBlock.size;
-    void *dIn = mustMalloc(dInSize);
+    void *dIn = checked_malloc(dInSize);
 
     const size_t dOutSize = ZSTD_DStreamOutSize();
-    void *dOut = mustMalloc(dOutSize);
+    void *dOut = checked_malloc(dOutSize);
 
     ZSTD_DCtx *ctx = ZSTD_createDCtx();
     if (ctx == NULL) fatalf(E_SYS, NULL);
@@ -121,7 +120,7 @@ static uint8_t **comBlockGetZstd(const int index) {
         // they are appended to a central, ordered table for playback
         // this enables fplayer to free decompressed frame blocks as they are played
         for (uint32_t i = 0; i < out.pos / frameSize; i++) {
-            uint8_t *const frame = mustMalloc(frameSize);
+            uint8_t *const frame = checked_malloc(frameSize);
             const uint8_t *const src = &((uint8_t *) dOut)[i * frameSize];
 
             memcpy(frame, src, frameSize);
@@ -130,10 +129,10 @@ static uint8_t **comBlockGetZstd(const int index) {
         }
     }
 
-    freeAndNullWith(ctx, ZSTD_freeDCtx);
+    ZSTD_freeDCtx(ctx);
 
-    freeAndNull(dIn);
-    freeAndNull(dOut);
+    free(dIn);
+    free(dOut);
 
     return frames;
 }

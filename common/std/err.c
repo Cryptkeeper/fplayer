@@ -1,5 +1,6 @@
 #include "err.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -50,4 +51,24 @@ void fatalf(const enum err_t err, const char *const format, ...) {
     // internally, but it avoids the business logic being littered with unclear
     // error handling.
     exit(1);
+}
+
+void *checked_malloc(const size_t size) {
+    void *const ptr = malloc(size);
+
+    assert(ptr != NULL);
+    if (ptr == NULL) fatalf(E_SYS, "error allocating %ull bytes\n", size);
+
+    return ptr;
+}
+
+long checked_strtol(const char *const str, const long min, const long max) {
+    char *endptr = NULL;
+
+    const long parsed = strtol(str, &endptr, 10);
+
+    if (errno != 0 || endptr == str || *endptr != '\0')
+        fatalf(E_APP, "error parsing '%s' as an integer\n", str);
+
+    return parsed < min ? min : parsed > max ? max : parsed;
 }
