@@ -2,7 +2,6 @@
 #define FPLAYER_MEM_H
 
 #include <stddef.h>
-#include <stdlib.h>
 
 #define freeAndNull(p)                                                         \
     do {                                                                       \

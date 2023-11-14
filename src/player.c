@@ -1,6 +1,7 @@
 #include "player.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "lightorama/heartbeat.h"
@@ -52,9 +53,9 @@ static void playerWaitForConnection(const PlayerOpts opts) {
     }
 }
 
-static void playerPlayFirstAudioFile(sds override, sds sequence) {
+static void playerPlayFirstAudioFile(const sds override, const sds sequence) {
     // select the override, if set, otherwise fallback to the sequence's hint
-    sds audioFilePath = override != NULL ? override : sequence;
+    const sds audioFilePath = override != NULL ? override : sequence;
 
     if (audioFilePath != NULL) {
         printf("preparing to play %s\n", audioFilePath);
@@ -74,9 +75,9 @@ static void playerLogStatus(void) {
 
     gLastLog = now;
 
-    sds remaining = playerGetRemaining();
-    sds sleep = sleepGetStatus();
-    sds netstats = nsGetStatus();
+    const sds remaining = playerGetRemaining();
+    const sds sleep = sleepGetStatus();
+    const sds netstats = nsGetStatus();
 
     printf("remaining: %s\tdt: %s\tpump: %4d\t%s\n", remaining, sleep,
            framePumpGetRemaining(&gFramePump), netstats);
@@ -132,7 +133,7 @@ static void playerStartPlayback(void) {
     printf("end of sequence!\n");
 
     // print closing remarks
-    sds netstats = nsGetSummary();
+    const sds netstats = nsGetSummary();
 
     printf("%s\n", netstats);
 
@@ -141,12 +142,11 @@ static void playerStartPlayback(void) {
 
 static void playerFree(void) {
     freeAndNull(gLastFrameData);
-
     gNextFrame = 0;
 }
 
-void playerRun(sds sequenceFilePath,
-               sds audioOverrideFilePath,
+void playerRun(const sds sequenceFilePath,
+               const sds audioOverrideFilePath,
                const PlayerOpts opts) {
     sds audioFilePath = NULL;
     sequenceOpen(sequenceFilePath, &audioFilePath);
@@ -154,7 +154,7 @@ void playerRun(sds sequenceFilePath,
     comBlocksInit();
 
     if (opts.precomputeFades) {
-        sds cacheFilePath =
+        const sds cacheFilePath =
                 sdscatprintf(sdsempty(), "%s.pcf", sequenceFilePath);
 
         // load existing data or precompute and save new data

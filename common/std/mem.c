@@ -1,5 +1,7 @@
 #include "mem.h"
 
+#include <stdlib.h>
+
 #include "err.h"
 
 void *mustMalloc(const size_t size) {

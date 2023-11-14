@@ -32,10 +32,11 @@ sds nsGetStatus(void) {
 
     const float cr = nsGetCompressionRatio(gNSSaved, gNSWritten);
 
-    sds str = sdscatprintf(sdsempty(),
-                           "%.03f KB/s\tfades: %" PRInetstat
-                           "\tpackets: %" PRInetstat "\tcompressed: %.02f",
-                           kb, gNSFades, gNSPackets, cr);
+    const sds str =
+            sdscatprintf(sdsempty(),
+                         "%.03f KB/s\tfades: %" PRInetstat
+                         "\tpackets: %" PRInetstat "\tcompressed: %.02f",
+                         kb, gNSFades, gNSPackets, cr);
 
     for (int i = 0; i < gStatsCount; i++) {
         netstat_t *const last = gStats[i][0];

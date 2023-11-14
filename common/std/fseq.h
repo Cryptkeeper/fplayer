@@ -2,7 +2,6 @@
 #define FPLAYER_FSEQ_H
 
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdio.h>
 
 #include "sds.h"

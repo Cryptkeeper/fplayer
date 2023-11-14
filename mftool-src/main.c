@@ -51,7 +51,8 @@ static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
     return copied;
 }
 
-static void fseqOpen(sds fp, FILE **fd, struct tf_file_header_t *const header) {
+static void
+fseqOpen(const sds fp, FILE **fd, struct tf_file_header_t *const header) {
     FILE *const f = *fd = fopen(fp, "rb");
 
     if (f == NULL) fatalf(E_FIO, "error opening file `%s`\n", fp);
@@ -70,7 +71,8 @@ static void fseqOpen(sds fp, FILE **fd, struct tf_file_header_t *const header) {
                header->majorVersion, header->minorVersion);
 }
 
-static void fseqCopySetVars(sds sfp, sds dfp, const fseq_var_t *const vars) {
+static void
+fseqCopySetVars(const sds sfp, const sds dfp, const fseq_var_t *const vars) {
     FILE *src;
     struct tf_file_header_t original;
 
@@ -104,7 +106,7 @@ static void fseqCopySetVars(sds sfp, sds dfp, const fseq_var_t *const vars) {
 
 #define VAR_HEADER_SIZE 4
 
-static fseq_var_t *fseqReadVars(sds fp) {
+static fseq_var_t *fseqReadVars(const sds fp) {
     FILE *src;
     struct tf_file_header_t header;
 
@@ -165,9 +167,9 @@ static void printUsage(void) {
            "(copies file)\n");
 }
 
-static void renamePair(sds sfp, sds dfp) {
+static void renamePair(const sds sfp, const sds dfp) {
     // rename files to swap them
-    sds nsfp = sdscatprintf(sdsempty(), "%s.orig", sfp);
+    const sds nsfp = sdscatprintf(sdsempty(), "%s.orig", sfp);
 
     if (rename(sfp, nsfp) != 0)
         fatalf(E_SYS, "error renaming `%s` -> `%s`\n", sfp,
@@ -190,8 +192,8 @@ int main(const int argc, char **const argv) {
         return 0;
     }
 
-    sds sfp = sdsnew(argv[1]); /* source file path */
-    sds dfp = NULL;            /* destination file path (source + .tmp) */
+    const sds sfp = sdsnew(argv[1]); /* source file path */
+    sds dfp = NULL;                  /* destination file path (source + .tmp) */
 
     fseq_var_t *vars = fseqReadVars(sfp);
 

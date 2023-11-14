@@ -2,7 +2,6 @@
 #define FPLAYER_SLEEP_H
 
 #include <stdbool.h>
-#include <stdint.h>
 
 #include "sds.h"
 

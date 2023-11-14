@@ -41,7 +41,7 @@ static fseq_var_t *fseqCreateProgramVars(void) {
     return vars;
 }
 
-static inline uint8_t intensityOscillatorRampVendorNext(void) {
+static uint8_t intensityOscillatorRampVendorNext(void) {
     static int percentage = 0;
     static int mod = 1;
 
@@ -56,7 +56,7 @@ static inline uint8_t intensityOscillatorRampVendorNext(void) {
 
     const float f = (float) percentage / 100.0f;
 
-    return (uint8_t) LorIntensityCurveVendor(f);
+    return LorIntensityCurveVendor(f);
 }
 
 #ifdef ENABLE_ZSTD
@@ -114,9 +114,8 @@ generateChannelData(FILE *const dst,
 #ifdef ENABLE_ZSTD
         // divide frames evenly amongst the block count, adding the total reminder
         // to each frame as a cheap way to ensure all frames are accounted for
-        const unsigned int framesPerBlock =
-                (frameCount / compressionBlockCount) +
-                (frameCount % compressionBlockCount);
+        const unsigned int framesPerBlock = frameCount / compressionBlockCount +
+                                            frameCount % compressionBlockCount;
 
         // allocate a single block of channel data memory that will be compressed
         const size_t channelDataSize = framesPerBlock * channelCount;
@@ -140,7 +139,7 @@ generateChannelData(FILE *const dst,
             // compress the entire block of channel data
             size_t compressedDataSize;
             void *const compressedData =
-                    compressZstd((const void *) channelData, channelDataSize,
+                    compressZstd((const char *) channelData, channelDataSize,
                                  &compressedDataSize);
 
             // write compressed data to the file

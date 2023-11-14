@@ -41,8 +41,7 @@ precomputeHistoryGetInsert(const uint32_t id) {
     return put != NULL ? &put->value : NULL;
 }
 
-static inline void
-precomputeHistoryReset(struct precompute_history_t *const history) {
+static void precomputeHistoryReset(struct precompute_history_t *const history) {
     *history = (struct precompute_history_t){0};
 }
 
@@ -80,7 +79,7 @@ reset:
     precomputeHistoryReset(history);
 }
 
-static inline bool precomputeHistoryAligned(const int slope, const int dt) {
+static bool precomputeHistoryAligned(const int slope, const int dt) {
     // returns whether `dt` (a delta between two intensity values) is considered
     // align with a previous delta, `slope`
     // this controls when fading detects "shifts" and interrupts the fade state
@@ -88,8 +87,8 @@ static inline bool precomputeHistoryAligned(const int slope, const int dt) {
     return dt >= slope - r && dt <= slope + r;
 }
 
-static inline bool isIntensityFlash(const uint8_t old, const uint8_t new) {
-    const int d = (old > new) ? (old - new) : (new - old);
+static bool isIntensityFlash(const uint8_t old, const uint8_t new) {
+    const int d = old > new ? old - new : new - old;
     return d >= 200;
 }
 
@@ -195,7 +194,7 @@ void precomputeRun(const char *const fp) {
     const timeInstant start = timeGetNow();
 
     if (fadeTableLoadCache(fp)) {
-        sds time = timeElapsedString(start, timeGetNow());
+        const sds time = timeElapsedString(start, timeGetNow());
 
         printf("loaded precomputed cache file: %s in %s\n", fp, time);
 
@@ -222,7 +221,7 @@ void precomputeRun(const char *const fp) {
 
     framePumpFree(&pump);
 
-    sds time = timeElapsedString(start, timeGetNow());
+    const sds time = timeElapsedString(start, timeGetNow());
 
     printf("identified %d fade events (%d variants) in %s\n", gFadesGenerated,
            fadeTableSize(), time);

@@ -53,7 +53,7 @@ static sds channelRangeValidate(const struct channel_range_t range) {
 static struct channel_range_t *gRanges;
 
 static void channelMapParseCSV(const char *const b) {
-    sds buf = sdsnew(b);
+    const sds buf = sdsnew(b);
 
     int nRows = 0;
     sds *rows = sdssplitlen(buf, sdslen(buf), "\n", 1, &nRows);
@@ -63,7 +63,7 @@ static void channelMapParseCSV(const char *const b) {
     int ignoredRows = 0;
 
     for (int i = 0; i < nRows; i++) {
-        sds row = rows[i];
+        const sds row = rows[i];
 
         // ignoring empty new lines
         if (sdslen(row) == 0) continue;
@@ -104,7 +104,7 @@ static void channelMapParseCSV(const char *const b) {
                 .ecircuit = (uint16_t) parseLong(cols[4], 0, UINT16_MAX),
         };
 
-        sds error = channelRangeValidate(cr);
+        const sds error = channelRangeValidate(cr);
 
         if (error != NULL) {
             fprintf(stderr, "unmappable channel range L%d: %s\n", i, error);
@@ -180,8 +180,8 @@ bool channelMapFind(const uint32_t id,
     return false;
 }
 
-static inline bool channelMapContainsUid(const uint8_t *const set,
-                                         const uint8_t value) {
+static bool channelMapContainsUid(const uint8_t *const set,
+                                  const uint8_t value) {
     const int size = arrlen(set);
 
     if (size == 0) return false;

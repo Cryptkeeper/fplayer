@@ -25,7 +25,7 @@ bool fseqWriteHeader(FILE *const dst, const struct tf_file_header_t header) {
 
     fwrite_type(reserved, dst);
 
-    const uint8_t compression = (uint8_t) header.compressionType;
+    const uint8_t compression = header.compressionType;
 
     fwrite_type(compression, dst);
     fwrite_type(header.compressionBlockCount, dst);
@@ -96,7 +96,7 @@ void fseqAlignOffsets(struct tf_file_header_t *const header,
         varDataSize += fseqGetVarSize(vars[i]);
 
     // round to nearest product of 4 for 32-bit alignment
-    if (varDataSize % 4 != 0) varDataSize += 4 - (varDataSize % 4);
+    if (varDataSize % 4 != 0) varDataSize += 4 - varDataSize % 4;
 
     // ensure the value can be safely downcasted to what the file format expects
     assert(varDataSize <= UINT16_MAX);

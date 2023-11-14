@@ -101,7 +101,7 @@ static void framePumpRecharge(FramePump *const pump,
     pump->head = 0;
 
     // check for performance issues after reading
-    sds time = timeElapsedString(start, timeGetNow());
+    const sds time = timeElapsedString(start, timeGetNow());
 
     printf("%s %d frames in %s\n", preload ? "pre-loaded" : "loaded",
            (int) arrlen(frames), time);
@@ -116,7 +116,7 @@ struct frame_pump_thread_args_t {
 
 static void *framePumpThread(void *pargs) {
     const struct frame_pump_thread_args_t args =
-            *((struct frame_pump_thread_args_t *) pargs);
+            *(struct frame_pump_thread_args_t *) pargs;
 
     FramePump *const framePump = mustMalloc(sizeof(FramePump));
 
@@ -128,7 +128,7 @@ static void *framePumpThread(void *pargs) {
 
     framePumpRecharge(framePump, args.startFrame, true);
 
-    return (void *) framePump;
+    return framePump;
 }
 
 // https://www.austingroupbugs.net/view.php?id=599
@@ -161,7 +161,7 @@ static FramePump *framePumpPreloadGet(void) {
 
     gPumpThread = PTHREAD_NULL;
 
-    return (FramePump *) args;
+    return args;
 }
 
 static bool framePumpSwapPreload(FramePump *const pump) {

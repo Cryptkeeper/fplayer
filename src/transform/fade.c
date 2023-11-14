@@ -47,7 +47,7 @@ struct fade_handle_kvp_t {
 
 static struct fade_handle_kvp_t *gFades;
 
-static inline bool fadeEqual(const Fade a, const Fade b) {
+static bool fadeEqual(const Fade a, const Fade b) {
     return a.from == b.from && a.to == b.to && a.startFrame == b.startFrame &&
            a.frames == b.frames && a.type == b.type;
 }
@@ -69,7 +69,7 @@ static int fadeCreateHandleRef(const Fade fade) {
 
     const int key = gNextHandle++;
 
-    struct fade_handle_t handle = (struct fade_handle_t){
+    const struct fade_handle_t handle = (struct fade_handle_t){
             .rc = 1,
             .fade = fade,
     };
@@ -95,7 +95,7 @@ void fadePush(const uint32_t id, const Fade fade) {
 }
 
 int fadeTableSize(void) {
-    return (int) hmlen(gFades);
+    return hmlen(gFades);
 }
 
 struct handle_remap_t {
@@ -132,7 +132,7 @@ bool fadeTableCache(const char *const fp) {
             uint32_t index = 0;
 
             // check if fade handle has already been deduplicated
-            struct handle_remap_t *const remap =
+            const struct handle_remap_t *const remap =
                     hmgetp_null(remaps, frame.value);
 
             if (remap != NULL) {
@@ -148,8 +148,8 @@ bool fadeTableCache(const char *const fp) {
                     if (prevFade.from == fade->value.fade.from &&
                         prevFade.to == fade->value.fade.to &&
                         prevFade.frames == fade->value.fade.frames &&
-                        (prevFade.isFlash ==
-                         (fade->value.fade.type == FADE_FLASH))) {
+                        prevFade.isFlash ==
+                                (fade->value.fade.type == FADE_FLASH)) {
                         index = k;
                         didMatch = true;
 
@@ -249,12 +249,15 @@ void fadeFrameFree(const uint32_t frame) {
     if (data == NULL) return;
 
     for (int i = 0; i < hmlen(data->value.fades); i++) {
-        struct frame_fade_kvp_t fade = data->value.fades[i];
+        const struct frame_fade_kvp_t fade = data->value.fades[i];
 
         struct fade_handle_kvp_t *const handle =
                 hmgetp_null(gFades, fade.value);
 
-        if (--handle->value.rc == 0) hmdel(gFades, handle->key);
+        assert(handle != NULL);
+
+        if (handle != NULL && --handle->value.rc == 0)
+            hmdel(gFades, handle->key);
     }
 
     hmfree(data->value.fades);

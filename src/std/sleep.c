@@ -45,7 +45,7 @@ static void sleepSpinLockNs(int64_t ns);
 // and 2. a spin look for nanosecond precision at cost of CPU
 //
 // ...are split into individual functions for readability.
-static inline void sleepPrecise(const int64_t ns) {
+static void sleepPrecise(const int64_t ns) {
     const int64_t preciseTime = sleepEstimatedNs(ns);
 
     sleepSpinLockNs(preciseTime);
@@ -64,12 +64,10 @@ static int64_t sleepEstimatedNs(const int64_t ns) {
 
     double remainingTime = (double) ns / 1e9;
 
-    timeInstant start, end;
-
     while (remainingTime > estimate) {
         // measure the nanoseconds it takes for the system to perform
         // a one millisecond #nanosleep call
-        start = timeGetNow();
+        const timeInstant start = timeGetNow();
 
 #ifdef _WIN32
         Sleep(1);
@@ -82,11 +80,11 @@ static int64_t sleepEstimatedNs(const int64_t ns) {
         nanosleep(timeOneMs, NULL);
 #endif
 
-        end = timeGetNow();
+        const double sSample =
+                (double) timeElapsedNs(start, timeGetNow()) / 1e9;
 
-        const double sSample = (double) timeElapsedNs(start, end) / 1e9;
         remainingTime -= sSample;
-        sampleCount++;
+        sampleCount += 1;
 
         const double delta = sSample - sampleMean;
         sampleMean += delta / sampleCount;
@@ -102,17 +100,13 @@ static int64_t sleepEstimatedNs(const int64_t ns) {
 static void sleepSpinLockNs(const int64_t ns) {
     const timeInstant start = timeGetNow();
 
-    timeInstant now;
-
 spin:
-    now = timeGetNow();
-
-    if (timeElapsedNs(start, now) < ns) goto spin;
+    if (timeElapsedNs(start, timeGetNow()) < ns) goto spin;
 }
 
 static int gNextSampleIdx = 0;
 
-static inline void sleepRecordSample(const int64_t ns) {
+static void sleepRecordSample(const int64_t ns) {
     gSampleNs[gNextSampleIdx++] = ns;
     gNextSampleIdx %= gSampleCount;
 
@@ -133,12 +127,10 @@ void sleepTimerLoop(const long intervalMillis, bool (*sleep)(void)) {
     assert(intervalMillis > 0);
     assert(sleep != NULL);
 
-    timeInstant start;
-
     static int64_t lostNs = 0;
 
     while (true) {
-        start = timeGetNow();
+        const timeInstant start = timeGetNow();
 
         if (!sleep()) break;
 

@@ -7,14 +7,14 @@
 
     #include <AL/alut.h>
 
-static inline void alCheckError(const char *const msg) {
+static void alCheckError(const char *const msg) {
     ALenum err;
     if ((err = alGetError()) == AL_NO_ERROR) return;
 
     fprintf(stderr, "%s: OpenAL error 0x%02x\n", msg, err);
 }
 
-static inline void alutCheckError(const char *const msg) {
+static void alutCheckError(const char *const msg) {
     ALenum err;
     if ((err = alutGetError()) == ALUT_ERROR_NO_ERROR) return;
 
@@ -82,7 +82,7 @@ void audioPlayFile(const char *const filepath) {
     alGenSources(1, &gSource);
     alCheckError("error generating default audio source");
 
-    alSourcei(gSource, AL_BUFFER, (ALint) gCurrentBuffer);
+    alSourcei(gSource, AL_BUFFER, gCurrentBuffer);
     alCheckError("error assigning source buffer");
 
     alSourcePlay(gSource);

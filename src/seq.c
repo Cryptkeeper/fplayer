@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "sds.h"
 #include "tinyfseq.h"
@@ -45,15 +46,15 @@ static sds sequenceLoadAudioFilePath(void) {
     sds audioFilePath = NULL;
 
     for (int remaining = varDataSize; remaining > VAR_HEADER_SIZE;) {
-        if ((err = tf_read_var_header(readIdx, remaining, &varHeader,
-                                      (uint8_t *) varData, MAX_VAR_VALUE_SIZE,
-                                      &readIdx)) != TF_OK)
+        if ((err = tf_read_var_header(readIdx, remaining, &varHeader, varData,
+                                      MAX_VAR_VALUE_SIZE, &readIdx)) != TF_OK)
             fatalf(E_APP, "error parsing sequence variable: %s\n",
                    tf_err_str(err));
 
         // ensure the variable string value is null terminated
         // size includes 4-byte structure, manually offset
-        sds varString = sdsnewlen(varData, varHeader.size - VAR_HEADER_SIZE);
+        const sds varString =
+                sdsnewlen(varData, varHeader.size - VAR_HEADER_SIZE);
 
         printf("var '%c%c': %s\n", varHeader.id[0], varHeader.id[1], varString);
 
@@ -75,7 +76,7 @@ static sds sequenceLoadAudioFilePath(void) {
 
 #define FSEQ_HEADER_SIZE 32
 
-void sequenceOpen(sds filepath, sds *const audioFilePath) {
+void sequenceOpen(const sds filepath, sds *const audioFilePath) {
     FILE *const f = gFile = fopen(filepath, "rb");
 
     if (f == NULL) fatalf(E_FIO, "error opening sequence: %s\n", filepath);
@@ -108,7 +109,7 @@ uint32_t sequenceReadFrames(const struct seq_read_args_t args,
         frameCount = gPlaying.frameCount - args.startFrame;
 
     const uint32_t pos = sequenceData()->channelDataOffset +
-                         (args.startFrame * args.frameSize);
+                         args.startFrame * args.frameSize;
 
     if (fseek(gFile, pos, SEEK_SET) < 0) fatalf(E_FIO, NULL);
 
@@ -117,7 +118,7 @@ uint32_t sequenceReadFrames(const struct seq_read_args_t args,
 
     pthread_mutex_unlock(&gFileMutex);
 
-    return (uint32_t) framesRead;
+    return framesRead;
 }
 
 void sequenceRead(const uint32_t start, const uint32_t n, void *const data) {

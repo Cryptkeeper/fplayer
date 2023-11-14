@@ -180,7 +180,7 @@ static void freeArgs(void) {
     sdsfree(gSerialDevName);
 }
 
-int main(int argc, char **argv) {
+int main(const int argc, char **const argv) {
     int ec = EXIT_SUCCESS;
     if (parseOpts(argc, argv, &ec)) return ec;
 

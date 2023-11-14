@@ -45,9 +45,9 @@ static void comBlocksLoadAddrs(void) {
         enum tf_err_t err;
         struct tf_compression_block_t block;
 
-        if ((err = tf_read_compression_block(
-                     head, size - (i * COMPRESSION_BLOCK_SIZE), &block,
-                     &head)) != TF_OK)
+        if ((err = tf_read_compression_block(head,
+                                             size - i * COMPRESSION_BLOCK_SIZE,
+                                             &block, &head)) != TF_OK)
             fatalf(E_APP, "error parsing compression block: %s\n",
                    tf_err_str(err));
 
@@ -55,7 +55,7 @@ static void comBlocksLoadAddrs(void) {
         // these will appear with a 0 size value, trailing previously valid blocks
         if (block.size == 0) break;
 
-        ComBlock comBlock = (ComBlock){
+        const ComBlock comBlock = (ComBlock){
                 .addr = offset,
                 .size = block.size,
         };
@@ -122,7 +122,7 @@ static uint8_t **comBlockGetZstd(const int index) {
         // this enables fplayer to free decompressed frame blocks as they are played
         for (uint32_t i = 0; i < out.pos / frameSize; i++) {
             uint8_t *const frame = mustMalloc(frameSize);
-            uint8_t *const src = &((uint8_t *) dOut)[i * frameSize];
+            const uint8_t *const src = &((uint8_t *) dOut)[i * frameSize];
 
             memcpy(frame, src, frameSize);
 

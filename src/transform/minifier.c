@@ -26,7 +26,7 @@ struct encoding_request_t {
     uint16_t nFrames;
 };
 
-static void minifyEncodeRequest(struct encoding_request_t request) {
+static void minifyEncodeRequest(const struct encoding_request_t request) {
     assert(request.circuits > 0);
     assert(request.nCircuits > 0);
 
@@ -66,16 +66,16 @@ static void minifyEncodeRequest(struct encoding_request_t request) {
 
         // if the effect is sent once, mark the individual step frames as saved
         // +2 to written size since it doesn't include padding yet
-        gNSSaved += (request.nFrames * request.nCircuits * ungroupedSize) -
+        gNSSaved += request.nFrames * request.nCircuits * ungroupedSize -
                     (written + 2);
     }
 }
 
-static inline LorIntensity minifyEncodeIntensity(uint8_t abs) {
-    return LorIntensityCurveVendor((float) (abs / 255.0));
+static LorIntensity minifyEncodeIntensity(const uint8_t abs) {
+    return LorIntensityCurveVendor(abs / 255.0);
 }
 
-static inline LorTime minifyGetFadeDuration(const Fade fade) {
+static LorTime minifyGetFadeDuration(const Fade fade) {
     const uint64_t ms = sequenceData()->frameStepTimeMillis * fade.frames;
 
     return lorSecondsToTime((float) ms / 1000.0F);
@@ -85,7 +85,7 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
     assert(arrlen(stack) > 0);
 
     const int firstCircuit = stack[0].circuit - 1;
-    const uint8_t groupOffset = (uint8_t) (firstCircuit / 16);
+    const uint8_t groupOffset = firstCircuit / 16;
 
     int alignOffset = firstCircuit % 16;
 

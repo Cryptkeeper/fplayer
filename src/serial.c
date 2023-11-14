@@ -17,7 +17,7 @@
 #include "transform/minifier.h"
 #include "transform/netstats.h"
 
-static inline void spPrintError(enum sp_return err) {
+static void spPrintError(const enum sp_return err) {
     fprintf(stderr, "libserialport error: %d\n", err);
 
     // global error handling is only used with a single super error type
@@ -166,7 +166,7 @@ sds *serialEnumPorts(void) {
     for (int i = 0; pl[i] != NULL; i++) {
         const struct sp_port *const port = pl[i];
 
-        sds name = sdsnew(sp_get_port_name(port));
+        const sds name = sdsnew(sp_get_port_name(port));
 
         arrput(ports, name);
     }
