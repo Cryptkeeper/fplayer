@@ -202,20 +202,20 @@ int main(const int argc, char **const argv) {
             case 'f':
                 // minimum 4 FPS = 250ms sleep time (stored in uint8_t, <= 255)
                 // maximum 1000 FPS = 1ms sleep time
-                fps = (uint16_t) parseLong(optarg, 4, 1000);
+                fps = (uint16_t) checked_strtol(optarg, 4, 1000);
                 break;
 
             case 'c':
-                channelCount = (uint32_t) parseLong(optarg, 1, UINT32_MAX);
+                channelCount = (uint32_t) checked_strtol(optarg, 1, UINT32_MAX);
                 break;
 
             case 'd':
-                frameCount = (uint32_t) parseLong(optarg, 1, UINT32_MAX);
+                frameCount = (uint32_t) checked_strtol(optarg, 1, UINT32_MAX);
                 break;
 
             case 'b':
                 compressionBlockCount =
-                        (uint8_t) parseLong(optarg, 1, UINT8_MAX);
+                        (uint8_t) checked_strtol(optarg, 1, UINT8_MAX);
                 break;
 
             case ':':
