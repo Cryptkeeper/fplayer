@@ -1,13 +1,8 @@
 #include <getopt.h>
 #include <stdio.h>
 
-#ifdef ENABLE_OPENAL
-    #include <AL/alut.h>
-#endif
-
-#ifdef ENABLE_ZSTD
-    #include <zstd.h>
-#endif
+#include <AL/alut.h>
+#include <zstd.h>
 
 #include <libserialport.h>
 
@@ -54,23 +49,12 @@ static void printUsage(void) {
 }
 
 static void printVersions(void) {
-#ifdef ENABLE_OPENAL
     printf("ALUT %d.%d\n", alutGetMajorVersion(), alutGetMinorVersion());
     printf("OpenAL %s\n", alGetString(AL_VERSION));
-#else
-    printf("ALUT disabled\n");
-    printf("OpenAL disabled\n");
-#endif
-
     printf("liblightorama %s\n", LIBLIGHTORAMA_VERSION_STRING);
     printf("libserialport %s\n", SP_PACKAGE_VERSION_STRING);
     printf("libtinyfseq %s\n", TINYFSEQ_VERSION);
-
-#ifdef ENABLE_ZSTD
     printf("zstd %s\n", ZSTD_versionString());
-#else
-    printf("zstd disabled\n");
-#endif
 }
 
 static sds gSequenceFilePath;
@@ -103,58 +87,45 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
                 channelMapInit(optarg);
                 channelMapFree();
                 return true;
-
             case 'l':
                 printSerialEnumPorts();
                 return true;
-
             case 'h':
                 printUsage();
                 return true;
-
             case 'v':
                 printVersions();
                 return true;
-
             case 'f':
                 gSequenceFilePath = sdsnew(optarg);
                 break;
-
             case 'c':
                 gChannelMapFilePath = sdsnew(optarg);
                 break;
-
             case 'a':
                 gAudioOverrideFilePath = sdsnew(optarg);
                 break;
-
             case 'r':
                 gPlayerOpts.frameStepTimeOverrideMs =
                         (uint8_t) checked_strtol(optarg, 1, UINT8_MAX);
                 break;
-
             case 'w':
                 gPlayerOpts.connectionWaitS =
                         (uint8_t) checked_strtol(optarg, 0, UINT8_MAX);
                 break;
-
             case 'p':
                 gPlayerOpts.precomputeFades = true;
                 break;
-
             case 'd':
                 gSerialDevName = sdsnew(optarg);
                 break;
-
             case 'b':
                 gSerialBaudRate = (int) checked_strtol(optarg, 0, INT_MAX);
                 break;
-
             case ':':
                 fprintf(stderr, "option is missing argument: %c\n", optopt);
                 *ec = EXIT_FAILURE;
                 return true;
-
             case '?':
             default:
                 fprintf(stderr, "unknown option: %c\n", optopt);
@@ -188,7 +159,6 @@ int main(const int argc, char **const argv) {
     channelMapInit(gChannelMapFilePath);
 
     // initialize core subsystems
-    audioInit();
     serialInit(gSerialDevName, gSerialBaudRate);
 
     // start the player as configured, this will start playback automatically

@@ -1,11 +1,9 @@
 #include "audio.h"
 
-#ifdef ENABLE_OPENAL
+#include <assert.h>
+#include <stdio.h>
 
-    #include <assert.h>
-    #include <stdio.h>
-
-    #include <AL/alut.h>
+#include <AL/alut.h>
 
 static void alCheckError(const char *const msg) {
     ALenum err;
@@ -25,7 +23,14 @@ static void alutCheckError(const char *const msg) {
 static ALuint gSource = AL_NONE;
 static ALuint gCurrentBuffer = AL_NONE;
 
-void audioInit(void) {
+static bool gIsInit = false;
+
+static void audioInit(void) {
+    assert(!gIsInit);
+    if (gIsInit) return;
+
+    gIsInit = true;
+
     alutInit(0, NULL);
     alutCheckError("error initializing ALUT");
 }
@@ -53,6 +58,9 @@ static void audioStop(void) {
 }
 
 void audioExit(void) {
+    if (!gIsInit) return;
+    gIsInit = false;
+
     audioStop();
 
     alutExit();
@@ -72,6 +80,9 @@ bool audioCheckPlaying(void) {
 }
 
 void audioPlayFile(const char *const filepath) {
+    // lazy initialize until once an audio playback request is made
+    if (!gIsInit) audioInit();
+
     gCurrentBuffer = alutCreateBufferFromFile(filepath);
     alutCheckError("error decoding file into buffer");
 
@@ -88,21 +99,3 @@ void audioPlayFile(const char *const filepath) {
     alSourcePlay(gSource);
     alCheckError("error starting audio source playback");
 }
-
-#else
-
-void audioInit(void) {
-}
-
-void audioExit(void) {
-}
-
-bool audioCheckPlaying(void) {
-    return false;
-}
-
-void audioPlayFile(const char *const filepath) {
-    (void) filepath;
-}
-
-#endif

@@ -2,11 +2,9 @@
 
 #include <assert.h>
 
-#include "stb_ds.h"
+#include <zstd.h>
 
-#ifdef ENABLE_ZSTD
-    #include <zstd.h>
-#endif
+#include "stb_ds.h"
 
 #include "seq.h"
 #include "std/err.h"
@@ -67,7 +65,6 @@ static void comBlocksLoadAddrs(void) {
     free(b);
 }
 
-#ifdef ENABLE_ZSTD
 static uint8_t **comBlockGetZstd(const int index) {
     assert(index >= 0 && index < arrlen(gBlocks));
 
@@ -136,7 +133,6 @@ static uint8_t **comBlockGetZstd(const int index) {
 
     return frames;
 }
-#endif
 
 void comBlocksInit(void) {
     comBlocksLoadAddrs();
@@ -146,10 +142,8 @@ uint8_t **comBlockGet(const int index) {
     const enum tf_ctype_t compression = sequenceData()->compressionType;
 
     switch (compression) {
-#ifdef ENABLE_ZSTD
         case TF_COMPRESSION_ZSTD:
             return comBlockGetZstd(index);
-#endif
         default:
             fatalf(E_APP, "cannot decompress type: %d\n", compression);
             return NULL;

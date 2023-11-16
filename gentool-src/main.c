@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <zstd.h>
+
 #include "lightorama/intensity.h"
 #include "sds.h"
 #include "std/err.h"
@@ -12,10 +14,6 @@
 
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
-
-#ifdef ENABLE_ZSTD
-    #include <zstd.h>
-#endif
 
 static fseq_var_t *fseqCreateProgramVars(void) {
     fseq_var_t *vars = NULL;
@@ -57,7 +55,6 @@ static uint8_t intensityOscillatorRampVendorNext(void) {
     return LorIntensityCurveVendor(f);
 }
 
-#ifdef ENABLE_ZSTD
 static void *compressZstd(const char *const src,
                           const size_t srcSize,
                           size_t *const dstSize) {
@@ -77,7 +74,6 @@ static void *compressZstd(const char *const src,
 
     return dst;
 }
-#endif
 
 static void generateChannelDataUncompressed(FILE *const dst,
                                             const uint8_t fps,
@@ -109,7 +105,6 @@ generateChannelData(FILE *const dst,
     struct tf_compression_block_t *blocks = NULL;
 
     if (compressionBlockCount > 0) {
-#ifdef ENABLE_ZSTD
         // divide frames evenly amongst the block count, adding the total reminder
         // to each frame as a cheap way to ensure all frames are accounted for
         const unsigned int framesPerBlock = frameCount / compressionBlockCount +
@@ -159,9 +154,6 @@ generateChannelData(FILE *const dst,
 
         // free the original channel data memory
         free(channelData);
-#else
-        fatalf("zstd compression is not enabled\n");
-#endif
     } else {
         generateChannelDataUncompressed(dst, fps, frameCount, channelCount);
     }

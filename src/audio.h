@@ -3,8 +3,6 @@
 
 #include <stdbool.h>
 
-void audioInit(void);
-
 void audioExit(void);
 
 bool audioCheckPlaying(void);

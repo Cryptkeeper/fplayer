@@ -56,25 +56,15 @@ add_executable(fplayer ${SRC_FILES})
 target_include_directories(fplayer PRIVATE common libtinyfseq sds stb)
 target_link_libraries(fplayer common lightorama m serialport)
 
-option(USE_OPENAL "enable audio playback via alut+openal" true)
+# OpenAL
+target_link_libraries(fplayer alut)
 
-if (USE_OPENAL)
-    target_link_libraries(fplayer alut)
-
-    if (APPLE)
-        target_link_libraries(fplayer "-framework OpenAL")
-    else ()
-        target_link_libraries(fplayer openal)
-    endif ()
-
-    add_compile_definitions(ENABLE_OPENAL)
+if (APPLE)
+    target_link_libraries(fplayer "-framework OpenAL")
+else ()
+    target_link_libraries(fplayer openal)
 endif ()
 
-option(USE_ZSTD "enable zstd decompression at playback" true)
-
-if (USE_ZSTD)
-    target_link_libraries(fplayer zstd)
-    target_link_libraries(gentool zstd)
-
-    add_compile_definitions(ENABLE_ZSTD)
-endif ()
+# zstd
+target_link_libraries(fplayer zstd)
+target_link_libraries(gentool zstd)
