@@ -75,7 +75,7 @@ static sds sequenceLoadAudioFilePath(void) {
 
 #define FSEQ_HEADER_SIZE 32
 
-void sequenceOpen(const sds filepath, sds *const audioFilePath) {
+void sequenceOpen(const char *const filepath, sds *const audioFilePath) {
     FILE *const f = gFile = fopen(filepath, "rb");
 
     if (f == NULL) fatalf(E_FIO, "error opening sequence: %s\n", filepath);
