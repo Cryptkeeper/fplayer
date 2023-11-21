@@ -31,13 +31,13 @@ static uint8_t *gLastFrameData;
 // before it considers itself connected to the player
 // This artificially waits prior to starting playback to ensure the device is
 // considered connected and ready for frame data
-static void playerWaitForConnection(const PlayerOpts opts) {
-    if (opts.connectionWaitS == 0) return;
+static void playerWaitForConnection(const unsigned int seconds) {
+    if (seconds == 0) return;
 
-    printf("waiting %d seconds for connection...\n", opts.connectionWaitS);
+    printf("waiting %u seconds for connection...\n", seconds);
 
     // assumes 2 heartbeat messages per second (500ms delay)
-    for (int toSend = opts.connectionWaitS * 2; toSend > 0; toSend--) {
+    for (unsigned int toSend = seconds * 2; toSend > 0; toSend--) {
         serialWriteHeartbeat();
 
 #ifdef _WIN32
@@ -53,14 +53,15 @@ static void playerWaitForConnection(const PlayerOpts opts) {
     }
 }
 
-static void playerPlayFirstAudioFile(const sds override, const sds sequence) {
+static void playerPlayFirstAudioFile(const char *const override,
+                                     const char *const sequence) {
     // select the override, if set, otherwise fallback to the sequence's hint
-    const sds audioFilePath = override != NULL ? override : sequence;
+    const char *const priority = override != NULL ? override : sequence;
 
-    if (audioFilePath != NULL) {
-        printf("preparing to play %s\n", audioFilePath);
+    if (priority != NULL) {
+        printf("preparing to play %s\n", priority);
 
-        audioPlayFile(audioFilePath);
+        audioPlayFile(priority);
     } else {
         printf("no audio file detected using override or via sequence\n");
     }
@@ -155,8 +156,8 @@ static void playerFree(void) {
     gNextFrame = 0;
 }
 
-void playerRun(const sds sequenceFilePath,
-               const sds audioOverrideFilePath,
+void playerRun(const char *const sequenceFilePath,
+               const char *const audioOverrideFilePath,
                const PlayerOpts opts) {
     sds audioFilePath = NULL;
     sequenceOpen(sequenceFilePath, &audioFilePath);
@@ -173,7 +174,7 @@ void playerRun(const sds sequenceFilePath,
         sdsfree(cacheFilePath);
     }
 
-    playerWaitForConnection(opts);
+    playerWaitForConnection(opts.connectionWaitS);
     playerPlayFirstAudioFile(audioOverrideFilePath, audioFilePath);
 
     sdsfree(audioFilePath);// only needed to init playback
