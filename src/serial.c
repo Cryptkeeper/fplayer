@@ -33,7 +33,7 @@ static void spPrintError(const enum sp_return err) {
 #define spTry(fn)                                                              \
     do {                                                                       \
         enum sp_return _err = fn;                                              \
-        if (_err != SP_OK) spPrintError(_err);                                 \
+        if (_err != SP_OK && _err < 0) spPrintError(_err);                     \
     } while (0)
 
 static struct sp_port *gPort;
