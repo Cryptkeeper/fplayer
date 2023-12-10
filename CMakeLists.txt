@@ -15,19 +15,19 @@ endif ()
 
 set(PEDANTIC_COMPILER_FLAGS "-Wall -Werror -Wextra -Wno-unused-value -pedantic")
 
-add_subdirectory(liblightorama)
+add_subdirectory(dep/liblightorama)
 
 file(GLOB_RECURSE COMMON_FILES "common/std/*.[ch]")
-file(GLOB_RECURSE SDS_FILES "sds/*.c")
+file(GLOB_RECURSE SDS_FILES "dep/sds/*.c")
 
 add_library(common STATIC ${COMMON_FILES} ${SDS_FILES})
 
-target_include_directories(common PUBLIC libtinyfseq sds stb)
+target_include_directories(common PUBLIC "dep/libtinyfseq" "dep/sds" "dep/stb")
 
 option(BUILD_MFTOOL "enable building mftool executable" true)
 
 if (BUILD_MFTOOL)
-    file(GLOB_RECURSE MFTOOL_FILES "mftool-src/*.c")
+    file(GLOB_RECURSE MFTOOL_FILES "tool/mftool/*.c")
     set_source_files_properties(${MFTOOL_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COMPILER_FLAGS})
 
     add_executable(mftool ${MFTOOL_FILES})
@@ -39,7 +39,7 @@ endif ()
 option(BUILD_GENTOOL "enable building gentool executable" true)
 
 if (BUILD_GENTOOL)
-    file(GLOB_RECURSE GENTOOL_FILES "gentool-src/*.c")
+    file(GLOB_RECURSE GENTOOL_FILES "tool/gentool/*.c")
     set_source_files_properties(${GENTOOL_FILES} PROPERTIES COMPILER_FLAGS ${PEDANTIC_COMPILER_FLAGS})
 
     add_executable(gentool ${GENTOOL_FILES})
@@ -53,7 +53,7 @@ set_source_files_properties(${SRC_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COM
 
 add_executable(fplayer ${SRC_FILES})
 
-target_include_directories(fplayer PRIVATE common libtinyfseq sds stb)
+target_include_directories(fplayer PRIVATE common)
 target_link_libraries(fplayer common lightorama m serialport)
 
 # OpenAL

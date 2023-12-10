@@ -1,9 +1,9 @@
 [submodule "libtinyfseq"]
-	path = libtinyfseq
+	path = dep/libtinyfseq
 	url = git@github.com:Cryptkeeper/libtinyfseq.git
 [submodule "liblightorama"]
-	path = liblightorama
+	path = dep/liblightorama
 	url = git@github.com:Cryptkeeper/liblightorama.git
 [submodule "sds"]
-	path = sds
+	path = dep/sds
 	url = git@github.com:antirez/sds.git
