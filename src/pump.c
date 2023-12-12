@@ -26,7 +26,7 @@ static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
     // generates a frame data buffer of 5 seconds worth of playback
     const uint32_t reqFrameCount = sequenceFPS() * 5;
 
-    uint8_t *const frameData = checked_malloc(frameSize * reqFrameCount);
+    uint8_t *const frameData = mustMalloc(frameSize * reqFrameCount);
 
     const uint32_t framesRead = sequenceReadFrames(
             (struct seq_read_args_t){
@@ -45,7 +45,7 @@ static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
     arrsetcap(frames, framesRead);
 
     for (uint32_t i = 0; i < framesRead; i++) {
-        uint8_t *const frame = checked_malloc(frameSize);
+        uint8_t *const frame = mustMalloc(frameSize);
 
         memcpy(frame, &frameData[i * frameSize], frameSize);
 
@@ -100,12 +100,12 @@ static void framePumpRecharge(FramePump *const pump,
     pump->head = 0;
 
     // check for performance issues after reading
-    const sds time = timeElapsedString(start, timeGetNow());
+    char *const time = timeElapsedString(start, timeGetNow());
 
     printf("%s %d frames in %s\n", preload ? "pre-loaded" : "loaded",
            (int) arrlen(frames), time);
 
-    sdsfree(time);
+    free(time);
 }
 
 struct frame_pump_thread_args_t {
@@ -117,7 +117,7 @@ static void *framePumpThread(void *pargs) {
     const struct frame_pump_thread_args_t args =
             *(struct frame_pump_thread_args_t *) pargs;
 
-    FramePump *const framePump = checked_malloc(sizeof(FramePump));
+    FramePump *const framePump = mustMalloc(sizeof(FramePump));
 
     memset(framePump, 0, sizeof(FramePump));
 
@@ -207,7 +207,7 @@ const uint8_t *framePumpGet(FramePump *const pump,
 
     // copy the frame data entry to a central buffer that is exposed
     // this enables us to internally free the frame allocation without another callback
-    if (pump->buffer == NULL) pump->buffer = checked_malloc(frameSize);
+    if (pump->buffer == NULL) pump->buffer = mustMalloc(frameSize);
 
     memcpy(pump->buffer, pump->frames[pump->head], frameSize);
 

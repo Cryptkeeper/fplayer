@@ -12,8 +12,10 @@ enum err_t {
 
 void fatalf(enum err_t err, const char *format, ...);
 
-void *checked_malloc(size_t size);
+void *mustMalloc(size_t size);
 
-long checked_strtol(const char *str, long min, long max);
+long mustStrtol(const char *str, long min, long max);
+
+char *mustStrdup(const char *str);
 
 #endif//FPLAYER_ERR_H

@@ -57,23 +57,23 @@ static void printVersions(void) {
     printf("zstd %s\n", ZSTD_versionString());
 }
 
-static sds gSequenceFilePath;
-static sds gAudioOverrideFilePath;
+static char *gSequenceFilePath;
+static char *gAudioOverrideFilePath;
 
-static sds gChannelMapFilePath;
+static char *gChannelMapFilePath;
 
 static PlayerOpts gPlayerOpts;
 
-static sds gSerialDevName;
+static char *gSerialDevName;
 static int gSerialBaudRate = 19200;
 
 static void printSerialEnumPorts(void) {
-    sds *ports = serialEnumPorts();
+    char **ports = serialEnumPorts();
 
     for (int i = 0; i < arrlen(ports); i++) {
         printf("%s\n", ports[i]);
 
-        sdsfree(ports[i]);
+        free(ports[i]);
     }
 
     arrfree(ports);
@@ -97,30 +97,30 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
                 printVersions();
                 return true;
             case 'f':
-                gSequenceFilePath = sdsnew(optarg);
+                gSequenceFilePath = mustStrdup(optarg);
                 break;
             case 'c':
-                gChannelMapFilePath = sdsnew(optarg);
+                gChannelMapFilePath = mustStrdup(optarg);
                 break;
             case 'a':
-                gAudioOverrideFilePath = sdsnew(optarg);
+                gAudioOverrideFilePath = mustStrdup(optarg);
                 break;
             case 'r':
                 gPlayerOpts.frameStepTimeOverrideMs =
-                        (uint8_t) checked_strtol(optarg, 1, UINT8_MAX);
+                        (uint8_t) mustStrtol(optarg, 1, UINT8_MAX);
                 break;
             case 'w':
                 gPlayerOpts.connectionWaitS =
-                        (uint8_t) checked_strtol(optarg, 0, UINT8_MAX);
+                        (uint8_t) mustStrtol(optarg, 0, UINT8_MAX);
                 break;
             case 'p':
                 gPlayerOpts.precomputeFades = true;
                 break;
             case 'd':
-                gSerialDevName = sdsnew(optarg);
+                gSerialDevName = mustStrdup(optarg);
                 break;
             case 'b':
-                gSerialBaudRate = (int) checked_strtol(optarg, 0, INT_MAX);
+                gSerialBaudRate = (int) mustStrtol(optarg, 0, INT_MAX);
                 break;
             case ':':
                 fprintf(stderr, "option is missing argument: %c\n", optopt);
@@ -145,10 +145,10 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
 }
 
 static void freeArgs(void) {
-    sdsfree(gSequenceFilePath);
-    sdsfree(gAudioOverrideFilePath);
-    sdsfree(gChannelMapFilePath);
-    sdsfree(gSerialDevName);
+    free(gSequenceFilePath);
+    free(gAudioOverrideFilePath);
+    free(gChannelMapFilePath);
+    free(gSerialDevName);
 }
 
 int main(const int argc, char **const argv) {

@@ -56,7 +56,7 @@ bool fseqWriteCompressionBlocks(
 #define VAR_HEADER_SIZE 4
 
 static uint16_t fseqGetVarSize(const fseq_var_t var) {
-    return sdslen(var.string) + 1 + VAR_HEADER_SIZE;
+    return strlen(var.string) + 1 + VAR_HEADER_SIZE;
 }
 
 bool fseqWriteVars(FILE *const dst,
@@ -74,18 +74,12 @@ bool fseqWriteVars(FILE *const dst,
         fwrite_type(var.idh, dst);
         fwrite_type(var.idl, dst);
 
-        fwrite(var.string, sdslen(var.string), 1, dst);
+        fwrite(var.string, strlen(var.string), 1, dst);
 
         fputc('\0', dst);
     }
 
     return true;
-}
-
-void fseqVarsFree(fseq_var_t *vars) {
-    for (size_t i = 0; i < arrlenu(vars); i++) sdsfree(vars[i].string);
-
-    arrfree(vars);
 }
 
 void fseqAlignOffsets(struct tf_file_header_t *const header,

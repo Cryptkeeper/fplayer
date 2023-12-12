@@ -2,11 +2,14 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifdef _WIN32
     #include <windows.h>
 #endif
 
+#include "std/string.h"
 #include "time.h"
 
 #define gSampleCount 20
@@ -14,7 +17,7 @@
 static int64_t gSampleNs[gSampleCount];
 static int gLastSampleIdx;
 
-sds sleepGetStatus(void) {
+char *sleepGetStatus(void) {
     double avg = 0;
     int n = 1;
 
@@ -28,7 +31,7 @@ sds sleepGetStatus(void) {
     const double ms = avg / 1e6;
     const double fps = ms > 0 ? 1000 / ms : 0;
 
-    return sdscatprintf(sdsempty(), "%.4fms (%.2f fps)", ms, fps);
+    return dsprintf("%.4fms (%.2f fps)", ms, fps);
 }
 
 static int64_t sleepEstimatedNs(int64_t ns);

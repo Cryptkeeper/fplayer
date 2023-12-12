@@ -3,10 +3,9 @@
 
 #include <stdint.h>
 
-#include "sds.h"
 #include "tinyfseq.h"
 
-void sequenceOpen(const char *filepath, sds *audioFilePath);
+void sequenceOpen(const char *filepath, char **audioFilePath);
 
 struct seq_read_args_t {
     uint32_t startFrame; /* the frame index to begin reading at */

@@ -3,10 +3,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-#include "sds.h"
 #include "stb_ds.h"
 
 #include "std/err.h"
+#include "std/string.h"
 
 struct channel_range_t {
     uint32_t sid;
@@ -16,111 +16,128 @@ struct channel_range_t {
     uint16_t ecircuit;
 };
 
-static sds channelRangeValidate(const struct channel_range_t range) {
+static char *channelRangeValidate(const struct channel_range_t range) {
     const int64_t rid = range.eid - range.sid;
 
     if (rid < 0)
-        return sdscatprintf(sdsempty(),
-                            "start ID (%d, C0) is greater than end ID (%d, C1)",
-                            range.sid, range.eid);
+        return dsprintf("start ID (%d, C0) is greater than end ID (%d, C1)",
+                        range.sid, range.eid);
 
     const int rcircuit = range.ecircuit - range.scircuit;
 
     if (rcircuit < 0)
-        return sdscatprintf(
-                sdsempty(),
+        return dsprintf(
                 "start circuit (%d, C3) is greater than end circuit (%d, C4)",
                 range.scircuit, range.ecircuit);
 
     // LOR values should be 1-indexed
     if (range.unit == 0 || range.scircuit == 0)
-        return sdscatprintf(
-                sdsempty(),
+        return dsprintf(
                 "unit (%d, C2) and start circuit (%d, C3) should be >=1",
                 range.unit, range.scircuit);
 
     if (rid != rcircuit)
-        return sdscatprintf(sdsempty(),
-                            "ID range (%" PRIu64 " values) must be equal in "
-                            "length to circuit range (%d values)",
-                            rid, rcircuit);
+        return dsprintf("ID range (%" PRIu64 " values) must be equal in "
+                        "length to circuit range (%d values)",
+                        rid, rcircuit);
 
     return NULL;
 }
 
-static struct channel_range_t *gRanges;
+static bool channelMapParseCSVRow(const int line,
+                                  const char *const row,
+                                  struct channel_range_t *const range) {
+    char *const str = mustStrdup(row);
+    char *last;
 
-static void channelMapParseCSV(const char *const b) {
-    const sds buf = sdsnew(b);
+    for (int col = 0; col < 5; col++) {
+        const char *v = col == 0 ? strtok_r(str, ",", &last)
+                                 : strtok_r(NULL, ",", &last);
 
-    int nRows = 0;
-    sds *rows = sdssplitlen(buf, sdslen(buf), "\n", 1, &nRows);
-
-    sdsfree(buf);
-
-    int ignoredRows = 0;
-
-    for (int i = 0; i < nRows; i++) {
-        const sds row = rows[i];
-
-        // ignoring empty new lines
-        if (sdslen(row) == 0) continue;
-
-        // ignore comment lines beginning with '#'
-        if (row[0] == '#') continue;
-
-        int nCols = 0;
-        sds *cols = sdssplitlen(row, sdslen(row), ",", 1, &nCols);
-
-        if (nCols != 5) {
+        if (v == NULL || strlen(v) == 0) {
             fprintf(stderr,
-                    "invalid channel map entry L%d: `%s`, requires 5 "
-                    "comma-seperated values\n",
-                    i, row);
+                    "invalid channel map entry L%d: `%s`, missing/empty value "
+                    "at C%d\n",
+                    line, row, col);
 
-            ignoredRows++;
+            free(str);
 
-            goto continue_free;
+            return false;
         }
 
-        for (int j = 0; j < nCols; j++) {
-            if (sdslen(cols[j]) == 0) {
-                fprintf(stderr, "empty channel map entry column L%d: C%d\n", i,
-                        j);
-
-                ignoredRows++;
-
-                goto continue_free;
-            }
+        switch (col) {
+            case 0:
+                range->sid = (uint32_t) mustStrtol(v, 0, UINT32_MAX);
+                break;
+            case 1:
+                range->eid = (uint32_t) mustStrtol(v, 0, UINT32_MAX);
+                break;
+            case 2:
+                range->unit = (uint8_t) mustStrtol(v, 0, UINT8_MAX);
+                break;
+            case 3:
+                range->scircuit = (uint16_t) mustStrtol(v, 0, UINT16_MAX);
+                break;
+            case 4:
+                range->ecircuit = (uint16_t) mustStrtol(v, 0, UINT16_MAX);
+            default:
+                break;
         }
-
-        const struct channel_range_t cr = {
-                .sid = (uint32_t) checked_strtol(cols[0], 0, UINT32_MAX),
-                .eid = (uint32_t) checked_strtol(cols[1], 0, UINT32_MAX),
-                .unit = (uint8_t) checked_strtol(cols[2], 0, UINT8_MAX),
-                .scircuit = (uint16_t) checked_strtol(cols[3], 0, UINT16_MAX),
-                .ecircuit = (uint16_t) checked_strtol(cols[4], 0, UINT16_MAX),
-        };
-
-        const sds error = channelRangeValidate(cr);
-
-        if (error != NULL) {
-            fprintf(stderr, "unmappable channel range L%d: %s\n", i, error);
-
-            sdsfree(error);
-
-            ignoredRows++;
-
-            goto continue_free;
-        }
-
-        arrput(gRanges, cr);
-
-    continue_free:
-        sdsfreesplitres(cols, nCols);
     }
 
-    sdsfreesplitres(rows, nRows);
+    free(str);
+
+    return true;
+}
+
+static struct channel_range_t *gRanges;
+
+enum cmap_parse_result_t { CMAP_PARSE_OK, CMAP_PARSE_EMPTY, CMAP_PARSE_ERROR };
+
+static enum cmap_parse_result_t channelMapParseCSVLine(const int line,
+                                                       const char *const row) {
+    // ignoring empty new lines
+    if (strlen(row) == 0) return CMAP_PARSE_EMPTY;
+
+    // ignore comment lines beginning with '#'
+    if (row[0] == '#') return CMAP_PARSE_EMPTY;
+
+    struct channel_range_t cr;
+    if (!channelMapParseCSVRow(line, row, &cr)) return CMAP_PARSE_ERROR;
+
+    char *const error = channelRangeValidate(cr);
+
+    if (error != NULL) {
+        fprintf(stderr, "unmappable channel range L%d: %s\n", line, error);
+        free(error);
+
+        return CMAP_PARSE_ERROR;
+    }
+
+    arrput(gRanges, cr);
+
+    return CMAP_PARSE_OK;
+}
+
+static void channelMapParseCSV(const char *const b) {
+    char *const str = mustStrdup(b);
+    char *last;
+
+    int ignoredRows = 0;
+    int line = 0;
+
+    for (const char *row = strtok_r(str, "\n", &last); row != NULL;
+         row = strtok_r(NULL, "\n", &last)) {
+
+        const enum cmap_parse_result_t result =
+                channelMapParseCSVLine(line, row);
+
+        if (result == CMAP_PARSE_ERROR) ignoredRows++;
+
+        line++;
+    }
+
+    free(str);
 
     printf("configured %d valid channel map %s\n", (int) arrlen(gRanges),
            arrlen(gRanges) == 1 ? "entry" : "entries");
@@ -142,13 +159,12 @@ void channelMapInit(const char *const filepath) {
 
     rewind(f);
 
-    char *const b = checked_malloc(filesize + 1);
+    char *const b = mustMalloc(filesize + 1);
 
     if (fread(b, 1, filesize, f) != (size_t) filesize) fatalf(E_FIO, NULL);
 
     fclose(f);
 
-    // manually NULL terminate string to avoid safety depending solely on sds
     b[filesize] = '\0';
 
     channelMapParseCSV(b);

@@ -2,6 +2,8 @@
 
 #include <stddef.h>
 
+#include "std/string.h"
+
 netstat_t gNSPackets = 0;
 netstat_t gNSFades = 0;
 netstat_t gNSSaved = 0;
@@ -27,16 +29,14 @@ static float nsGetCompressionRatio(const netstat_t saved,
     return (float) saved / (float) (saved + size);
 }
 
-sds nsGetStatus(void) {
+char *nsGetStatus(void) {
     const float kb = (float) gNSWritten / 1024.0F;
 
     const float cr = nsGetCompressionRatio(gNSSaved, gNSWritten);
 
-    const sds str =
-            sdscatprintf(sdsempty(),
-                         "%.03f KB/s\tfades: %" PRInetstat
-                         "\tpackets: %" PRInetstat "\tcompressed: %.02f",
-                         kb, gNSFades, gNSPackets, cr);
+    char *const msg = dsprintf("%.03f KB/s\tfades: %" PRInetstat
+                               "\tpackets: %" PRInetstat "\tcompressed: %.02f",
+                               kb, gNSFades, gNSPackets, cr);
 
     for (int i = 0; i < gStatsCount; i++) {
         netstat_t *const last = gStats[i][0];
@@ -47,14 +47,13 @@ sds nsGetStatus(void) {
         *last = 0;
     }
 
-    return str;
+    return msg;
 }
 
-sds nsGetSummary(void) {
+char *nsGetSummary(void) {
     const float cr = nsGetCompressionRatio(gNSSavedSum, gNSWrittenSum);
 
-    return sdscatprintf(sdsempty(),
-                        "transferred %" PRInetstat " bytes via %" PRInetstat
-                        " packets, saved %" PRInetstat " bytes (%.0f%%)",
-                        gNSWrittenSum, gNSPacketsSum, gNSSavedSum, cr * 100);
+    return dsprintf("transferred %" PRInetstat " bytes via %" PRInetstat
+                    " packets, saved %" PRInetstat " bytes (%.0f%%)",
+                    gNSWrittenSum, gNSPacketsSum, gNSSavedSum, cr * 100);
 }

@@ -4,8 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "sds.h"
-
 void serialInit(const char *devName, int baudRate);
 
 void serialWrite(const uint8_t *b, size_t size);
@@ -21,6 +19,6 @@ void serialWriteFrame(const uint8_t *frameData,
 
 void serialExit(void);
 
-sds *serialEnumPorts(void);
+char **serialEnumPorts(void);
 
 #endif//FPLAYER_SERIAL_H

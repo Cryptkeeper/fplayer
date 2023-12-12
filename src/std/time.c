@@ -1,5 +1,7 @@
 #include "time.h"
 
+#include "std/string.h"
+
 #ifdef _WIN32
     #include <windows.h>
 #endif
@@ -32,9 +34,9 @@ int64_t timeElapsedNs(const timeInstant start, const timeInstant end) {
            (end.tv_nsec - start.tv_nsec);
 }
 
-sds timeElapsedString(const timeInstant start, const timeInstant end) {
+char *timeElapsedString(const timeInstant start, const timeInstant end) {
     const int64_t diff = timeElapsedNs(start, end);
     const float ms = (float) diff / (float) 1e6;
 
-    return sdscatprintf(sdsempty(), ms >= 1 ? "%.1fms" : "%.3fms", ms);
+    return dsprintf(ms >= 1 ? "%.1fms" : "%.3fms", ms);
 }

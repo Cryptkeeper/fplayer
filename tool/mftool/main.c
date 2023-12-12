@@ -7,9 +7,9 @@
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
 
-#include "sds.h"
 #include "std/err.h"
 #include "std/fseq.h"
+#include "std/string.h"
 
 static void fseqCopyConfigBlocks(FILE *const dst,
                                  const struct tf_file_header_t header,
@@ -17,7 +17,7 @@ static void fseqCopyConfigBlocks(FILE *const dst,
     const uint16_t size =
             header.compressionBlockCount * 8 + header.channelRangeCount * 6;
 
-    uint8_t *const b = checked_malloc(size);
+    uint8_t *const b = mustMalloc(size);
 
     if (fread(b, size, 1, src) != 1)
         fatalf(E_FIO, "error reading config blocks\n");
@@ -30,7 +30,7 @@ static void fseqCopyConfigBlocks(FILE *const dst,
 #define CD_CHUNK_SIZE 4096
 
 static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
-    uint8_t *const chunk = checked_malloc(CD_CHUNK_SIZE);
+    uint8_t *const chunk = mustMalloc(CD_CHUNK_SIZE);
 
     uint32_t copied = 0;
 
@@ -50,8 +50,9 @@ static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
     return copied;
 }
 
-static void
-fseqOpen(const sds fp, FILE **fd, struct tf_file_header_t *const header) {
+static void fseqOpen(const char *const fp,
+                     FILE **fd,
+                     struct tf_file_header_t *const header) {
     FILE *const f = *fd = fopen(fp, "rb");
 
     if (f == NULL) fatalf(E_FIO, "error opening file `%s`\n", fp);
@@ -70,8 +71,9 @@ fseqOpen(const sds fp, FILE **fd, struct tf_file_header_t *const header) {
                header->majorVersion, header->minorVersion);
 }
 
-static void
-fseqCopySetVars(const sds sfp, const sds dfp, const fseq_var_t *const vars) {
+static void fseqCopySetVars(const char *const sfp,
+                            const char *const dfp,
+                            const fseq_var_t *const vars) {
     FILE *src;
     struct tf_file_header_t original;
 
@@ -105,7 +107,7 @@ fseqCopySetVars(const sds sfp, const sds dfp, const fseq_var_t *const vars) {
 
 #define VAR_HEADER_SIZE 4
 
-static fseq_var_t *fseqReadVars(const sds fp) {
+static fseq_var_t *fseqReadVars(const char *const fp) {
     FILE *src;
     struct tf_file_header_t header;
 
@@ -118,12 +120,10 @@ static fseq_var_t *fseqReadVars(const sds fp) {
 
     assert(varDataSize > VAR_HEADER_SIZE);
 
-    uint8_t *const varData = checked_malloc(varDataSize);
+    uint8_t *const varData = mustMalloc(varDataSize);
 
     if (fread(varData, varDataSize, 1, src) != 1)
-        fatalf(E_FIO, sdscatprintf(sdsempty(),
-                                   "error reading var data blob (%d bytes)",
-                                   varDataSize));
+        fatalf(E_FIO, "error reading var data blob (%d bytes)", varDataSize);
 
     uint16_t pos = 0;
     fseq_var_t *vars = NULL;
@@ -132,18 +132,24 @@ static fseq_var_t *fseqReadVars(const sds fp) {
     // 0-length values could be technically supported?
     while (pos < varDataSize - VAR_HEADER_SIZE) {
         // only valid until `pos` is modified at end of block
-        uint8_t *head = &varData[pos];
+        const uint8_t *head = &varData[pos];
 
         const uint16_t varSize = ((uint16_t *) head)[0];
-        const int32_t varLen = varSize - VAR_HEADER_SIZE;
+        const int32_t varLen = (int32_t) varSize - VAR_HEADER_SIZE;
 
         assert(varLen > 0);
 
-        // let sds do the dirty work of reading and terminating the string
+        // size includes 4-byte structure, manually offset
+        char *const varString = mustMalloc(varLen);
+
+        // ensures string is NULL terminated and can truncate if necessary
+        memcpy(varString, &head[4], varLen - 1);
+        varString[varLen - 1] = '\0';
+
         const fseq_var_t var = {
                 .idh = head[2],
                 .idl = head[3],
-                .string = sdsnewlen(&head[4], varLen),
+                .string = varString,
         };
 
         arrput(vars, var);
@@ -166,9 +172,9 @@ static void printUsage(void) {
            "(copies file)\n");
 }
 
-static void renamePair(const sds sfp, const sds dfp) {
+static void renamePair(const char *const sfp, const char *const dfp) {
     // rename files to swap them
-    const sds nsfp = sdscatprintf(sdsempty(), "%s.orig", sfp);
+    char *const nsfp = dsprintf("%s.orig", sfp);
 
     if (rename(sfp, nsfp) != 0)
         fatalf(E_SYS, "error renaming `%s` -> `%s`\n", sfp,
@@ -180,7 +186,7 @@ static void renamePair(const sds sfp, const sds dfp) {
 
     printf("renamed `%s` to `%s`\n", sfp, nsfp);
 
-    sdsfree(nsfp);
+    free(nsfp);
 }
 
 int main(const int argc, char **const argv) {
@@ -191,8 +197,8 @@ int main(const int argc, char **const argv) {
         return 0;
     }
 
-    const sds sfp = sdsnew(argv[1]); /* source file path */
-    sds dfp = NULL;                  /* destination file path (source + .tmp) */
+    const char *const sfp = argv[1]; /* source file path */
+    char *dfp = NULL;                /* destination file path (source + .tmp) */
 
     fseq_var_t *vars = fseqReadVars(sfp);
 
@@ -208,7 +214,7 @@ int main(const int argc, char **const argv) {
     }
 
     // init optional args
-    dfp = sdscatprintf(sdsempty(), "%s.tmp", sfp);
+    dfp = dsprintf("%s.tmp", sfp);
 
     // try to find a matching `mf` var to update
     for (ssize_t i = 0; i < arrlen(vars); i++) {
@@ -217,8 +223,8 @@ int main(const int argc, char **const argv) {
         if (var->idh != 'm' || var->idl != 'f') continue;
 
         // overwrite previous decoded string value
-        sdsfree(var->string);
-        var->string = sdsnew(argv[2]);
+        free(var->string);
+        var->string = mustStrdup(argv[2]);
 
         goto do_copy;
     }
@@ -227,21 +233,22 @@ int main(const int argc, char **const argv) {
     const fseq_var_t new = {
             .idh = 'm',
             .idl = 'f',
-            .string = sdsnew(argv[2]),
+            .string = mustStrdup(argv[2]),
     };
 
     arrput(vars, new);
 
 do_copy:
     fseqCopySetVars(sfp, dfp, vars);
-
     renamePair(sfp, dfp);
 
 exit:
-    sdsfree(sfp);
-    sdsfree(dfp);
+    free(dfp);
 
-    fseqVarsFree(vars);
+    // free any allocated variable string values
+    for (ssize_t i = 0; i < arrlen(vars); i++) free(vars[i].string);
+
+    arrfree(vars);
 
     return 0;
 }

@@ -4,6 +4,3 @@
 [submodule "liblightorama"]
 	path = dep/liblightorama
 	url = git@github.com:Cryptkeeper/liblightorama.git
-[submodule "sds"]
-	path = dep/sds
-	url = git@github.com:antirez/sds.git

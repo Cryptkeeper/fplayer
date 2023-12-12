@@ -44,6 +44,13 @@ jobs:
             valgrind --leak-check=full --error-exitcode=1 ./build/gentool -o test_${fps}fps.fseq -f ${fps} -d 300 -b 0
           done
 
+      - name: Test variable editing
+        run: |
+          valgrind --leak-check=full --error-exitcode=1 ./build/mftool test_25fps.fseq
+          valgrind --leak-check=full --error-exitcode=1 ./build/mftool test_25fps.fseq "test_variable.mp3"
+          valgrind --leak-check=full --error-exitcode=1 ./build/mftool test_25fps.fseq.orig
+          valgrind --leak-check=full --error-exitcode=1 ./build/mftool test_25fps.fseq
+
       - name: Run generated sequences (compressed)
         run: |
           for fps in 25 40 60 120

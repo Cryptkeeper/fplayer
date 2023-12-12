@@ -152,7 +152,7 @@ static bool precomputeHandleNextFrame(FramePump *const pump) {
     const bool hasPrevFrame = gLastFrameData != NULL;
 
     if (gLastFrameData == NULL) {
-        gLastFrameData = checked_malloc(frameSize);
+        gLastFrameData = mustMalloc(frameSize);
 
         // zero out the array to represent all existing intensity values as off
         memset(gLastFrameData, 0, frameSize);
@@ -194,11 +194,10 @@ void precomputeRun(const char *const fp) {
     const timeInstant start = timeGetNow();
 
     if (fadeTableLoadCache(fp)) {
-        const sds time = timeElapsedString(start, timeGetNow());
+        char *const time = timeElapsedString(start, timeGetNow());
 
         printf("loaded precomputed cache file: %s in %s\n", fp, time);
-
-        sdsfree(time);
+        free(time);
 
         return;
     }
@@ -221,12 +220,12 @@ void precomputeRun(const char *const fp) {
 
     framePumpFree(&pump);
 
-    const sds time = timeElapsedString(start, timeGetNow());
+    char *const time = timeElapsedString(start, timeGetNow());
 
     printf("identified %d fade events (%d variants) in %s\n", gFadesGenerated,
            fadeTableSize(), time);
 
-    sdsfree(time);
+    free(time);
 
     if (fadeTableCache(fp)) {
         printf("saved precompute cache: %s\n", fp);

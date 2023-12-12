@@ -18,11 +18,10 @@ set(PEDANTIC_COMPILER_FLAGS "-Wall -Werror -Wextra -Wno-unused-value -pedantic")
 add_subdirectory(dep/liblightorama)
 
 file(GLOB_RECURSE COMMON_FILES "common/std/*.[ch]")
-file(GLOB_RECURSE SDS_FILES "dep/sds/*.c")
 
-add_library(common STATIC ${COMMON_FILES} ${SDS_FILES})
+add_library(common STATIC ${COMMON_FILES})
 
-target_include_directories(common PUBLIC "dep/libtinyfseq" "dep/sds" "dep/stb")
+target_include_directories(common PUBLIC "dep/libtinyfseq" "dep/stb")
 
 option(BUILD_MFTOOL "enable building mftool executable" true)
 
@@ -68,3 +67,11 @@ endif ()
 # zstd
 target_link_libraries(fplayer zstd)
 target_link_libraries(gentool zstd)
+
+# Testing
+add_executable(test_dsprintf test/dsprintf.c)
+
+target_include_directories(test_dsprintf PRIVATE common)
+target_link_libraries(test_dsprintf common)
+
+add_test(NAME dsprintf COMMAND test_dsprintf)

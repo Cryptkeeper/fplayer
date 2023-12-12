@@ -8,7 +8,6 @@
 #include <zstd.h>
 
 #include "lightorama/intensity.h"
-#include "sds.h"
 #include "std/err.h"
 #include "std/fseq.h"
 
@@ -21,7 +20,7 @@ static fseq_var_t *fseqCreateProgramVars(void) {
     const fseq_var_t sequenceProducer = {
             .idh = 's',
             .idl = 'p',
-            .string = sdsnew("fplayer/gentool"),
+            .string = "fplayer/gentool",
     };
 
     arrpush(vars, sequenceProducer);
@@ -29,7 +28,7 @@ static fseq_var_t *fseqCreateProgramVars(void) {
     const fseq_var_t generationMode = {
             .idh = 'g',
             .idl = 'm',
-            .string = sdsnew("intensity_oscillator_ramp_vendor"),
+            .string = "intensity_oscillator_ramp_vendor",
     };
 
     arrpush(vars, generationMode);
@@ -59,7 +58,7 @@ static void *compressZstd(const char *const src,
                           const size_t srcSize,
                           size_t *const dstSize) {
     const size_t dstCapacity = ZSTD_compressBound(srcSize);
-    void *const dst = checked_malloc(dstCapacity);
+    void *const dst = mustMalloc(dstCapacity);
 
     const int compressionLevel = 1;
 
@@ -81,7 +80,7 @@ static void generateChannelDataUncompressed(FILE *const dst,
                                             const uint32_t channelCount) {
     // generate each individual frame
     // all channels are set to the same value for each frame via a memory block
-    uint8_t *const channelData = checked_malloc(channelCount);
+    uint8_t *const channelData = mustMalloc(channelCount);
 
     for (uint32_t frame = 0; frame <= frameCount; frame++) {
         memset(channelData, intensityOscillatorRampVendorNext(), channelCount);
@@ -112,7 +111,7 @@ generateChannelData(FILE *const dst,
 
         // allocate a single block of channel data memory that will be compressed
         const size_t channelDataSize = framesPerBlock * channelCount;
-        uint8_t *const channelData = checked_malloc(channelDataSize);
+        uint8_t *const channelData = mustMalloc(channelDataSize);
 
         // generate each frame, all channels are set to the same value per frame
         uint32_t remainingFrameCount = frameCount;
@@ -174,7 +173,7 @@ static void printUsage(void) {
 }
 
 int main(const int argc, char **const argv) {
-    sds outputPath = NULL;
+    char *outputPath = NULL;
     uint16_t fps = 25;
     uint32_t channelCount = 16;
     uint32_t frameCount = 250;
@@ -188,26 +187,26 @@ int main(const int argc, char **const argv) {
                 return 0;
 
             case 'o':
-                outputPath = sdsnew(optarg);
+                outputPath = mustStrdup(optarg);
                 break;
 
             case 'f':
                 // minimum 4 FPS = 250ms sleep time (stored in uint8_t, <= 255)
                 // maximum 1000 FPS = 1ms sleep time
-                fps = (uint16_t) checked_strtol(optarg, 4, 1000);
+                fps = (uint16_t) mustStrtol(optarg, 4, 1000);
                 break;
 
             case 'c':
-                channelCount = (uint32_t) checked_strtol(optarg, 1, UINT32_MAX);
+                channelCount = (uint32_t) mustStrtol(optarg, 1, UINT32_MAX);
                 break;
 
             case 'd':
-                frameCount = (uint32_t) checked_strtol(optarg, 1, UINT32_MAX);
+                frameCount = (uint32_t) mustStrtol(optarg, 1, UINT32_MAX);
                 break;
 
             case 'b':
                 compressionBlockCount =
-                        (uint8_t) checked_strtol(optarg, 1, UINT8_MAX);
+                        (uint8_t) mustStrtol(optarg, 1, UINT8_MAX);
                 break;
 
             case ':':
@@ -222,7 +221,7 @@ int main(const int argc, char **const argv) {
     }
 
     // avoid allocating a default value until potential early exit checks are done
-    if (outputPath == NULL) outputPath = sdsnew("generated.fseq");
+    if (outputPath == NULL) outputPath = mustStrdup("generated.fseq");
 
     FILE *const f = fopen(outputPath, "wb");
 
@@ -245,7 +244,7 @@ int main(const int argc, char **const argv) {
             .compressionBlockCount = compressionBlockCount,
     };
 
-    fseq_var_t *const vars = fseqCreateProgramVars();
+    fseq_var_t *vars = fseqCreateProgramVars();
 
     fseqAlignOffsets(&header, vars);
 
@@ -270,12 +269,12 @@ int main(const int argc, char **const argv) {
 
     fseqWriteVars(f, header, vars);
 
-    fseqVarsFree(vars);
-
     // done writing file
+    arrfree(vars);
+
     fclose(f);
 
-    sdsfree(outputPath);
+    free(outputPath);
 
     return 0;
 }

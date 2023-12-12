@@ -4,8 +4,8 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "sds.h"
 #include "tinyfseq.h"
 
 #include "std/err.h"
@@ -19,7 +19,7 @@ static struct tf_file_header_t gPlaying;
 #define VAR_HEADER_SIZE    4
 #define MAX_VAR_VALUE_SIZE 512
 
-static sds sequenceLoadAudioFilePath(void) {
+static char *sequenceLoadAudioFilePath(void) {
     const uint16_t varDataSize =
             gPlaying.channelDataOffset - gPlaying.variableDataOffset;
 
@@ -28,7 +28,7 @@ static sds sequenceLoadAudioFilePath(void) {
     if (fseek(gFile, gPlaying.variableDataOffset, SEEK_SET) < 0)
         fatalf(E_FIO, NULL);
 
-    uint8_t *varTable = checked_malloc(varDataSize);
+    uint8_t *varTable = mustMalloc(varDataSize);
 
     if (fread(varTable, 1, varDataSize, gFile) != varDataSize)
         fatalf(E_FIO, NULL);
@@ -40,9 +40,9 @@ static sds sequenceLoadAudioFilePath(void) {
 
     uint8_t *readIdx = &varTable[0];
 
-    void *varData = checked_malloc(MAX_VAR_VALUE_SIZE);
+    void *varData = mustMalloc(MAX_VAR_VALUE_SIZE);
 
-    sds audioFilePath = NULL;
+    char *audioFilePath = NULL;
 
     for (int remaining = varDataSize; remaining > VAR_HEADER_SIZE;) {
         if ((err = tf_read_var_header(readIdx, remaining, &varHeader, varData,
@@ -50,19 +50,22 @@ static sds sequenceLoadAudioFilePath(void) {
             fatalf(E_APP, "error parsing sequence variable: %s\n",
                    tf_err_str(err));
 
-        // ensure the variable string value is null terminated
         // size includes 4-byte structure, manually offset
-        const sds varString =
-                sdsnewlen(varData, varHeader.size - VAR_HEADER_SIZE);
+        const size_t varLen = varHeader.size - VAR_HEADER_SIZE;
+        char *const varString = mustMalloc(varLen);
+
+        // ensures string is NULL terminated and can truncate if necessary
+        memcpy(varString, varData, varLen - 1);
+        varString[varLen - 1] = '\0';
 
         printf("var '%c%c': %s\n", varHeader.id[0], varHeader.id[1], varString);
 
         // mf = Media File variable, contains audio filepath
         // caller is responsible for freeing `audioFilePath` copy return
         if (varHeader.id[0] == 'm' && varHeader.id[1] == 'f')
-            if (audioFilePath == NULL) audioFilePath = sdsdup(varString);
+            if (audioFilePath == NULL) audioFilePath = mustStrdup(varString);
 
-        sdsfree(varString);
+        free(varString);
 
         remaining -= varHeader.size;
     }
@@ -75,7 +78,7 @@ static sds sequenceLoadAudioFilePath(void) {
 
 #define FSEQ_HEADER_SIZE 32
 
-void sequenceOpen(const char *const filepath, sds *const audioFilePath) {
+void sequenceOpen(const char *const filepath, char **const audioFilePath) {
     FILE *const f = gFile = fopen(filepath, "rb");
 
     if (f == NULL) fatalf(E_FIO, "error opening sequence: %s\n", filepath);

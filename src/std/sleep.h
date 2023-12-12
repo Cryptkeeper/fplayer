@@ -3,9 +3,7 @@
 
 #include <stdbool.h>
 
-#include "sds.h"
-
-sds sleepGetStatus(void);
+char *sleepGetStatus(void);
 
 void sleepTimerLoop(long intervalMillis, bool (*sleep)(void));
 

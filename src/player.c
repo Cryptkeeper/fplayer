@@ -13,6 +13,7 @@
 #include "serial.h"
 #include "std/err.h"
 #include "std/sleep.h"
+#include "std/string.h"
 #include "std/time.h"
 #include "transform/netstats.h"
 #include "transform/precompute.h"
@@ -67,12 +68,11 @@ static void playerPlayFirstAudioFile(const char *const override,
     }
 }
 
-static sds playerGetRemaining(void) {
+static char *playerGetRemaining(void) {
     const uint32_t framesRemaining = sequenceData()->frameCount - gNextFrame;
     const long seconds = framesRemaining / sequenceFPS();
 
-    return sdscatprintf(sdsempty(), "%02ldm %02lds", seconds / 60,
-                        seconds % 60);
+    return dsprintf("%02ldm %02lds", seconds / 60, seconds % 60);
 }
 
 static void playerLogStatus(void) {
@@ -84,16 +84,16 @@ static void playerLogStatus(void) {
 
     gLastLog = now;
 
-    const sds remaining = playerGetRemaining();
-    const sds sleep = sleepGetStatus();
-    const sds netstats = nsGetStatus();
+    char *const remaining = playerGetRemaining();
+    char *const sleep = sleepGetStatus();
+    char *const netstats = nsGetStatus();
 
     printf("remaining: %s\tdt: %s\tpump: %4d\t%s\n", remaining, sleep,
            framePumpGetRemaining(&gFramePump), netstats);
 
-    sdsfree(remaining);
-    sdsfree(sleep);
-    sdsfree(netstats);
+    free(remaining);
+    free(sleep);
+    free(netstats);
 }
 
 static bool playerHandleNextFrame(void) {
@@ -102,7 +102,7 @@ static bool playerHandleNextFrame(void) {
     const uint32_t frameSize = sequenceData()->channelCount;
 
     if (gLastFrameData == NULL) {
-        gLastFrameData = checked_malloc(frameSize);
+        gLastFrameData = mustMalloc(frameSize);
 
         // zero out the array to represent all existing intensity values as off
         memset(gLastFrameData, 0, frameSize);
@@ -142,11 +142,10 @@ static void playerStartPlayback(void) {
     printf("end of sequence!\n");
 
     // print closing remarks
-    const sds netstats = nsGetSummary();
+    char *const netstats = nsGetSummary();
 
     printf("%s\n", netstats);
-
-    sdsfree(netstats);
+    free(netstats);
 }
 
 static void playerFree(void) {
@@ -159,25 +158,24 @@ static void playerFree(void) {
 void playerRun(const char *const sequenceFilePath,
                const char *const audioOverrideFilePath,
                const PlayerOpts opts) {
-    sds audioFilePath = NULL;
+    char *audioFilePath = NULL;
     sequenceOpen(sequenceFilePath, &audioFilePath);
 
     comBlocksInit();
 
     if (opts.precomputeFades) {
-        const sds cacheFilePath =
-                sdscatprintf(sdsempty(), "%s.pcf", sequenceFilePath);
+        char *const cacheFilePath = dsprintf("%s.pcf", sequenceFilePath);
 
         // load existing data or precompute and save new data
         precomputeRun(cacheFilePath);
 
-        sdsfree(cacheFilePath);
+        free(cacheFilePath);
     }
 
     playerWaitForConnection(opts.connectionWaitS);
     playerPlayFirstAudioFile(audioOverrideFilePath, audioFilePath);
 
-    sdsfree(audioFilePath);// only needed to init playback
+    free(audioFilePath);// only needed to init playback
 
     // optionally override the sequence's playback rate with the CLI's value
     if (opts.frameStepTimeOverrideMs > 0)

@@ -25,7 +25,7 @@ static void comBlocksLoadAddrs(void) {
 
     const int size = nBlocks * COMPRESSION_BLOCK_SIZE;
 
-    uint8_t *const b = checked_malloc(size);
+    uint8_t *const b = mustMalloc(size);
 
     // fseq header is fixed to 32 bytes, followed by compression block array
     sequenceRead(32, COMPRESSION_BLOCK_SIZE * nBlocks, b);
@@ -71,10 +71,10 @@ static uint8_t **comBlockGetZstd(const int index) {
     const ComBlock comBlock = gBlocks[index];
 
     const size_t dInSize = comBlock.size;
-    void *dIn = checked_malloc(dInSize);
+    void *dIn = mustMalloc(dInSize);
 
     const size_t dOutSize = ZSTD_DStreamOutSize();
-    void *dOut = checked_malloc(dOutSize);
+    void *dOut = mustMalloc(dOutSize);
 
     ZSTD_DCtx *ctx = ZSTD_createDCtx();
     if (ctx == NULL) fatalf(E_SYS, NULL);
@@ -117,7 +117,7 @@ static uint8_t **comBlockGetZstd(const int index) {
         // they are appended to a central, ordered table for playback
         // this enables fplayer to free decompressed frame blocks as they are played
         for (uint32_t i = 0; i < out.pos / frameSize; i++) {
-            uint8_t *const frame = checked_malloc(frameSize);
+            uint8_t *const frame = mustMalloc(frameSize);
             const uint8_t *const src = &((uint8_t *) dOut)[i * frameSize];
 
             memcpy(frame, src, frameSize);

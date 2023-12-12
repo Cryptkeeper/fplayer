@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include <string.h>
 
 #include <libserialport.h>
 
@@ -153,20 +152,18 @@ void serialExit(void) {
     gPort = NULL;
 }
 
-sds *serialEnumPorts(void) {
+char **serialEnumPorts(void) {
     struct sp_port **pl;
 
     spTry(sp_list_ports(&pl));
+    // FIXME: exit if sp query fails
 
-    sds *ports = NULL;
+    char **ports = NULL;
 
     // https://github.com/martinling/libserialport/blob/master/examples/list_ports.c#L28
     for (int i = 0; pl[i] != NULL; i++) {
-        const struct sp_port *const port = pl[i];
-
-        const sds name = sdsnew(sp_get_port_name(port));
-
-        arrput(ports, name);
+        char *portName = mustStrdup(sp_get_port_name(pl[i]));
+        arrpush(ports, portName);
     }
 
     sp_free_port_list(pl);

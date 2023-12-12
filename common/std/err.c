@@ -53,7 +53,7 @@ void fatalf(const enum err_t err, const char *const format, ...) {
     exit(1);
 }
 
-void *checked_malloc(const size_t size) {
+void *mustMalloc(const size_t size) {
     void *const ptr = malloc(size);
 
     assert(ptr != NULL);
@@ -62,7 +62,7 @@ void *checked_malloc(const size_t size) {
     return ptr;
 }
 
-long checked_strtol(const char *const str, const long min, const long max) {
+long mustStrtol(const char *const str, const long min, const long max) {
     char *endptr = NULL;
 
     errno = 0;
@@ -73,4 +73,13 @@ long checked_strtol(const char *const str, const long min, const long max) {
         fatalf(E_APP, "error parsing '%s' as an integer\n", str);
 
     return parsed < min ? min : parsed > max ? max : parsed;
+}
+
+char *mustStrdup(const char *str) {
+    char *const ptr = strdup(str);
+
+    assert(ptr != NULL);
+    if (ptr == NULL) fatalf(E_SYS, "error duplicating string\n");
+
+    return ptr;
 }
