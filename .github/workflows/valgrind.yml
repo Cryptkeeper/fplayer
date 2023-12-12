@@ -46,10 +46,14 @@ jobs:
 
       - name: Test variable editing
         run: |
+          # set variable, print full tables after to prove changes
           valgrind --leak-check=full --error-exitcode=1 ./build/mftool test_25fps.fseq
           valgrind --leak-check=full --error-exitcode=1 ./build/mftool test_25fps.fseq "test_variable.mp3"
           valgrind --leak-check=full --error-exitcode=1 ./build/mftool test_25fps.fseq.orig
           valgrind --leak-check=full --error-exitcode=1 ./build/mftool test_25fps.fseq
+
+          # restore original/unmodified version
+          mv test_25fps.fseq.org test_25fps.fseq
 
       - name: Run generated sequences (compressed)
         run: |
