@@ -32,6 +32,10 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: ctest -C ${{env.BUILD_TYPE}}
 
+      - name: Test help menu
+        run: |
+          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -h
+
       - name: Test channel map
         run: |
           valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -t channels.csv
