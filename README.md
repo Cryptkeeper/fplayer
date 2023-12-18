@@ -25,7 +25,6 @@ Options:
 
 [CLI]
 	-t <file>		Test load channel map and exit
-	-i			Print audio playback errors instead of exiting
 	-l			Print available serial port list and exit
 	-h			Print this message and exit
 	-v			Print library versions and exit
