@@ -36,6 +36,10 @@ jobs:
         run: |
           valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -h
 
+      - name: Test serial port list
+        run: |
+          valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -l
+
       - name: Test channel map
         run: |
           valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -t channels.csv
