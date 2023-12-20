@@ -95,13 +95,13 @@ static void generateChannelDataUncompressed(FILE *const dst,
     free(channelData);
 }
 
-static struct tf_compression_block_t *
+static TFCompressionBlock *
 generateChannelData(FILE *const dst,
                     const uint8_t fps,
                     const uint32_t frameCount,
                     const uint32_t channelCount,
                     const uint8_t compressionBlockCount) {
-    struct tf_compression_block_t *blocks = NULL;
+    TFCompressionBlock *blocks = NULL;
 
     if (compressionBlockCount > 0) {
         // divide frames evenly amongst the block count, adding the total reminder
@@ -140,7 +140,7 @@ generateChannelData(FILE *const dst,
             free(compressedData);
 
             // append a new compression block entry to track the offsets
-            const struct tf_compression_block_t newBlock = {
+            const TFCompressionBlock newBlock = {
                     .firstFrameId = firstFrameId,
                     .size = compressedDataSize,
             };
@@ -233,7 +233,7 @@ int main(const int argc, char **const argv) {
            (float) (channelCount * frameCount) / 1024.0f);
 
     // generate a customized valid header for playback
-    struct tf_file_header_t header = {
+    TFHeader header = {
             .minorVersion = 0,
             .majorVersion = 2,
             .channelCount = channelCount,
@@ -256,7 +256,7 @@ int main(const int argc, char **const argv) {
     //  that need to be encoded directly past the initial header
     fseek(f, header.channelDataOffset, SEEK_SET);
 
-    struct tf_compression_block_t *compressionBlocks = generateChannelData(
+    TFCompressionBlock *compressionBlocks = generateChannelData(
             f, fps, frameCount, channelCount, compressionBlockCount);
 
     assert(arrlenu(compressionBlocks) == compressionBlockCount);

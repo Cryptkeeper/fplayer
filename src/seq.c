@@ -13,9 +13,9 @@
 static FILE *gFile;
 static pthread_mutex_t gFileMutex = PTHREAD_MUTEX_INITIALIZER;
 
-static struct tf_file_header_t gPlaying;
+static TFHeader gPlaying;
 
-// 4 is the packed sizeof(struct tf_var_header_t)
+// 4 is the packed sizeof(TFVarHeader)
 #define VAR_HEADER_SIZE    4
 #define MAX_VAR_VALUE_SIZE 512
 
@@ -35,8 +35,7 @@ static char *sequenceLoadAudioFilePath(void) {
 
     pthread_mutex_unlock(&gFileMutex);
 
-    struct tf_var_header_t varHeader;
-    enum tf_err_t err;
+    TFVarHeader varHeader;
 
     uint8_t *readIdx = &varTable[0];
 
@@ -45,10 +44,11 @@ static char *sequenceLoadAudioFilePath(void) {
     char *audioFilePath = NULL;
 
     for (int remaining = varDataSize; remaining > VAR_HEADER_SIZE;) {
-        if ((err = tf_read_var_header(readIdx, remaining, &varHeader, varData,
-                                      MAX_VAR_VALUE_SIZE, &readIdx)) != TF_OK)
+        TFError err;
+        if ((err = TFVarHeader_read(readIdx, remaining, &varHeader, varData,
+                                    MAX_VAR_VALUE_SIZE, &readIdx)))
             fatalf(E_APP, "error parsing sequence variable: %s\n",
-                   tf_err_str(err));
+                   TFError_string(err));
 
         // size includes 4-byte structure, manually offset
         const size_t varLen = varHeader.size - VAR_HEADER_SIZE;
@@ -92,10 +92,10 @@ void sequenceOpen(const char *const filepath, char **const audioFilePath) {
 
     pthread_mutex_unlock(&gFileMutex);
 
-    enum tf_err_t err;
-
-    if ((err = tf_read_file_header(b, sizeof(b), &gPlaying, NULL)) != TF_OK)
-        fatalf(E_APP, "error parsing sequence header: %s\n", tf_err_str(err));
+    TFError err;
+    if ((err = TFHeader_read(b, sizeof(b), &gPlaying, NULL)))
+        fatalf(E_APP, "error parsing sequence header: %s\n",
+               TFError_string(err));
 
     *audioFilePath = sequenceLoadAudioFilePath();
 }
@@ -146,9 +146,9 @@ void sequenceFree(void) {
 
     pthread_mutex_unlock(&gFileMutex);
 
-    gPlaying = (struct tf_file_header_t){0};
+    gPlaying = (TFHeader){0};
 }
 
-struct tf_file_header_t *sequenceData(void) {
+TFHeader *sequenceData(void) {
     return &gPlaying;
 }

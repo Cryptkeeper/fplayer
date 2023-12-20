@@ -39,14 +39,12 @@ static void comBlocksLoadAddrs(void) {
     uint32_t offset = sequenceData()->channelDataOffset;
 
     for (int i = 0; i < nBlocks; i++) {
-        enum tf_err_t err;
-        struct tf_compression_block_t block;
-
-        if ((err = tf_read_compression_block(head,
-                                             size - i * COMPRESSION_BLOCK_SIZE,
-                                             &block, &head)) != TF_OK)
+        TFError err;
+        TFCompressionBlock block;
+        if ((err = TFCompressionBlock_read(
+                     head, size - i * COMPRESSION_BLOCK_SIZE, &block, &head)))
             fatalf(E_APP, "error parsing compression block: %s\n",
-                   tf_err_str(err));
+                   TFError_string(err));
 
         // a fseq file may include multiple empty compression blocks for padding purposes
         // these will appear with a 0 size value, trailing previously valid blocks
@@ -139,7 +137,7 @@ void comBlocksInit(void) {
 }
 
 uint8_t **comBlockGet(const int index) {
-    const enum tf_ctype_t compression = sequenceData()->compressionType;
+    const TFCompressionType compression = sequenceData()->compressionType;
 
     switch (compression) {
         case TF_COMPRESSION_ZSTD:

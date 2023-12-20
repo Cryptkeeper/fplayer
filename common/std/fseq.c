@@ -7,7 +7,7 @@
 
 #define fwrite_type(v, f) fwrite(&v, sizeof(v), 1, f)
 
-bool fseqWriteHeader(FILE *const dst, const struct tf_file_header_t header) {
+bool fseqWriteHeader(FILE *const dst, const TFHeader header) {
     if (fseek(dst, 0, SEEK_SET) != 0) return false;
 
     const uint8_t magic[4] = {'P', 'S', 'E', 'Q'};
@@ -38,13 +38,12 @@ bool fseqWriteHeader(FILE *const dst, const struct tf_file_header_t header) {
 
 #define HEADER_SIZE 32
 
-bool fseqWriteCompressionBlocks(
-        FILE *const dst,
-        const struct tf_compression_block_t *const blocks) {
+bool fseqWriteCompressionBlocks(FILE *const dst,
+                                const TFCompressionBlock *const blocks) {
     if (fseek(dst, HEADER_SIZE, SEEK_SET) != 0) return false;
 
     for (size_t i = 0; i < arrlenu(blocks); i++) {
-        const struct tf_compression_block_t block = blocks[i];
+        const TFCompressionBlock block = blocks[i];
 
         fwrite_type(block.firstFrameId, dst);
         fwrite_type(block.size, dst);
@@ -60,7 +59,7 @@ static uint16_t fseqGetVarSize(const fseq_var_t var) {
 }
 
 bool fseqWriteVars(FILE *const dst,
-                   const struct tf_file_header_t header,
+                   const TFHeader header,
                    const fseq_var_t *const vars) {
     if (fseek(dst, header.variableDataOffset, SEEK_SET) != 0) return false;
 
@@ -82,8 +81,7 @@ bool fseqWriteVars(FILE *const dst,
     return true;
 }
 
-void fseqAlignOffsets(struct tf_file_header_t *const header,
-                      const fseq_var_t *const vars) {
+void fseqAlignOffsets(TFHeader *const header, const fseq_var_t *const vars) {
     uint16_t varDataSize = 0;
 
     for (size_t i = 0; i < arrlenu(vars); i++)

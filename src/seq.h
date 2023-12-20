@@ -19,7 +19,7 @@ void sequenceRead(uint32_t start, uint32_t n, void *data);
 
 void sequenceFree(void);
 
-struct tf_file_header_t *sequenceData(void);
+TFHeader *sequenceData(void);
 
 #define sequenceFPS() (1000 / sequenceData()->frameStepTimeMillis)
 

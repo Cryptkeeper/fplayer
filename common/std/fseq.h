@@ -6,10 +6,9 @@
 
 #include "tinyfseq.h"
 
-bool fseqWriteHeader(FILE *dst, struct tf_file_header_t header);
+bool fseqWriteHeader(FILE *dst, TFHeader header);
 
-bool fseqWriteCompressionBlocks(FILE *dst,
-                                const struct tf_compression_block_t *blocks);
+bool fseqWriteCompressionBlocks(FILE *dst, const TFCompressionBlock *blocks);
 
 typedef struct fseq_var_t {
     uint8_t idh;
@@ -17,10 +16,8 @@ typedef struct fseq_var_t {
     char *string;
 } fseq_var_t;
 
-bool fseqWriteVars(FILE *dst,
-                   struct tf_file_header_t header,
-                   const fseq_var_t *vars);
+bool fseqWriteVars(FILE *dst, TFHeader header, const fseq_var_t *vars);
 
-void fseqAlignOffsets(struct tf_file_header_t *header, const fseq_var_t *vars);
+void fseqAlignOffsets(TFHeader *header, const fseq_var_t *vars);
 
 #endif//FPLAYER_FSEQ_H

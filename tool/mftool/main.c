@@ -11,9 +11,8 @@
 #include "std/fseq.h"
 #include "std/string.h"
 
-static void fseqCopyConfigBlocks(FILE *const dst,
-                                 const struct tf_file_header_t header,
-                                 FILE *const src) {
+static void
+fseqCopyConfigBlocks(FILE *const dst, const TFHeader header, FILE *const src) {
     const uint16_t size =
             header.compressionBlockCount * 8 + header.channelRangeCount * 6;
 
@@ -50,9 +49,7 @@ static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
     return copied;
 }
 
-static void fseqOpen(const char *const fp,
-                     FILE **fd,
-                     struct tf_file_header_t *const header) {
+static void fseqOpen(const char *const fp, FILE **fd, TFHeader *const header) {
     FILE *const f = *fd = fopen(fp, "rb");
 
     if (f == NULL) fatalf(E_FIO, "error opening file `%s`\n", fp);
@@ -61,10 +58,9 @@ static void fseqOpen(const char *const fp,
 
     if (fread(b, sizeof(b), 1, f) != 1) fatalf(E_FIO, "error reading header\n");
 
-    enum tf_err_t err;
-
-    if ((err = tf_read_file_header(b, sizeof(b), header, NULL)) != TF_OK)
-        fatalf(E_APP, "error decoding fseq header: %s\n", tf_err_str(err));
+    TFError err;
+    if ((err = TFHeader_read(b, sizeof(b), header, NULL)))
+        fatalf(E_APP, "error decoding fseq header: %s\n", TFError_string(err));
 
     if (!(header->majorVersion == 2 && header->minorVersion == 0))
         fatalf(E_APP, "unsupported fseq file version: %d.%d\n",
@@ -75,7 +71,7 @@ static void fseqCopySetVars(const char *const sfp,
                             const char *const dfp,
                             const fseq_var_t *const vars) {
     FILE *src;
-    struct tf_file_header_t original;
+    TFHeader original;
 
     fseqOpen(sfp, &src, &original);
 
@@ -83,7 +79,7 @@ static void fseqCopySetVars(const char *const sfp,
 
     if (dst == NULL) fatalf(E_FIO, "error opening file `%s`\n", dfp);
 
-    struct tf_file_header_t header = original;// copy original header
+    TFHeader header = original;// copy original header
 
     fseqAlignOffsets(&header, vars);
 
@@ -109,8 +105,7 @@ static void fseqCopySetVars(const char *const sfp,
 
 static fseq_var_t *fseqReadVars(const char *const fp) {
     FILE *src;
-    struct tf_file_header_t header;
-
+    TFHeader header;
     fseqOpen(fp, &src, &header);
 
     fseek(src, header.variableDataOffset, SEEK_SET);
