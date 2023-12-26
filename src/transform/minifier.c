@@ -54,12 +54,10 @@ static void minifyEncodeRequest(const struct encoding_request_t request) {
 
         gNSWritten += written;
 
-        // N bytes per individual set normally + 2 bytes padding each
-        const int ungroupedSize = 4 + 2;
-
         // if the effect is sent once, mark the individual step frames as saved
+        // 4 bytes per individual set + 2 bytes padding each
         // +2 to written size since it doesn't include padding yet
-        gNSSaved += request.nCircuits * ungroupedSize - (written + 2);
+        gNSSaved += request.nCircuits * 6 - (written + 2);
     }
 }
 

@@ -3,9 +3,9 @@
 
 #include <inttypes.h>
 
-#define PRInetstat PRIu64
+#define PRInetstat PRIi64
 
-typedef uint64_t netstat_t;
+typedef int64_t netstat_t;
 
 extern netstat_t gNSPackets; /* # of LOR packets sent last sec. (incl. fades) */
 extern netstat_t gNSSaved; /* # of bytes saved by protocol minifier last sec. */
