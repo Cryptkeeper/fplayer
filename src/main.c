@@ -30,9 +30,7 @@ static void printUsage(void) {
            "\t-c <file>\t\tNetwork channel map file path (required)\n"
            "\t-d <device name|stdout>\tDevice name for serial port "
            "connection\n"
-           "\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n"
-           "\t-p\t\t\tPrecompute fades for smoother playback and reduced "
-           "bandwidth (experimental)\n\n"
+           "\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n\n"
 
            "[Controls]\n"
            "\t-a <file>\t\tOverride audio with specified filepath\n"
@@ -81,7 +79,7 @@ static void printSerialEnumPorts(void) {
 
 static bool parseOpts(const int argc, char **const argv, int *const ec) {
     int c;
-    while ((c = getopt(argc, argv, ":t:ilhvf:c:a:r:w:pd:b:")) != -1) {
+    while ((c = getopt(argc, argv, ":t:ilhvf:c:a:r:w:d:b:")) != -1) {
         switch (c) {
             case 't':
                 channelMapInit(optarg);
@@ -112,9 +110,6 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
             case 'w':
                 gPlayerOpts.connectionWaitS =
                         (uint8_t) mustStrtol(optarg, 0, UINT8_MAX);
-                break;
-            case 'p':
-                gPlayerOpts.precomputeFades = true;
                 break;
             case 'd':
                 gSerialDevName = mustStrdup(optarg);

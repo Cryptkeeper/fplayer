@@ -9,9 +9,7 @@
 
 #include "../buffer.h"
 #include "../cmap.h"
-#include "../seq.h"
 #include "encode.h"
-#include "fade.h"
 #include "netstats.h"
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
@@ -21,9 +19,7 @@ struct encoding_request_t {
     uint8_t groupOffset;
     uint16_t circuits;
     uint8_t nCircuits;
-    LorEffect effect;
-    union LorEffectArgs *args;
-    uint16_t nFrames;
+    uint8_t intensity;
 };
 
 static void minifyEncodeRequest(const struct encoding_request_t request) {
@@ -31,25 +27,23 @@ static void minifyEncodeRequest(const struct encoding_request_t request) {
     assert(request.nCircuits > 0);
 
     gNSPackets += 1;
-    gNSFades += request.nFrames > 1 ? 1 : 0;// only fades are >1 frame
+
+    const union LorEffectArgs args = (union LorEffectArgs){
+            .setIntensity = {.intensity = request.intensity},
+    };
 
     if (request.nCircuits == 1) {
         assert(request.groupOffset == 0);
 
-        lorAppendChannelEffect(&gWriteBuffer, request.effect, request.args,
+        lorAppendChannelEffect(&gWriteBuffer, LOR_EFFECT_SET_INTENSITY, &args,
                                request.circuits - 1, request.unit);
 
         const size_t written = writeBufferFlush();
 
         gNSWritten += written;
-
-        if (request.effect == LOR_EFFECT_FADE) {
-            // 4 bytes per individual set normally
-            // +2 to written size since it doesn't include padding yet
-            gNSSaved += request.nFrames * 6 - (written + 2);
-        }
     } else {
-        lorAppendChannelSetEffect(&gWriteBuffer, request.effect, request.args,
+        lorAppendChannelSetEffect(&gWriteBuffer, LOR_EFFECT_SET_INTENSITY,
+                                  &args,
                                   (LorChannelSet){
                                           .offset = request.groupOffset,
                                           .channelBits = request.circuits,
@@ -60,25 +54,17 @@ static void minifyEncodeRequest(const struct encoding_request_t request) {
 
         gNSWritten += written;
 
-        // N bytes per individual set/fade normally + 2 bytes padding each
-        const int ungroupedSize =
-                (request.effect == LOR_EFFECT_FADE ? 7 : 4) + 2;
+        // N bytes per individual set normally + 2 bytes padding each
+        const int ungroupedSize = 4 + 2;
 
         // if the effect is sent once, mark the individual step frames as saved
         // +2 to written size since it doesn't include padding yet
-        gNSSaved += request.nFrames * request.nCircuits * ungroupedSize -
-                    (written + 2);
+        gNSSaved += request.nCircuits * ungroupedSize - (written + 2);
     }
 }
 
 static LorIntensity minifyEncodeIntensity(const uint8_t abs) {
     return LorIntensityCurveVendor(abs / 255.0);
-}
-
-static uint16_t minifyGetFadeDuration(const Fade fade) {
-    const uint64_t ms = sequenceData()->frameStepTimeMillis * fade.frames;
-    assert(ms / 100 <= UINT16_MAX);
-    return ms / 100;
 }
 
 static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
@@ -123,60 +109,13 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
             // build encoding request
             // this serves as a generic layer specifying the intended data,
             // which is processed by the encoder and written as LOR protocol data
-            struct encoding_request_t request = {
+            const struct encoding_request_t request = {
                     .unit = unit,
                     .groupOffset = popcount == 1 ? 0 : groupOffset,
                     .circuits = popcount == 1 ? change.circuit : matches,
                     .nCircuits = popcount,
-                    .args = NULL,
+                    .intensity = minifyEncodeIntensity(change.newIntensity),
             };
-
-            Fade fade;
-            bool hasFade = false;
-
-            if (change.fadeStarted >= 0) {
-                hasFade = fadeGet(change.fadeStarted, &fade);
-            }
-
-            // FIXME: allow non-null `request.args` value in downstream encoding
-            //  or allocate a non-static instance each time for true pointers
-            static union LorEffectArgs gEffectArgs;
-
-            if (hasFade) {
-                switch (fade.type) {
-                    case FADE_SLOPE:
-                        gEffectArgs = (union LorEffectArgs){
-                                .fade = {
-                                        .startIntensity = minifyEncodeIntensity(
-                                                fade.from),
-                                        .endIntensity =
-                                                minifyEncodeIntensity(fade.to),
-                                        .deciseconds =
-                                                minifyGetFadeDuration(fade),
-                                }};
-
-                        request.effect = LOR_EFFECT_FADE;
-                        request.args = &gEffectArgs;
-
-                        break;
-
-                    case FADE_FLASH:
-                        request.effect = LOR_EFFECT_SHIMMER;
-
-                        break;
-                }
-            } else {
-                gEffectArgs = (union LorEffectArgs){
-                        .setIntensity = {
-                                .intensity = minifyEncodeIntensity(
-                                        change.newIntensity),
-                        }};
-
-                request.effect = LOR_EFFECT_SET_INTENSITY;
-                request.args = &gEffectArgs;
-            }
-
-            request.nFrames = hasFade ? fade.frames : 1;
 
             minifyEncodeRequest(request);
 
@@ -190,8 +129,7 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
 
 void minifyStream(const uint8_t *const frameData,
                   const uint8_t *const lastFrameData,
-                  const uint32_t size,
-                  const uint32_t frame) {
+                  const uint32_t size) {
     uint8_t prevUnit = 0;
 
     EncodeChange *stack = NULL;
@@ -220,13 +158,11 @@ void minifyStream(const uint8_t *const frameData,
 
         // record values onto (possibly fresh) stack
         // flush when stack is full
-        EncodeChange change = (EncodeChange){
+        const EncodeChange change = (EncodeChange){
                 .circuit = circuit,
                 .oldIntensity = lastFrameData[id],
                 .newIntensity = frameData[id],
         };
-
-        fadeGetChange(frame, id, &change.fadeStarted, &change.fadeFinishing);
 
         arrput(stack, change);
 
@@ -237,7 +173,4 @@ void minifyStream(const uint8_t *const frameData,
     if (arrlen(stack) > 0) minifyEncodeStack(prevUnit, stack);
 
     arrfree(stack);
-
-    // allow fade data to be progressively freed
-    fadeFrameFree(frame);
 }

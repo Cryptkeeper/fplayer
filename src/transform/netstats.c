@@ -5,7 +5,6 @@
 #include "std/string.h"
 
 netstat_t gNSPackets = 0;
-netstat_t gNSFades = 0;
 netstat_t gNSSaved = 0;
 netstat_t gNSWritten = 0;
 
@@ -13,13 +12,12 @@ static netstat_t gNSPacketsSum;
 static netstat_t gNSSavedSum;
 static netstat_t gNSWrittenSum;
 
-#define gStatsCount 4
+#define gStatsCount 3
 
 // a table with each entry being a [0: netstat_t *, 1: netstat_t *] pair of a
 // tracked stat and its matching sum accumulator variable
 static netstat_t *gStats[gStatsCount][2] = {
         {&gNSPackets, &gNSPacketsSum},
-        {&gNSFades, NULL},
         {&gNSSaved, &gNSSavedSum},
         {&gNSWritten, &gNSWrittenSum},
 };
@@ -34,9 +32,9 @@ char *nsGetStatus(void) {
 
     const float cr = nsGetCompressionRatio(gNSSaved, gNSWritten);
 
-    char *const msg = dsprintf("%.03f KB/s\tfades: %" PRInetstat
-                               "\tpackets: %" PRInetstat "\tcompressed: %.02f",
-                               kb, gNSFades, gNSPackets, cr);
+    char *const msg =
+            dsprintf("%.03f KB/s\tpackets: %" PRInetstat "\tcompressed: %.02f",
+                     kb, gNSPackets, cr);
 
     for (int i = 0; i < gStatsCount; i++) {
         netstat_t *const last = gStats[i][0];

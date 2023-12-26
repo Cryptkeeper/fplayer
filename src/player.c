@@ -16,7 +16,6 @@
 #include "std/string.h"
 #include "std/time.h"
 #include "transform/netstats.h"
-#include "transform/precompute.h"
 
 #ifdef _WIN32
     #include <windows.h>
@@ -113,7 +112,7 @@ static bool playerHandleNextFrame(void) {
     // fetch the current frame data
     const uint8_t *const frameData = framePumpGet(&gFramePump, frame, true);
 
-    serialWriteFrame(frameData, gLastFrameData, frameSize, frame);
+    serialWriteFrame(frameData, gLastFrameData, frameSize);
 
     // copy previous frame to the secondary frame buffer
     // this enables the serial system to diff between the two frames and only
@@ -163,15 +162,6 @@ void playerRun(const char *const sequenceFilePath,
 
     comBlocksInit();
 
-    if (opts.precomputeFades) {
-        char *const cacheFilePath = dsprintf("%s.pcf", sequenceFilePath);
-
-        // load existing data or precompute and save new data
-        precomputeRun(cacheFilePath);
-
-        free(cacheFilePath);
-    }
-
     playerWaitForConnection(opts.connectionWaitS);
     playerPlayFirstAudioFile(audioOverrideFilePath, audioFilePath);
 
@@ -184,7 +174,6 @@ void playerRun(const char *const sequenceFilePath,
     playerStartPlayback();
 
     // playback finished, free resources and exit cleanly
-    precomputeFree();
     comBlocksFree();
     sequenceFree();
 

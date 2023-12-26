@@ -1,6 +1,7 @@
 #include "encode.h"
 
 #include <assert.h>
+#include <stdbool.h>
 
 #include "stb_ds.h"
 
@@ -18,26 +19,14 @@ uint16_t encodeStackGetMatches(const EncodeChange *const stack,
     for (int i = 0; i < max; i++) {
         const EncodeChange change = stack[i];
 
-        // actively fading state is controlled by LOR hardware
-        // nothing can therefore match it, avoiding interruptions to the effect
-        if (change.fadeFinishing) continue;
+        // the intensity did not change, do not attempt to create a bulk update
+        // another circuit with the same intensity will still be updated, with
+        // itself as the root circuit
+        const bool didChangeIntensity =
+                (change.newIntensity != change.oldIntensity) &&
+                (change.newIntensity == compare.newIntensity);
 
-        bool match = false;
-
-        if (compare.fadeStarted >= 0) {
-            match = change.fadeStarted == compare.fadeStarted;
-        } else {
-            // the intensity did not change, do not attempt to create a bulk update
-            // another circuit with the same intensity will still be updated, with
-            // itself as the root circuit
-            const bool didChangeIntensity =
-                    change.newIntensity != change.oldIntensity;
-
-            match = didChangeIntensity &&
-                    change.newIntensity == compare.newIntensity;
-        }
-
-        if (match) matches |= CIRCUIT_BIT(i);
+        if (didChangeIntensity) matches |= CIRCUIT_BIT(i);
     }
 
     return matches;

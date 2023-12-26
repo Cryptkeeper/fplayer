@@ -131,11 +131,10 @@ void serialWriteAllOff(void) {
 
 void serialWriteFrame(const uint8_t *const frameData,
                       const uint8_t *const lastFrameData,
-                      const uint32_t size,
-                      const uint32_t frame) {
+                      const uint32_t size) {
     serialWriteThrottledHeartbeat();
 
-    minifyStream(frameData, lastFrameData, size, frame);
+    minifyStream(frameData, lastFrameData, size);
 
     // the write buffer should already be cleared after each use
     assert(writeBufferFlush() == 0);
