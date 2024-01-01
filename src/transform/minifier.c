@@ -75,10 +75,10 @@ static LorIntensity minifyEncodeIntensity(const uint8_t abs) {
     return LorIntensityCurveVendor(abs / 255.0);
 }
 
-static LorTime minifyGetFadeDuration(const Fade fade) {
+static uint16_t minifyGetFadeDuration(const Fade fade) {
     const uint64_t ms = sequenceData()->frameStepTimeMillis * fade.frames;
-
-    return lorSecondsToTime((float) ms / 1000.0F);
+    assert(ms / 100 <= UINT16_MAX);
+    return ms / 100;
 }
 
 static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
@@ -151,7 +151,8 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
                                                 fade.from),
                                         .endIntensity =
                                                 minifyEncodeIntensity(fade.to),
-                                        .duration = minifyGetFadeDuration(fade),
+                                        .deciseconds =
+                                                minifyGetFadeDuration(fade),
                                 }};
 
                         request.effect = LOR_EFFECT_FADE;
