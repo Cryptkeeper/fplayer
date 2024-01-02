@@ -15,7 +15,7 @@ endif ()
 
 set(PEDANTIC_COMPILER_FLAGS "-Wall -Werror -Wextra -Wno-unused-value -pedantic")
 
-add_subdirectory(dep/liblightorama)
+add_subdirectory(dep/liblorproto)
 
 file(GLOB_RECURSE COMMON_FILES "common/std/*.[ch]")
 
@@ -44,7 +44,7 @@ if (BUILD_GENTOOL)
     add_executable(gentool ${GENTOOL_FILES})
 
     target_include_directories(gentool PRIVATE common)
-    target_link_libraries(gentool common lightorama)
+    target_link_libraries(gentool common lorproto)
 endif ()
 
 file(GLOB_RECURSE SRC_FILES "src/*.[ch]")
@@ -53,7 +53,7 @@ set_source_files_properties(${SRC_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COM
 add_executable(fplayer ${SRC_FILES})
 
 target_include_directories(fplayer PRIVATE common)
-target_link_libraries(fplayer common lightorama m serialport)
+target_link_libraries(fplayer common lorproto m serialport)
 
 # OpenAL
 target_link_libraries(fplayer alut)

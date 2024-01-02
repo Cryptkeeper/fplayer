@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lightorama/heartbeat.h"
+#include "lorproto/heartbeat.h"
 
 #include "audio.h"
 #include "comblock.h"

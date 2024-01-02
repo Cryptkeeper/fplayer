@@ -3,8 +3,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include "lightorama/easy.h"
-#include "lightorama/lightorama.h"
+#include "lorproto/easy.h"
+#include "lorproto/intensity.h"
 #include "stb_ds.h"
 
 #include "../buffer.h"

@@ -7,7 +7,7 @@
 
 #include <zstd.h>
 
-#include "lightorama/intensity.h"
+#include "lorproto/intensity.h"
 #include "std/err.h"
 #include "std/fseq.h"
 

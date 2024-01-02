@@ -5,7 +5,7 @@
 
 #include <libserialport.h>
 
-#include "lightorama/lightorama.h"
+#include "lorproto/lorproto.h"
 #include "stb_ds.h"
 
 #include "buffer.h"

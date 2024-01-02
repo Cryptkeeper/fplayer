@@ -45,7 +45,7 @@ All in a small package. Most of fplayer's resource usage originates from audio f
 
 fplayer offloads deserialization and encoding work to my other libraries,
 [libtinyfseq](https://github.com/Cryptkeeper/libtinyfseq) and
-[liblightorama](https://github.com/Cryptkeeper/liblightorama). Both are provided as git submodules and are built locally via the CMake build configuration. You do not need to install these.
+[liblorproto](https://github.com/Cryptkeeper/liblorproto). Both are provided as git submodules and are built locally via the CMake build configuration. You do not need to install these.
 
 You must provide: libserialport, OpenAL, an ALUT-compatible library, and zstd.
 

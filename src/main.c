@@ -6,7 +6,7 @@
 
 #include <libserialport.h>
 
-#include "lightorama/version.h"
+#include "lorproto/version.h"
 
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
@@ -51,7 +51,7 @@ static void printUsage(void) {
 static void printVersions(void) {
     printf("ALUT %d.%d\n", alutGetMajorVersion(), alutGetMinorVersion());
     printf("OpenAL %s\n", alGetString(AL_VERSION));
-    printf("liblightorama %s\n", LIBLIGHTORAMA_VERSION_STRING);
+    printf("liblorproto %s\n", LIBLORPROTO_VERSION_STRING);
     printf("libserialport %s\n", SP_PACKAGE_VERSION_STRING);
     printf("libtinyfseq %s\n", TINYFSEQ_VERSION);
     printf("zstd %s\n", ZSTD_versionString());

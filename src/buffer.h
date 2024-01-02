@@ -1,7 +1,7 @@
 #ifndef FPLAYER_BUFFER_H
 #define FPLAYER_BUFFER_H
 
-#include "lightorama/coretypes.h"
+#include "lorproto/coretypes.h"
 
 #include <stddef.h>
 
