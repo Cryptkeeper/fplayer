@@ -98,8 +98,8 @@ void serialWrite(const uint8_t *const b, const size_t size) {
 void serialWriteHeartbeat(void) {
     lorAppendHeartbeat(&gWriteBuffer);
 
-    gNSWritten += writeBufferFlush();
-    gNSPackets += 1;
+    netstats.written += writeBufferFlush();
+    netstats.packets += 1;
 }
 
 static void serialWriteThrottledHeartbeat(void) {
@@ -122,8 +122,8 @@ void serialWriteAllOff(void) {
     for (int i = 0; i < arrlen(uids); i++) {
         lorAppendUnitEffect(&gWriteBuffer, LOR_EFFECT_SET_OFF, NULL, uids[i]);
 
-        gNSWritten += writeBufferFlush();
-        gNSPackets += 1;
+        netstats.written += writeBufferFlush();
+        netstats.packets += 1;
     }
 
     arrfree(uids);

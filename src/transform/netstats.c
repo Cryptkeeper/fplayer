@@ -1,59 +1,37 @@
 #include "netstats.h"
 
-#include <stddef.h>
+#include <inttypes.h>
 
 #include "std/string.h"
 
-netstat_t gNSPackets = 0;
-netstat_t gNSFades = 0;
-netstat_t gNSSaved = 0;
-netstat_t gNSWritten = 0;
+struct netstats_t netstats; /* exposed interface */
 
-static netstat_t gNSPacketsSum;
-static netstat_t gNSSavedSum;
-static netstat_t gNSWrittenSum;
-
-#define gStatsCount 4
-
-// a table with each entry being a [0: netstat_t *, 1: netstat_t *] pair of a
-// tracked stat and its matching sum accumulator variable
-static netstat_t *gStats[gStatsCount][2] = {
-        {&gNSPackets, &gNSPacketsSum},
-        {&gNSFades, NULL},
-        {&gNSSaved, &gNSSavedSum},
-        {&gNSWritten, &gNSWrittenSum},
-};
-
-static float nsGetCompressionRatio(const netstat_t saved,
-                                   const netstat_t size) {
-    return (float) saved / (float) (saved + size);
-}
+static struct netstats_t sum; /* internal sum counter copy */
 
 char *nsGetStatus(void) {
-    const float kb = (float) gNSWritten / 1024.0F;
+    const float kb = (float) netstats.written / 1024.0F;
+    const float cr = (float) netstats.saved /
+                     ((float) netstats.saved + (float) netstats.written);
 
-    const float cr = nsGetCompressionRatio(gNSSaved, gNSWritten);
+    char *const msg = dsprintf("%.03f KB/s\tfades: %" PRIu64
+                               "\tpackets: %" PRIu64 "\tcompressed: %.02f",
+                               kb, netstats.saved, netstats.packets, cr);
 
-    char *const msg = dsprintf("%.03f KB/s\tfades: %" PRInetstat
-                               "\tpackets: %" PRInetstat "\tcompressed: %.02f",
-                               kb, gNSFades, gNSPackets, cr);
+    sum.packets += netstats.packets;
+    sum.fades += netstats.fades;
+    sum.saved += netstats.saved;
+    sum.written += netstats.written;
 
-    for (int i = 0; i < gStatsCount; i++) {
-        netstat_t *const last = gStats[i][0];
-        netstat_t *const sum = gStats[i][1];
-
-        if (sum != NULL) *sum += *last;
-
-        *last = 0;
-    }
+    netstats = (struct netstats_t){0};
 
     return msg;
 }
 
 char *nsGetSummary(void) {
-    const float cr = nsGetCompressionRatio(gNSSavedSum, gNSWrittenSum);
+    const float cr =
+            (float) sum.saved / ((float) sum.saved + (float) sum.written);
 
-    return dsprintf("transferred %" PRInetstat " bytes via %" PRInetstat
-                    " packets, saved %" PRInetstat " bytes (%.0f%%)",
-                    gNSWrittenSum, gNSPacketsSum, gNSSavedSum, cr * 100);
+    return dsprintf("transferred %" PRIu64 " bytes via %" PRIu64
+                    " packets, saved %" PRIu64 " bytes (%.0f%%)",
+                    sum.written, sum.packets, sum.saved, cr * 100);
 }
