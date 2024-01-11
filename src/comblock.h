@@ -3,9 +3,11 @@
 
 #include <stdint.h>
 
-void comBlocksInit(void);
+#include "std/fc.h"
 
-uint8_t **comBlockGet(int index);
+void comBlocksInit(FCHandle fc);
+
+uint8_t **comBlockGet(FCHandle fc, int index);
 
 void comBlocksFree(void);
 

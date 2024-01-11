@@ -20,21 +20,23 @@ uint32_t framePumpGetRemaining(const FramePump *pump) {
     return remaining - pump->head;
 }
 
-static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
-    const uint32_t frameSize = sequenceData()->channelCount;
+static uint8_t **framePumpChargeSequentialRead(FCHandle fc,
+                                               const uint32_t currentFrame) {
+    const uint32_t frameSize = curSequence.channelCount;
 
     // generates a frame data buffer of 5 seconds worth of playback
-    const uint32_t reqFrameCount = sequenceFPS() * 5;
+    const uint32_t reqFrameCount = 1000 / curSequence.frameStepTimeMillis * 5;
 
     uint8_t *const frameData = mustMalloc(frameSize * reqFrameCount);
 
-    const uint32_t framesRead = sequenceReadFrames(
-            (struct seq_read_args_t){
-                    .startFrame = currentFrame,
-                    .frameSize = frameSize,
-                    .frameCount = reqFrameCount,
-            },
-            frameData);
+    const uint32_t framesRead =
+            Seq_readFrames(fc,
+                           (struct seq_read_args_t){
+                                   .startFrame = currentFrame,
+                                   .frameSize = frameSize,
+                                   .frameCount = reqFrameCount,
+                           },
+                           frameData);
 
     if (framesRead < 1) fatalf(E_APP, "unexpected end of frame data\n");
 
@@ -57,11 +59,12 @@ static uint8_t **framePumpChargeSequentialRead(const uint32_t currentFrame) {
     return frames;
 }
 
-static uint8_t **framePumpChargeCompressionBlock(FramePump *const pump) {
-    if (pump->consumedComBlocks >= sequenceData()->compressionBlockCount)
+static uint8_t **framePumpChargeCompressionBlock(FCHandle fc,
+                                                 FramePump *const pump) {
+    if (pump->consumedComBlocks >= curSequence.compressionBlockCount)
         return NULL;
 
-    return comBlockGet(pump->consumedComBlocks++);
+    return comBlockGet(fc, pump->consumedComBlocks++);
 }
 
 static void framePumpFreeFrames(FramePump *const pump) {
@@ -73,7 +76,8 @@ static void framePumpFreeFrames(FramePump *const pump) {
     arrfree(pump->frames);
 }
 
-static void framePumpRecharge(FramePump *const pump,
+static void framePumpRecharge(FCHandle fc,
+                              FramePump *const pump,
                               const uint32_t currentFrame,
                               const bool preload) {
     const timeInstant start = timeGetNow();
@@ -81,13 +85,13 @@ static void framePumpRecharge(FramePump *const pump,
     uint8_t **frames = NULL;
 
     // recharge pump depending on the compression type
-    switch (sequenceData()->compressionType) {
+    switch (curSequence.compressionType) {
         case TF_COMPRESSION_NONE:
-            frames = framePumpChargeSequentialRead(currentFrame);
+            frames = framePumpChargeSequentialRead(fc, currentFrame);
             break;
         case TF_COMPRESSION_ZLIB:
         case TF_COMPRESSION_ZSTD:
-            frames = framePumpChargeCompressionBlock(pump);
+            frames = framePumpChargeCompressionBlock(fc, pump);
             break;
     }
 
@@ -109,6 +113,7 @@ static void framePumpRecharge(FramePump *const pump,
 }
 
 struct frame_pump_thread_args_t {
+    FCHandle fc;
     uint32_t startFrame;
     int16_t consumedComBlocks;
 };
@@ -125,7 +130,7 @@ static void *framePumpThread(void *pargs) {
             .consumedComBlocks = args.consumedComBlocks,
     };
 
-    framePumpRecharge(framePump, args.startFrame, true);
+    framePumpRecharge(args.fc, framePump, args.startFrame, true);
 
     return framePump;
 }
@@ -136,10 +141,12 @@ static void *framePumpThread(void *pargs) {
 static pthread_t gPumpThread = PTHREAD_NULL;
 static struct frame_pump_thread_args_t gThreadArgs;
 
-static void framePumpHintPreload(const uint32_t startFrame,
+static void framePumpHintPreload(FCHandle fc,
+                                 const uint32_t startFrame,
                                  const int16_t consumedComBlocks) {
     if (gPumpThread != PTHREAD_NULL) return;
 
+    gThreadArgs.fc = fc;
     gThreadArgs.startFrame = startFrame;
     gThreadArgs.consumedComBlocks = consumedComBlocks;
 
@@ -178,21 +185,22 @@ static bool framePumpSwapPreload(FramePump *const pump) {
     return true;
 }
 
-const uint8_t *framePumpGet(FramePump *const pump,
+const uint8_t *framePumpGet(FCHandle fc,
+                            FramePump *const pump,
                             const uint32_t currentFrame,
                             const bool canHintPreload) {
     if (canHintPreload) {
         const uint32_t remaining = framePumpGetRemaining(pump);
 
-        const uint32_t threshold = sequenceFPS() * 3;
+        const uint32_t threshold = 1000 / curSequence.frameStepTimeMillis * 3;
 
         // once we hit the `threshold` frames remaining warning, hint at starting
         // a job thread for pre-loading the next frame pump chunk
         if (remaining > 0 && remaining <= threshold) {
             const uint32_t startFrame = currentFrame + remaining;
 
-            if (startFrame < sequenceData()->frameCount)
-                framePumpHintPreload(startFrame, pump->consumedComBlocks);
+            if (startFrame < curSequence.frameCount)
+                framePumpHintPreload(fc, startFrame, pump->consumedComBlocks);
         }
     }
 
@@ -200,10 +208,10 @@ const uint8_t *framePumpGet(FramePump *const pump,
         // attempt to swap to the preloaded frame pump, if any
         // otherwise block the playback loop while the next frames are loaded
         if (!framePumpSwapPreload(pump))
-            framePumpRecharge(pump, currentFrame, false);
+            framePumpRecharge(fc, pump, currentFrame, false);
     }
 
-    const uint32_t frameSize = sequenceData()->channelCount;
+    const uint32_t frameSize = curSequence.channelCount;
 
     // copy the frame data entry to a central buffer that is exposed
     // this enables us to internally free the frame allocation without another callback

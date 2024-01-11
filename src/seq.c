@@ -1,7 +1,5 @@
 #include "seq.h"
 
-#include <inttypes.h>
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,145 +8,99 @@
 
 #include "std/err.h"
 
-static FILE *gFile;
-static pthread_mutex_t gFileMutex = PTHREAD_MUTEX_INITIALIZER;
+TFHeader curSequence;
 
-static TFHeader gPlaying;
+void Seq_initHeader(FCHandle fc) {
+    const int size = 32; /* fixed size header */
+    uint8_t b[size];
 
-// 4 is the packed sizeof(TFVarHeader)
-#define VAR_HEADER_SIZE    4
-#define MAX_VAR_VALUE_SIZE 512
+    FC_read(fc, 0, size, b);
 
-static char *sequenceLoadAudioFilePath(void) {
-    const uint16_t varDataSize =
-            gPlaying.channelDataOffset - gPlaying.variableDataOffset;
+    TFError err;
+    if ((err = TFHeader_read(b, size, &curSequence, NULL)))
+        fatalf(E_APP, "error parsing fseq: %s\n", TFError_string(err));
+}
 
-    pthread_mutex_lock(&gFileMutex);
+static char *Seq_readVar(uint8_t **readIdx,
+                         const int remaining,
+                         TFVarHeader *varHeader,
+                         void *varData,
+                         const uint16_t varDataSize) {
+    TFError err;
+    if ((err = TFVarHeader_read(*readIdx, remaining, varHeader, varData,
+                                varDataSize, readIdx)))
+        fatalf(E_APP, "error parsing fseq var: %s\n", TFError_string(err));
 
-    if (fseek(gFile, gPlaying.variableDataOffset, SEEK_SET) < 0)
-        fatalf(E_FIO, NULL);
+    const int varHeaderSize = 4; /* size of binary var header */
 
-    uint8_t *varTable = mustMalloc(varDataSize);
+    const size_t varLen = varHeader->size - varHeaderSize;
+    char *const varString = mustMalloc(varLen);
 
-    if (fread(varTable, 1, varDataSize, gFile) != varDataSize)
-        fatalf(E_FIO, NULL);
+    // never copy final character since it will be NULL terminated, this may
+    // accidentally truncate a non-NULL terminated string
+    memcpy(varString, varData, varLen - 1);
 
-    pthread_mutex_unlock(&gFileMutex);
+    // ensures string is NULL terminated
+    varString[varLen - 1] = '\0';
 
-    TFVarHeader varHeader;
+    return varString;
+}
 
-    uint8_t *readIdx = &varTable[0];
+char *Seq_getMediaFile(FCHandle fc) {
+    const uint16_t varTableSize =
+            curSequence.channelDataOffset - curSequence.variableDataOffset;
 
-    void *varData = mustMalloc(MAX_VAR_VALUE_SIZE);
+    if (varTableSize == 0) return NULL;
 
-    char *audioFilePath = NULL;
+    uint8_t *const varTable = mustMalloc(varTableSize);
 
-    for (int remaining = varDataSize; remaining > VAR_HEADER_SIZE;) {
-        TFError err;
-        if ((err = TFVarHeader_read(readIdx, remaining, &varHeader, varData,
-                                    MAX_VAR_VALUE_SIZE, &readIdx)))
-            fatalf(E_APP, "error parsing sequence variable: %s\n",
-                   TFError_string(err));
+    FC_read(fc, curSequence.variableDataOffset, varTableSize, varTable);
 
-        // size includes 4-byte structure, manually offset
-        const size_t varLen = varHeader.size - VAR_HEADER_SIZE;
-        char *const varString = mustMalloc(varLen);
+    // re-use varTableSize since the size of any individual variable cannot
+    // exceed the total size of the variable data table
+    char *varData = mustMalloc(varTableSize);
 
-        // ensures string is NULL terminated and can truncate if necessary
-        memcpy(varString, varData, varLen - 1);
-        varString[varLen - 1] = '\0';
+    char *mf = NULL; /* matched media file path variable value */
 
-        printf("var '%c%c': %s\n", varHeader.id[0], varHeader.id[1], varString);
+    TFVarHeader hdr;
+    uint8_t *head = &varTable[0];
+
+    for (int remaining = varTableSize; remaining > 4 /* var header size */;
+         remaining -= hdr.size) {
+        char *str = Seq_readVar(&head, remaining, &hdr, varData, varTableSize);
+
+        printf("var '%c%c': %s\n", hdr.id[0], hdr.id[1], str);
 
         // mf = Media File variable, contains audio filepath
         // caller is responsible for freeing `audioFilePath` copy return
-        if (varHeader.id[0] == 'm' && varHeader.id[1] == 'f')
-            if (audioFilePath == NULL) audioFilePath = mustStrdup(varString);
+        if (hdr.id[0] == 'm' && hdr.id[1] == 'f' && mf == NULL) {
+            mf = str;
+            continue;
+        }
 
-        free(varString);
-
-        remaining -= varHeader.size;
+        free(str);
     }
 
     free(varData);
     free(varTable);
 
-    return audioFilePath;
+    return mf;
 }
 
-#define FSEQ_HEADER_SIZE 32
-
-void sequenceOpen(const char *const filepath, char **const audioFilePath) {
-    FILE *const f = gFile = fopen(filepath, "rb");
-
-    if (f == NULL) fatalf(E_FIO, "error opening sequence: %s\n", filepath);
-
-    pthread_mutex_lock(&gFileMutex);
-
-    uint8_t b[FSEQ_HEADER_SIZE];
-
-    if (fread(b, 1, FSEQ_HEADER_SIZE, f) != FSEQ_HEADER_SIZE)
-        fatalf(E_FIO, NULL);
-
-    pthread_mutex_unlock(&gFileMutex);
-
-    TFError err;
-    if ((err = TFHeader_read(b, sizeof(b), &gPlaying, NULL)))
-        fatalf(E_APP, "error parsing sequence header: %s\n",
-               TFError_string(err));
-
-    *audioFilePath = sequenceLoadAudioFilePath();
-}
-
-uint32_t sequenceReadFrames(const struct seq_read_args_t args,
-                            uint8_t *const frameData) {
-    pthread_mutex_lock(&gFileMutex);
-
+uint32_t Seq_readFrames(FCHandle fc,
+                        const struct seq_read_args_t args,
+                        uint8_t *const b) {
     uint32_t frameCount = args.frameCount;
 
     // ensure the requested frame count does not exceed the total frame count
-    if (args.startFrame + args.frameCount > gPlaying.frameCount)
-        frameCount = gPlaying.frameCount - args.startFrame;
+    if (args.startFrame + args.frameCount > curSequence.frameCount)
+        frameCount = curSequence.frameCount - args.startFrame;
 
-    const uint32_t pos = sequenceData()->channelDataOffset +
-                         args.startFrame * args.frameSize;
+    const uint32_t pos =
+            curSequence.channelDataOffset + args.startFrame * args.frameSize;
 
-    if (fseek(gFile, pos, SEEK_SET) < 0) fatalf(E_FIO, NULL);
-
-    const size_t framesRead =
-            fread(frameData, args.frameSize, frameCount, gFile);
-
-    pthread_mutex_unlock(&gFileMutex);
+    const uint32_t framesRead =
+            FC_readto(fc, pos, args.frameSize, frameCount, b);
 
     return framesRead;
-}
-
-void sequenceRead(const uint32_t start, const uint32_t n, void *const data) {
-    pthread_mutex_lock(&gFileMutex);
-
-    if (fseek(gFile, start, SEEK_SET) < 0) fatalf(E_FIO, NULL);
-
-    const size_t read = fread(data, 1, n, gFile);
-    if (read != n)
-        fatalf(E_FIO, "read " PRIu64 " bytes, wanted %d", (uint64_t) read, n);
-
-    pthread_mutex_unlock(&gFileMutex);
-}
-
-void sequenceFree(void) {
-    pthread_mutex_lock(&gFileMutex);
-
-    if (gFile != NULL) {
-        fclose(gFile);
-
-        gFile = NULL;
-    }
-
-    pthread_mutex_unlock(&gFileMutex);
-
-    gPlaying = (TFHeader){0};
-}
-
-TFHeader *sequenceData(void) {
-    return &gPlaying;
 }

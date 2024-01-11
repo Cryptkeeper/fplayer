@@ -76,7 +76,7 @@ static LorIntensity minifyEncodeIntensity(const uint8_t abs) {
 }
 
 static uint16_t minifyGetFadeDuration(const Fade fade) {
-    const uint64_t ms = sequenceData()->frameStepTimeMillis * fade.frames;
+    const uint64_t ms = curSequence.frameStepTimeMillis * fade.frames;
     assert(ms / 100 <= UINT16_MAX);
     return ms / 100;
 }

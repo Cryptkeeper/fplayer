@@ -1,7 +1,9 @@
 #ifndef FPLAYER_PRECOMPUTE_H
 #define FPLAYER_PRECOMPUTE_H
 
-void precomputeRun(const char *fp);
+#include "std/fc.h"
+
+void precomputeRun(const char *fp, FCHandle fc);
 
 void precomputeFree(void);
 

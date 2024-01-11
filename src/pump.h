@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "std/fc.h"
+
 typedef struct frame_pump_t {
     uint8_t **frames;
     uint32_t head;
@@ -13,8 +15,10 @@ typedef struct frame_pump_t {
 
 uint32_t framePumpGetRemaining(const FramePump *pump);
 
-const uint8_t *
-framePumpGet(FramePump *pump, uint32_t currentFrame, bool canHintPreload);
+const uint8_t *framePumpGet(FCHandle fc,
+                            FramePump *pump,
+                            uint32_t currentFrame,
+                            bool canHintPreload);
 
 void framePumpFree(FramePump *pump);
 

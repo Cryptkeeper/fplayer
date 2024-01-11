@@ -18,8 +18,8 @@ typedef struct com_block_t {
 
 static ComBlock *gBlocks;
 
-static void comBlocksLoadAddrs(void) {
-    const uint8_t nBlocks = sequenceData()->compressionBlockCount;
+static void comBlocksLoadAddrs(FCHandle fc) {
+    const uint8_t nBlocks = curSequence.compressionBlockCount;
 
     if (nBlocks == 0) return;
 
@@ -28,7 +28,7 @@ static void comBlocksLoadAddrs(void) {
     uint8_t *const b = mustMalloc(size);
 
     // fseq header is fixed to 32 bytes, followed by compression block array
-    sequenceRead(32, COMPRESSION_BLOCK_SIZE * nBlocks, b);
+    FC_read(fc, 32, COMPRESSION_BLOCK_SIZE * nBlocks, b);
 
     // individually parse and validate each block
     // append to a std_ds.h array to avoid managing the resizing
@@ -36,7 +36,7 @@ static void comBlocksLoadAddrs(void) {
 
     uint8_t *head = b;
 
-    uint32_t offset = sequenceData()->channelDataOffset;
+    uint32_t offset = curSequence.channelDataOffset;
 
     for (int i = 0; i < nBlocks; i++) {
         TFError err;
@@ -63,7 +63,7 @@ static void comBlocksLoadAddrs(void) {
     free(b);
 }
 
-static uint8_t **comBlockGetZstd(const int index) {
+static uint8_t **comBlockGetZstd(FCHandle fc, const int index) {
     assert(index >= 0 && index < arrlen(gBlocks));
 
     const ComBlock comBlock = gBlocks[index];
@@ -78,7 +78,7 @@ static uint8_t **comBlockGetZstd(const int index) {
     if (ctx == NULL) fatalf(E_SYS, NULL);
 
     // read full compression block entry
-    sequenceRead(comBlock.addr, dInSize, dIn);
+    FC_read(fc, comBlock.addr, dInSize, dIn);
 
     ZSTD_inBuffer in = {
             .src = dIn,
@@ -101,7 +101,7 @@ static uint8_t **comBlockGetZstd(const int index) {
             fatalf(E_APP, "error while decompressing zstd stream: %s (%zu)\n",
                    ZSTD_getErrorName(err), err);
 
-        const uint32_t frameSize = sequenceData()->channelCount;
+        const uint32_t frameSize = curSequence.channelCount;
 
         // the decompressed size should be a product of the frameSize
         // otherwise the data (is most likely) decompressed incorrectly
@@ -132,16 +132,16 @@ static uint8_t **comBlockGetZstd(const int index) {
     return frames;
 }
 
-void comBlocksInit(void) {
-    comBlocksLoadAddrs();
+void comBlocksInit(FCHandle fc) {
+    comBlocksLoadAddrs(fc);
 }
 
-uint8_t **comBlockGet(const int index) {
-    const TFCompressionType compression = sequenceData()->compressionType;
+uint8_t **comBlockGet(FCHandle fc, const int index) {
+    const TFCompressionType compression = curSequence.compressionType;
 
     switch (compression) {
         case TF_COMPRESSION_ZSTD:
-            return comBlockGetZstd(index);
+            return comBlockGetZstd(fc, index);
         default:
             fatalf(E_APP, "cannot decompress type: %d\n", compression);
             return NULL;

@@ -17,7 +17,7 @@
 static int64_t gSampleNs[gSampleCount];
 static int gLastSampleIdx;
 
-char *sleepGetStatus(void) {
+char *Sleep_status(void) {
     double avg = 0;
     int n = 1;
 
@@ -32,6 +32,11 @@ char *sleepGetStatus(void) {
     const double fps = ms > 0 ? 1000 / ms : 0;
 
     return dsprintf("%.4fms (%.2f fps)", ms, fps);
+}
+
+void Sleep_halt(struct sleep_loop_t *loop, char *msg) {
+    loop->halt = true;
+    loop->msg = msg;
 }
 
 static int64_t sleepEstimatedNs(int64_t ns);
@@ -126,18 +131,22 @@ static void sleepTimerTick(const int64_t ns) {
     sleepRecordSample(timeElapsedNs(start, end));
 }
 
-void sleepTimerLoop(const long intervalMillis, bool (*sleep)(void)) {
-    assert(intervalMillis > 0);
-    assert(sleep != NULL);
+void Sleep_loop(struct sleep_loop_t *const loop) {
+    assert(loop != NULL);
+    assert(!loop->halt);
+    assert(loop->intervalMs > 0);
+    assert(loop->fn != NULL);
 
     static int64_t lostNs = 0;
 
     while (true) {
         const timeInstant start = timeGetNow();
 
-        if (!sleep()) break;
+        loop->fn(loop);
 
-        const int64_t intervalNs = intervalMillis * 1000000;
+        if (loop->halt) break;
+
+        const int64_t intervalNs = loop->intervalMs * 1000000;
 
         // if `sleep()` did not take the full time allowance, calculate
         // the remaining time budget and sleep for the full duration

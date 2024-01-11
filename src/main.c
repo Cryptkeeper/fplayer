@@ -19,6 +19,7 @@
 #include "player.h"
 #include "serial.h"
 #include "std/err.h"
+#include "std/fc.h"
 
 static void printUsage(void) {
     printf("Usage: fplayer -f=FILE -c=FILE [options] ...\n\n"
@@ -158,11 +159,16 @@ int main(const int argc, char **const argv) {
     // load required app context configs
     channelMapInit(gChannelMapFilePath);
 
+    // open sequence file and init controller handler
+    FCHandle fc = FC_open(gSequenceFilePath);
+
     // initialize core subsystems
     serialInit(gSerialDevName, gSerialBaudRate);
 
     // start the player as configured, this will start playback automatically
-    playerRun(gSequenceFilePath, gAudioOverrideFilePath, gPlayerOpts);
+    playerRun(fc, gAudioOverrideFilePath, gPlayerOpts);
+
+    FC_close(fc);
 
     // teardown in reverse order
     serialExit();

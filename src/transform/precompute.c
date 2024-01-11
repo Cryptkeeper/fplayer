@@ -144,10 +144,10 @@ static uint8_t *gLastFrameData;
 
 static int64_t gNextFrame;
 
-static bool precomputeHandleNextFrame(FramePump *const pump) {
-    if (gNextFrame >= sequenceData()->frameCount) return false;
+static bool precomputeHandleNextFrame(FCHandle fc, FramePump *const pump) {
+    if (gNextFrame >= curSequence.frameCount) return false;
 
-    const uint32_t frameSize = sequenceData()->channelCount;
+    const uint32_t frameSize = curSequence.channelCount;
 
     const bool hasPrevFrame = gLastFrameData != NULL;
 
@@ -161,7 +161,7 @@ static bool precomputeHandleNextFrame(FramePump *const pump) {
     const uint32_t frame = gNextFrame++;
 
     // fetch the current frame data
-    const uint8_t *const frameData = framePumpGet(pump, frame, false);
+    const uint8_t *const frameData = framePumpGet(fc, pump, frame, false);
 
     if (hasPrevFrame) {
         for (uint32_t circuit = 0; circuit < frameSize; circuit++) {
@@ -190,7 +190,7 @@ static void precomputeFlush(void) {
     }
 }
 
-void precomputeRun(const char *const fp) {
+void precomputeRun(const char *const fp, FCHandle fc) {
     const timeInstant start = timeGetNow();
 
     if (fadeTableLoadCache(fp)) {
@@ -209,7 +209,7 @@ void precomputeRun(const char *const fp) {
 
     FramePump pump = {0};
 
-    while (precomputeHandleNextFrame(&pump))
+    while (precomputeHandleNextFrame(fc, &pump))
         ;
 
     precomputeFlush();
