@@ -131,6 +131,7 @@ static void playerHandleNextFrame(struct sleep_loop_t *const loop) {
 static void playerStartPlayback(FCHandle fc) {
     struct sleep_loop_t loop = {
             .args = fc,
+            .intervalMs = curSequence.frameStepTimeMillis,
             .fn = playerHandleNextFrame,
     };
 
