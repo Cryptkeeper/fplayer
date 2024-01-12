@@ -5,15 +5,10 @@
 
 #include <libserialport.h>
 
-#include "lorproto/lorproto.h"
 #include "stb_ds.h"
 
-#include "buffer.h"
-#include "cmap.h"
+#include "protowriter.h"
 #include "std/err.h"
-#include "std/time.h"
-#include "transform/minifier.h"
-#include "transform/netstats.h"
 
 static void spPrintError(const enum sp_return err) {
     fprintf(stderr, "libserialport error: %d\n", err);
@@ -95,52 +90,10 @@ void serialWrite(const uint8_t *const b, const size_t size) {
     }
 }
 
-void serialWriteHeartbeat(void) {
-    lorAppendHeartbeat(&gWriteBuffer);
+void serialWaitForDrain(void) {
+    if (gPort == NULL) return;
 
-    netstats.written += writeBufferFlush();
-    netstats.packets += 1;
-}
-
-static void serialWriteThrottledHeartbeat(void) {
-    static timeInstant gLastHeartbeat;
-
-    // each frame will request a heartbeat be sent
-    // this logic throttles that to every Nms according to a liblightorama magic value
-    const timeInstant now = timeGetNow();
-
-    if (timeElapsedNs(gLastHeartbeat, now) < LOR_HEARTBEAT_DELAY_NS) return;
-
-    gLastHeartbeat = now;
-
-    serialWriteHeartbeat();
-}
-
-void serialWriteAllOff(void) {
-    uint8_t *uids = channelMapGetUids();
-
-    for (int i = 0; i < arrlen(uids); i++) {
-        lorAppendUnitEffect(&gWriteBuffer, LOR_EFFECT_SET_OFF, NULL, uids[i]);
-
-        netstats.written += writeBufferFlush();
-        netstats.packets += 1;
-    }
-
-    arrfree(uids);
-}
-
-void serialWriteFrame(const uint8_t *const frameData,
-                      const uint8_t *const lastFrameData,
-                      const uint32_t size,
-                      const uint32_t frame) {
-    serialWriteThrottledHeartbeat();
-
-    minifyStream(frameData, lastFrameData, size, frame);
-
-    // the write buffer should already be cleared after each use
-    assert(writeBufferFlush() == 0);
-
-    if (gPort != NULL) spTry(sp_drain(gPort));
+    spTry(sp_drain(gPort));
 }
 
 void serialExit(void) {

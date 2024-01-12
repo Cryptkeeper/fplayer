@@ -7,7 +7,10 @@
 #include "lorproto/heartbeat.h"
 
 #include "audio.h"
+#include "cmap.h"
 #include "comblock.h"
+#include "lorproto/easy.h"
+#include "protowriter.h"
 #include "pump.h"
 #include "seq.h"
 #include "serial.h"
@@ -15,8 +18,11 @@
 #include "std/sleep.h"
 #include "std/string.h"
 #include "std/time.h"
+#include "transform/minifier.h"
 #include "transform/netstats.h"
 #include "transform/precompute.h"
+
+#include <stb_ds.h>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -37,9 +43,13 @@ static void playerWaitForConnection(const unsigned int seconds) {
 
     printf("waiting %u seconds for connection...\n", seconds);
 
+    // generate a single heartbeat message to repeatedly send
+    LorBuffer *msg = protowriter.checkout_msg();
+    lorAppendHeartbeat(msg);
+
     // assumes 2 heartbeat messages per second (500ms delay)
     for (unsigned int toSend = seconds * 2; toSend > 0; toSend--) {
-        serialWriteHeartbeat();
+        protowriter.return_msg(msg);
 
 #ifdef _WIN32
         Sleep(LOR_HEARTBEAT_DELAY_MS);
@@ -115,11 +125,26 @@ static void playerHandleNextFrame(struct sleep_loop_t *const loop,
 
     const uint32_t frame = gNextFrame++;
 
+    // send a heartbeat if it has been >500ms
+    static timeInstant lastHeartbeat;
+
+    if (timeElapsedNs(lastHeartbeat, timeGetNow()) > LOR_HEARTBEAT_DELAY_NS) {
+        lastHeartbeat = timeGetNow();
+
+        LorBuffer *msg = protowriter.checkout_msg();
+        lorAppendHeartbeat(msg);
+        protowriter.return_msg(msg);
+    }
+
     // fetch the current frame data
     const uint8_t *const frameData =
             framePumpGet(args, &gFramePump, frame, true);
 
-    serialWriteFrame(frameData, gLastFrameData, frameSize, frame);
+    minifyStream(frameData, gLastFrameData, frameSize, frame);
+
+    // wait for serial to drain outbound
+    // this creates back pressure that results in fps loss if the serial can't keep up
+    serialWaitForDrain();
 
     // copy previous frame to the secondary frame buffer
     // this enables the serial system to diff between the two frames and only
@@ -127,6 +152,18 @@ static void playerHandleNextFrame(struct sleep_loop_t *const loop,
     memcpy(gLastFrameData, frameData, frameSize);
 
     playerLogStatus();
+}
+
+static void playerTurnOffAllLights(void) {
+    uint8_t *uids = channelMapGetUids();
+
+    for (size_t i = 0; i < arrlenu(uids); i++) {
+        LorBuffer *msg = protowriter.checkout_msg();
+        lorAppendUnitEffect(msg, LOR_EFFECT_SET_OFF, NULL, uids[i]);
+        protowriter.return_msg(msg);
+    }
+
+    arrfree(uids);
 }
 
 static void playerStartPlayback(FCHandle fc) {
@@ -142,7 +179,7 @@ static void playerStartPlayback(FCHandle fc) {
     printf("sequence stopped: %s\n", loop.msg);
     printf("turning off lights, waiting for end of audio...\n");
 
-    serialWriteAllOff();
+    playerTurnOffAllLights();
 
     // continue blocking until audio is finished
     // playback will continue until sequence and audio are both complete

@@ -7,8 +7,8 @@
 #include "lorproto/intensity.h"
 #include "stb_ds.h"
 
-#include "../buffer.h"
 #include "../cmap.h"
+#include "../protowriter.h"
 #include "../seq.h"
 #include "encode.h"
 #include "fade.h"
@@ -30,18 +30,17 @@ static void minifyEncodeRequest(const struct encoding_request_t request) {
     assert(request.circuits > 0);
     assert(request.nCircuits > 0);
 
-    netstats.packets++;
     netstats.fades += request.nFrames > 1 ? 1 : 0;// only fades are >1 frame
+
+    LorBuffer *msg = protowriter.checkout_msg();
 
     if (request.nCircuits == 1) {
         assert(request.groupOffset == 0);
 
-        lorAppendChannelEffect(&gWriteBuffer, request.effect, request.args,
+        lorAppendChannelEffect(msg, request.effect, request.args,
                                request.circuits - 1, request.unit);
 
-        const size_t written = writeBufferFlush();
-
-        netstats.written += written;
+        const size_t written = protowriter.return_msg(msg);
 
         if (request.effect == LOR_EFFECT_FADE) {
             // 4 bytes per individual set normally
@@ -49,16 +48,14 @@ static void minifyEncodeRequest(const struct encoding_request_t request) {
             netstats.saved += request.nFrames * 6 - (written + 2);
         }
     } else {
-        lorAppendChannelSetEffect(&gWriteBuffer, request.effect, request.args,
+        lorAppendChannelSetEffect(msg, request.effect, request.args,
                                   (LorChannelSet){
                                           .offset = request.groupOffset,
                                           .channelBits = request.circuits,
                                   },
                                   request.unit);
 
-        const size_t written = writeBufferFlush();
-
-        netstats.written += written;
+        const size_t written = protowriter.return_msg(msg);
 
         // N bytes per individual set/fade normally + 2 bytes padding each
         const int ungroupedSize =
