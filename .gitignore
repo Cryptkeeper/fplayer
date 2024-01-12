@@ -6,6 +6,7 @@
 *.wav
 /*.fseq
 *.pcf
+fuzz-corpus/
 
 # CMake
 cmake-build-debug/

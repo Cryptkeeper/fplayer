@@ -89,15 +89,14 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
     do {
         uint16_t consumed = 0;
 
-        const int end = alignOffset + (int) arrlen(stack);
-        const int max = end < 16 ? end : 16;
+        const int count = arrlen(stack);
 
         // consume alignment offset after the first iteration
         // writing enough data to overflow into multiple chunking iterations
         // ensures that any >0 iteration starts at a new 16-bit boundary
         alignOffset = 0;
 
-        for (uint8_t i = alignOffset; i < max; i++) {
+        for (uint8_t i = alignOffset; i < alignOffset + count; i++) {
             // check if circuit has already been accounted for
             // i.e. the intensity value matched another and the update was bulked
             if (consumed & CIRCUIT_BIT(i)) continue;
@@ -181,7 +180,7 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
             if (consumed == 0xFFFFu) break;
         }
 
-        arrdeln(stack, 0, max);
+        arrdeln(stack, 0, count);
     } while (arrlen(stack) > 0);
 }
 
@@ -232,6 +231,8 @@ void minifyStream(const uint8_t *const frameData,
 
     // flush any pending data from the last iteration
     if (arrlen(stack) > 0) minifyEncodeStack(prevUnit, stack);
+
+    assert(arrlen(stack) == 0);
 
     arrfree(stack);
 

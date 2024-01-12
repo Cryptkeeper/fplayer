@@ -47,55 +47,77 @@ static char *channelRangeValidate(const struct channel_range_t range) {
 static bool channelMapParseCSVRow(const int line,
                                   const char *const row,
                                   struct channel_range_t *const range) {
-    char *const str = mustStrdup(row);
-    char *last;
+    char *dup;
+    char *ptr = dup = mustStrdup(row);
 
-    for (int col = 0; col < 5; col++) {
-        const char *v = col == 0 ? strtok_r(str, ",", &last)
-                                 : strtok_r(NULL, ",", &last);
+    bool ok = true;
 
-        if (v == NULL || strlen(v) == 0) {
+    int col = 0;
+
+    char *token;
+    while ((token = strsep(&dup, ",")) != NULL) {
+        if (token == NULL || strlen(token) == 0) {
             fprintf(stderr,
                     "invalid channel map entry L%d: `%s`, missing/empty value "
                     "at C%d\n",
                     line, row, col);
-
-            free(str);
-
-            return false;
+            ok = false;
+            goto cleanup;
         }
 
         switch (col) {
             case 0:
-                range->sid = (uint32_t) mustStrtol(v, 0, UINT32_MAX);
+                if (!strtolb(token, 0, UINT32_MAX, &range->sid)) {
+                    ok = false;
+                    goto cleanup;
+                }
                 break;
             case 1:
-                range->eid = (uint32_t) mustStrtol(v, 0, UINT32_MAX);
+                if (!strtolb(token, 0, UINT32_MAX, &range->eid)) {
+                    ok = false;
+                    goto cleanup;
+                }
                 break;
             case 2:
-                range->unit = (uint8_t) mustStrtol(v, 0, UINT8_MAX);
+                if (!strtolb(token, 0, UINT8_MAX, &range->unit)) {
+                    ok = false;
+                    goto cleanup;
+                }
                 break;
             case 3:
-                range->scircuit = (uint16_t) mustStrtol(v, 0, UINT16_MAX);
+                if (!strtolb(token, 0, UINT16_MAX, &range->scircuit)) {
+                    ok = false;
+                    goto cleanup;
+                }
                 break;
             case 4:
-                range->ecircuit = (uint16_t) mustStrtol(v, 0, UINT16_MAX);
-            default:
+                if (!strtolb(token, 0, UINT16_MAX, &range->ecircuit)) {
+                    ok = false;
+                    goto cleanup;
+                }
                 break;
+            default:
+                fprintf(stderr,
+                        "invalid channel map entry L%d: `%s`, too many "
+                        "values at C%d\n",
+                        line, row, col);
+                ok = false;
+                goto cleanup;
         }
+
+        col++;
     }
 
-    free(str);
+cleanup:
+    free(ptr);
 
-    return true;
+    return ok;
 }
 
 static struct channel_range_t *gRanges;
 
-enum cmap_parse_result_t { CMAP_PARSE_OK, CMAP_PARSE_EMPTY, CMAP_PARSE_ERROR };
-
-static enum cmap_parse_result_t channelMapParseCSVLine(const int line,
-                                                       const char *const row) {
+enum cmap_parse_result_t channelMapParseCSVLine(const int line,
+                                                const char *const row) {
     // ignoring empty new lines
     if (strlen(row) == 0) return CMAP_PARSE_EMPTY;
 

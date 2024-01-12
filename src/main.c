@@ -107,13 +107,18 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
                 gAudioOverrideFilePath = mustStrdup(optarg);
                 break;
             case 'r':
-                gPlayerOpts.frameStepTimeOverrideMs =
-                        (uint8_t) mustStrtol(optarg, 1, UINT8_MAX);
-                break;
+                if (strtolb(optarg, 1, UINT8_MAX,
+                            &gPlayerOpts.frameStepTimeOverrideMs))
+                    break;
+                fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
+                *ec = EXIT_FAILURE;
+                return true;
             case 'w':
-                gPlayerOpts.connectionWaitS =
-                        (uint8_t) mustStrtol(optarg, 0, UINT8_MAX);
-                break;
+                if (strtolb(optarg, 0, UINT8_MAX, &gPlayerOpts.connectionWaitS))
+                    break;
+                fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
+                *ec = EXIT_FAILURE;
+                return true;
             case 'p':
                 gPlayerOpts.precomputeFades = true;
                 break;
@@ -121,8 +126,10 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
                 gSerialDevName = mustStrdup(optarg);
                 break;
             case 'b':
-                gSerialBaudRate = (int) mustStrtol(optarg, 0, INT_MAX);
-                break;
+                if (strtolb(optarg, 0, INT_MAX, &gSerialBaudRate)) break;
+                fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
+                *ec = EXIT_FAILURE;
+                return true;
             case ':':
                 fprintf(stderr, "option is missing argument: %c\n", optopt);
                 *ec = EXIT_FAILURE;

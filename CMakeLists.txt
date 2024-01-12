@@ -75,3 +75,13 @@ target_include_directories(test_dsprintf PRIVATE common)
 target_link_libraries(test_dsprintf common)
 
 add_test(NAME dsprintf COMMAND test_dsprintf)
+
+# Fuzzing (libFuzzer)
+if (ENABLE_FUZZING)
+    add_executable(fuzz_cmap fuzz/cmap.c src/cmap.c)
+
+    target_include_directories(fuzz_cmap PRIVATE common "src")
+
+    target_link_libraries(fuzz_cmap common "-fsanitize=fuzzer")
+    target_compile_options(fuzz_cmap PRIVATE -fsanitize=fuzzer)
+endif ()

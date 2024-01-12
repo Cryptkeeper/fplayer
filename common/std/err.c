@@ -62,17 +62,19 @@ void *mustMalloc(const size_t size) {
     return ptr;
 }
 
-long mustStrtol(const char *const str, const long min, const long max) {
-    char *endptr = NULL;
-
+bool strtolb(const char *const str,
+             const long min,
+             const long max,
+             void *const p) {
     errno = 0;
 
+    char *endptr = NULL;
     const long parsed = strtol(str, &endptr, 10);
 
-    if (errno != 0 || endptr == str || *endptr != '\0')
-        fatalf(E_APP, "error parsing '%s' as an integer\n", str);
+    if (errno != 0 || endptr == str || *endptr != '\0') return false;
 
-    return parsed < min ? min : parsed > max ? max : parsed;
+    *(long *) p = parsed < min ? min : parsed > max ? max : parsed;
+    return true;
 }
 
 char *mustStrdup(const char *str) {

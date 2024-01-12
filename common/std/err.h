@@ -1,6 +1,7 @@
 #ifndef FPLAYER_ERR_H
 #define FPLAYER_ERR_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 enum err_t {
@@ -14,7 +15,7 @@ void fatalf(enum err_t err, const char *format, ...);
 
 void *mustMalloc(size_t size);
 
-long mustStrtol(const char *str, long min, long max);
+bool strtolb(const char *str, long min, long max, void *p);
 
 char *mustStrdup(const char *str);
 
