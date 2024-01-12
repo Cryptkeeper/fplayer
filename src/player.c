@@ -97,7 +97,8 @@ static void playerLogStatus(void) {
     free(netstats);
 }
 
-static void playerHandleNextFrame(struct sleep_loop_t *const loop) {
+static void playerHandleNextFrame(struct sleep_loop_t *const loop,
+                                  void *const args) {
     if (gNextFrame >= curSequence.frameCount) {
         Sleep_halt(loop, "out of frames");
         return;
@@ -116,7 +117,7 @@ static void playerHandleNextFrame(struct sleep_loop_t *const loop) {
 
     // fetch the current frame data
     const uint8_t *const frameData =
-            framePumpGet(loop->args, &gFramePump, frame, true);
+            framePumpGet(args, &gFramePump, frame, true);
 
     serialWriteFrame(frameData, gLastFrameData, frameSize, frame);
 
@@ -130,14 +131,13 @@ static void playerHandleNextFrame(struct sleep_loop_t *const loop) {
 
 static void playerStartPlayback(FCHandle fc) {
     struct sleep_loop_t loop = {
-            .args = fc,
             .intervalMs = curSequence.frameStepTimeMillis,
             .fn = playerHandleNextFrame,
     };
 
     // start sequence timer loop
     // this call blocks until playback is completed
-    Sleep_loop(&loop);
+    Sleep_loop(&loop, fc);
 
     printf("sequence stopped: %s\n", loop.msg);
     printf("turning off lights, waiting for end of audio...\n");

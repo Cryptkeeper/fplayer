@@ -131,7 +131,7 @@ static void sleepTimerTick(const int64_t ns) {
     sleepRecordSample(timeElapsedNs(start, end));
 }
 
-void Sleep_loop(struct sleep_loop_t *const loop) {
+void Sleep_loop(struct sleep_loop_t *const loop, void *const args) {
     assert(loop != NULL);
     assert(!loop->halt);
     assert(loop->intervalMs > 0);
@@ -142,7 +142,7 @@ void Sleep_loop(struct sleep_loop_t *const loop) {
     while (true) {
         const timeInstant start = timeGetNow();
 
-        loop->fn(loop);
+        loop->fn(loop, args);
 
         if (loop->halt) break;
 
