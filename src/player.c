@@ -4,12 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "lorproto/easy.h"
 #include "lorproto/heartbeat.h"
+#include "stb_ds.h"
 
 #include "audio.h"
 #include "cmap.h"
 #include "comblock.h"
-#include "lorproto/easy.h"
 #include "protowriter.h"
 #include "pump.h"
 #include "seq.h"
@@ -21,8 +22,6 @@
 #include "transform/minifier.h"
 #include "transform/netstats.h"
 #include "transform/precompute.h"
-
-#include <stb_ds.h>
 
 #ifdef _WIN32
     #include <windows.h>
