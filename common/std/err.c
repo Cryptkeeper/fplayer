@@ -65,15 +65,20 @@ void *mustMalloc(const size_t size) {
 bool strtolb(const char *const str,
              const long min,
              const long max,
-             void *const p) {
+             void *const p,
+             const size_t ps) {
+
     errno = 0;
 
     char *endptr = NULL;
-    const long parsed = strtol(str, &endptr, 10);
+    long parsed = strtol(str, &endptr, 10);
 
     if (errno != 0 || endptr == str || *endptr != '\0') return false;
 
-    *(long *) p = parsed < min ? min : parsed > max ? max : parsed;
+    parsed = parsed < min ? min : (parsed > max ? max : parsed);
+
+    memcpy(p, &parsed, ps);
+
     return true;
 }
 

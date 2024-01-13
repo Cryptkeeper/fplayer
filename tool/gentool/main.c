@@ -193,22 +193,27 @@ int main(const int argc, char **const argv) {
             case 'f':
                 // minimum 4 FPS = 250ms sleep time (stored in uint8_t, <= 255)
                 // maximum 1000 FPS = 1ms sleep time
-                if (strtolb(optarg, 4, 1000, &fps)) break;
+                if (strtolb(optarg, 4, 1000, &fps, sizeof(fps))) break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 return 1;
 
             case 'c':
-                if (strtolb(optarg, 1, UINT32_MAX, &channelCount)) break;
+                if (strtolb(optarg, 1, UINT32_MAX, &channelCount,
+                            sizeof(channelCount)))
+                    break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 return 1;
 
             case 'd':
-                if (strtolb(optarg, 1, UINT32_MAX, &frameCount)) break;
+                if (strtolb(optarg, 1, UINT32_MAX, &frameCount,
+                            sizeof(frameCount)))
+                    break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 return 1;
 
             case 'b':
-                if (strtolb(optarg, 0, UINT8_MAX, &compressionBlockCount))
+                if (strtolb(optarg, 0, UINT8_MAX, &compressionBlockCount,
+                            sizeof(compressionBlockCount)))
                     break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 return 1;

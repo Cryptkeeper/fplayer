@@ -15,7 +15,7 @@ void fatalf(enum err_t err, const char *format, ...);
 
 void *mustMalloc(size_t size);
 
-bool strtolb(const char *str, long min, long max, void *p);
+bool strtolb(const char *str, long min, long max, void *p, size_t ps);
 
 char *mustStrdup(const char *str);
 

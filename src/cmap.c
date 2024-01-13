@@ -44,6 +44,20 @@ static char *channelRangeValidate(const struct channel_range_t range) {
     return NULL;
 }
 
+#ifdef _WIN32
+// Public Domain strsep implementation by Dan Cross
+// via https://unixpapa.com/incnote/string.html
+static char *strsep(char **sp, char *sep) {
+    char *p, *s;
+    if (sp == NULL || *sp == NULL || **sp == '\0') return (NULL);
+    s = *sp;
+    p = s + strcspn(s, sep);
+    if (*p != '\0') *p++ = '\0';
+    *sp = p;
+    return (s);
+}
+#endif
+
 static bool channelMapParseCSVRow(const int line,
                                   const char *const row,
                                   struct channel_range_t *const range) {
@@ -67,31 +81,36 @@ static bool channelMapParseCSVRow(const int line,
 
         switch (col) {
             case 0:
-                if (!strtolb(token, 0, UINT32_MAX, &range->sid)) {
+                if (!strtolb(token, 0, UINT32_MAX, &range->sid,
+                             sizeof(range->sid))) {
                     ok = false;
                     goto cleanup;
                 }
                 break;
             case 1:
-                if (!strtolb(token, 0, UINT32_MAX, &range->eid)) {
+                if (!strtolb(token, 0, UINT32_MAX, &range->eid,
+                             sizeof(range->eid))) {
                     ok = false;
                     goto cleanup;
                 }
                 break;
             case 2:
-                if (!strtolb(token, 0, UINT8_MAX, &range->unit)) {
+                if (!strtolb(token, 0, UINT8_MAX, &range->unit,
+                             sizeof(range->unit))) {
                     ok = false;
                     goto cleanup;
                 }
                 break;
             case 3:
-                if (!strtolb(token, 0, UINT16_MAX, &range->scircuit)) {
+                if (!strtolb(token, 0, UINT16_MAX, &range->scircuit,
+                             sizeof(range->scircuit))) {
                     ok = false;
                     goto cleanup;
                 }
                 break;
             case 4:
-                if (!strtolb(token, 0, UINT16_MAX, &range->ecircuit)) {
+                if (!strtolb(token, 0, UINT16_MAX, &range->ecircuit,
+                             sizeof(range->ecircuit))) {
                     ok = false;
                     goto cleanup;
                 }

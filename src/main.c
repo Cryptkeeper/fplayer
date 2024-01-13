@@ -108,13 +108,15 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
                 break;
             case 'r':
                 if (strtolb(optarg, 1, UINT8_MAX,
-                            &gPlayerOpts.frameStepTimeOverrideMs))
+                            &gPlayerOpts.frameStepTimeOverrideMs,
+                            sizeof(gPlayerOpts.frameStepTimeOverrideMs)))
                     break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 *ec = EXIT_FAILURE;
                 return true;
             case 'w':
-                if (strtolb(optarg, 0, UINT8_MAX, &gPlayerOpts.connectionWaitS))
+                if (strtolb(optarg, 0, UINT8_MAX, &gPlayerOpts.connectionWaitS,
+                            sizeof(gPlayerOpts.connectionWaitS)))
                     break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 *ec = EXIT_FAILURE;
@@ -126,7 +128,9 @@ static bool parseOpts(const int argc, char **const argv, int *const ec) {
                 gSerialDevName = mustStrdup(optarg);
                 break;
             case 'b':
-                if (strtolb(optarg, 0, INT_MAX, &gSerialBaudRate)) break;
+                if (strtolb(optarg, 0, INT_MAX, &gSerialBaudRate,
+                            sizeof(gSerialBaudRate)))
+                    break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 *ec = EXIT_FAILURE;
                 return true;
