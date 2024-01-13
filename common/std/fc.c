@@ -72,6 +72,23 @@ uint32_t FC_readto(const FCHandle fc,
     return read;
 }
 
+uint32_t FC_filesize(const FCHandle fc) {
+    struct FC *const s = fc;
+
+    pthread_mutex_lock(&s->mutex);
+
+    if (fseek(s->file, 0, SEEK_END) < 0) fatalf(E_FIO, NULL);
+
+    const long size = ftell(s->file);
+    if (size < 0) fatalf(E_FIO, "error getting EOF position");
+
+    rewind(s->file);
+
+    pthread_mutex_unlock(&s->mutex);
+
+    return size;
+}
+
 const char *FC_filepath(FCHandle fc) {
     return fc->fp;
 }

@@ -4,9 +4,16 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-enum cmap_parse_result_t { CMAP_PARSE_OK, CMAP_PARSE_EMPTY, CMAP_PARSE_ERROR };
+enum cmap_parse_res_t { CMAP_PARSE_OK, CMAP_PARSE_EMPTY, CMAP_PARSE_ERROR };
 
-enum cmap_parse_result_t channelMapParseCSVLine(int line, const char *row);
+enum cmap_parse_res_t channelMapParseCSVLine(int line, const char *row);
+
+typedef struct cmap_parse_info_t {
+    int invalid_rows;
+    int valid_rows;
+} cmap_parse_info_t;
+
+cmap_parse_info_t channelMapParseCSV(const char *b);
 
 void channelMapInit(const char *filepath);
 

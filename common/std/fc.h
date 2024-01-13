@@ -17,6 +17,8 @@ uint32_t FC_readto(FCHandle fc,
                    uint32_t maxCount,
                    uint8_t *b);
 
+uint32_t FC_filesize(FCHandle fc);
+
 const char *FC_filepath(FCHandle fc);
 
 #endif//FPLAYER_FC_H
