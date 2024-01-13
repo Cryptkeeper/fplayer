@@ -65,12 +65,11 @@ uint32_t FC_readto(const FCHandle fc,
 
     if (fseek(s->file, offset, SEEK_SET) < 0) fatalf(E_FIO, NULL);
 
-    const size_t readCount = fread(b, size, maxCount, s->file);
-    if (readCount == 0) fatalf(E_FIO, "unexpected EOF");
+    const size_t read = fread(b, size, maxCount, s->file);
 
     pthread_mutex_unlock(&s->mutex);
 
-    return readCount;
+    return read;
 }
 
 const char *FC_filepath(FCHandle fc) {

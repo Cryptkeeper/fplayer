@@ -11,13 +11,11 @@
 TFHeader curSequence;
 
 void Seq_initHeader(FCHandle fc) {
-    const int size = 32; /* fixed size header */
-    uint8_t b[size];
-
-    FC_read(fc, 0, size, b);
+    uint8_t b[32];
+    FC_read(fc, 0, sizeof(b), b);
 
     TFError err;
-    if ((err = TFHeader_read(b, size, &curSequence, NULL)))
+    if ((err = TFHeader_read(b, sizeof(b), &curSequence, NULL)))
         fatalf(E_APP, "error parsing fseq: %s\n", TFError_string(err));
 }
 

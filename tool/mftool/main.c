@@ -8,18 +8,18 @@
 #include "stb_ds.h"
 
 #include "std/err.h"
+#include "std/fc.h"
 #include "std/fseq.h"
 #include "std/string.h"
 
 static void
-fseqCopyConfigBlocks(FILE *const dst, const TFHeader header, FILE *const src) {
+fseqCopyConfigBlocks(FILE *const dst, const TFHeader header, FCHandle src) {
     const uint16_t size =
             header.compressionBlockCount * 8 + header.channelRangeCount * 6;
 
     uint8_t *const b = mustMalloc(size);
 
-    if (fread(b, size, 1, src) != 1)
-        fatalf(E_FIO, "error reading config blocks\n");
+    FC_read(src, 32, size, b);
 
     fwrite(b, size, 1, dst);
 
@@ -28,13 +28,15 @@ fseqCopyConfigBlocks(FILE *const dst, const TFHeader header, FILE *const src) {
 
 #define CD_CHUNK_SIZE 4096
 
-static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
+static uint32_t
+fseqCopyChannelData(FCHandle src, const TFHeader header, FILE *const dst) {
     uint8_t *const chunk = mustMalloc(CD_CHUNK_SIZE);
 
     uint32_t copied = 0;
 
     while (1) {
-        const size_t read = fread(chunk, 1, CD_CHUNK_SIZE, src);
+        const uint32_t offset = header.channelDataOffset + copied;
+        const uint32_t read = FC_readto(src, offset, 1, CD_CHUNK_SIZE, chunk);
 
         // test for error or EOF
         if (read == 0) break;
@@ -49,14 +51,9 @@ static uint32_t fseqCopyChannelData(FILE *const src, FILE *const dst) {
     return copied;
 }
 
-static void fseqOpen(const char *const fp, FILE **fd, TFHeader *const header) {
-    FILE *const f = *fd = fopen(fp, "rb");
-
-    if (f == NULL) fatalf(E_FIO, "error opening file `%s`\n", fp);
-
+static void fseqGetHeader(FCHandle fc, TFHeader *const header) {
     uint8_t b[32];
-
-    if (fread(b, sizeof(b), 1, f) != 1) fatalf(E_FIO, "error reading header\n");
+    FC_read(fc, 0, sizeof(b), b);
 
     TFError err;
     if ((err = TFHeader_read(b, sizeof(b), header, NULL)))
@@ -70,10 +67,10 @@ static void fseqOpen(const char *const fp, FILE **fd, TFHeader *const header) {
 static void fseqCopySetVars(const char *const sfp,
                             const char *const dfp,
                             const fseq_var_t *const vars) {
-    FILE *src;
-    TFHeader original;
+    FCHandle src = FC_open(sfp);
 
-    fseqOpen(sfp, &src, &original);
+    TFHeader original;
+    fseqGetHeader(src, &original);
 
     FILE *const dst = fopen(dfp, "wb");
 
@@ -89,26 +86,24 @@ static void fseqCopySetVars(const char *const sfp,
     fseqWriteVars(dst, header, vars);
 
     // ensure the channel data is aligned on both files before bulk copying
-    fseek(src, original.channelDataOffset, SEEK_SET);
     fseek(dst, header.channelDataOffset, SEEK_SET);
 
     // bulk copy channel data
-    const size_t copied = fseqCopyChannelData(src, dst);
+    const size_t copied = fseqCopyChannelData(src, header, dst);
 
     printf("copied %zu bytes of frame data\n", copied);
 
-    fclose(src);
+    FC_close(src);
     fclose(dst);
 }
 
 #define VAR_HEADER_SIZE 4
 
 static fseq_var_t *fseqReadVars(const char *const fp) {
-    FILE *src;
-    TFHeader header;
-    fseqOpen(fp, &src, &header);
+    FCHandle fc = FC_open(fp);
 
-    fseek(src, header.variableDataOffset, SEEK_SET);
+    TFHeader header;
+    fseqGetHeader(fc, &header);
 
     const uint16_t varDataSize =
             header.channelDataOffset - header.variableDataOffset;
@@ -117,8 +112,7 @@ static fseq_var_t *fseqReadVars(const char *const fp) {
 
     uint8_t *const varData = mustMalloc(varDataSize);
 
-    if (fread(varData, varDataSize, 1, src) != 1)
-        fatalf(E_FIO, "error reading var data blob (%d bytes)", varDataSize);
+    FC_read(fc, header.variableDataOffset, varDataSize, varData);
 
     uint16_t pos = 0;
     fseq_var_t *vars = NULL;
@@ -155,7 +149,7 @@ static fseq_var_t *fseqReadVars(const char *const fp) {
 
     free(varData);
 
-    fclose(src);
+    FC_close(fc);
 
     return vars;
 }
