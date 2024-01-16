@@ -31,8 +31,8 @@ jobs:
       - name: fuzz_cmap_parse_csv_line
         working-directory: ${{github.workspace}}/build
         run: |
-          mkdir -p corpus/cmap_parse_csv_line
-          ./fuzz_cmap_parse_csv_line -max_len=16 -max_total_time=30 -print_final_stats=1 -close_fd_mask=2 -dict=../fuzz/cmap.dict corpus/cmap_parse_csv_line
+          mkdir -p corpus/fuzz_cmap_parse_csv_line
+          ./fuzz_cmap_parse_csv_line -max_len=16 -max_total_time=30 -print_final_stats=1 -close_fd_mask=2 -dict=../fuzz/cmap.dict corpus/fuzz_cmap_parse_csv_line
 
       - name: fuzz_cmap_parse_csv
         working-directory: ${{github.workspace}}/build
