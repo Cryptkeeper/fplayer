@@ -78,10 +78,13 @@ add_test(NAME dsprintf COMMAND test_dsprintf)
 
 # Fuzzing (libFuzzer)
 if (ENABLE_FUZZING)
-    add_executable(fuzz_cmap fuzz/cmap.c src/cmap.c)
+    add_executable(fuzz_cmap_parse_csv_line fuzz/cmap_parse_csv_line.c src/cmap.c)
+    target_include_directories(fuzz_cmap_parse_csv_line PRIVATE common "src")
+    target_link_libraries(fuzz_cmap_parse_csv_line common "-fsanitize=fuzzer")
+    target_compile_options(fuzz_cmap_parse_csv_line PRIVATE -fsanitize=fuzzer)
 
-    target_include_directories(fuzz_cmap PRIVATE common "src")
-
-    target_link_libraries(fuzz_cmap common "-fsanitize=fuzzer")
-    target_compile_options(fuzz_cmap PRIVATE -fsanitize=fuzzer)
+    add_executable(fuzz_cmap_parse_csv fuzz/cmap_parse_csv.c src/cmap.c)
+    target_include_directories(fuzz_cmap_parse_csv PRIVATE common "src")
+    target_link_libraries(fuzz_cmap_parse_csv common "-fsanitize=fuzzer")
+    target_compile_options(fuzz_cmap_parse_csv PRIVATE -fsanitize=fuzzer)
 endif ()

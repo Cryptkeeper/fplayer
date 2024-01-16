@@ -6,6 +6,7 @@
 #include "stb_ds.h"
 
 #include "std/err.h"
+#include "std/fc.h"
 #include "std/string.h"
 
 struct channel_range_t {
@@ -135,8 +136,8 @@ cleanup:
 
 static struct channel_range_t *gRanges;
 
-enum cmap_parse_result_t channelMapParseCSVLine(const int line,
-                                                const char *const row) {
+enum cmap_parse_res_t channelMapParseCSVLine(const int line,
+                                             const char *const row) {
     // ignoring empty new lines
     if (strlen(row) == 0) return CMAP_PARSE_EMPTY;
 
@@ -160,55 +161,59 @@ enum cmap_parse_result_t channelMapParseCSVLine(const int line,
     return CMAP_PARSE_OK;
 }
 
-static void channelMapParseCSV(const char *const b) {
+cmap_parse_info_t channelMapParseCSV(const char *const b) {
     char *const str = mustStrdup(b);
     char *last;
 
-    int ignoredRows = 0;
+    cmap_parse_info_t info = {0};
+
     int line = 0;
 
     for (const char *row = strtok_r(str, "\n", &last); row != NULL;
          row = strtok_r(NULL, "\n", &last)) {
 
-        const enum cmap_parse_result_t result =
-                channelMapParseCSVLine(line, row);
+        const enum cmap_parse_res_t result =
+                channelMapParseCSVLine(line++, row);
 
-        if (result == CMAP_PARSE_ERROR) ignoredRows++;
-
-        line++;
+        switch (result) {
+            case CMAP_PARSE_OK:
+                info.valid_rows++;
+                break;
+            case CMAP_PARSE_EMPTY:
+                continue;
+            case CMAP_PARSE_ERROR:
+                info.invalid_rows++;
+                break;
+        }
     }
 
     free(str);
 
-    printf("configured %d valid channel map %s\n", (int) arrlen(gRanges),
-           arrlen(gRanges) == 1 ? "entry" : "entries");
-
-    if (ignoredRows > 0)
-        fprintf(stderr, "warning: %d invalid channel map entries ignored\n",
-                ignoredRows);
+    return info;
 }
 
 void channelMapInit(const char *const filepath) {
-    FILE *f = fopen(filepath, "rb");
+    FCHandle fc = FC_open(filepath);
 
-    if (f == NULL) fatalf(E_FIO, "error opening channel map: %s\n", filepath);
+    const uint32_t filesize = FC_filesize(fc);
+    uint8_t *b = mustMalloc(filesize + 1);
 
-    if (fseek(f, 0, SEEK_END) < 0) fatalf(E_FIO, NULL);
+    FC_read(fc, 0, filesize, b);
+    FC_close(fc);
 
-    const long filesize = ftell(f);
-    if (filesize <= 0) fatalf(E_FIO, NULL);
-
-    rewind(f);
-
-    char *const b = mustMalloc(filesize + 1);
-
-    if (fread(b, 1, filesize, f) != (size_t) filesize) fatalf(E_FIO, NULL);
-
-    fclose(f);
-
+    // ensure file contents are treated as null terminated string
     b[filesize] = '\0';
 
-    channelMapParseCSV(b);
+    const cmap_parse_info_t info = channelMapParseCSV((char *) b);
+
+    // print parsed statistics
+    printf("configured %d valid channel map %s\n", info.valid_rows,
+           info.valid_rows == 1 ? "entry" : "entries");
+
+    if (info.invalid_rows > 0)
+        fprintf(stderr, "warning: %d invalid channel map entries ignored\n",
+                info.invalid_rows);
+
     free(b);
 }
 
