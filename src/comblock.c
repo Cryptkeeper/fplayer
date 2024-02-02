@@ -68,9 +68,12 @@ static bool comBlockLookupTable(FCHandle fc,
 
 static uint8_t **comBlockGetZstd(FCHandle fc, const int index) {
     // attempt to read the address and size of the compression block
-    uint32_t cbAddr, cbSize;
+    uint32_t cbAddr = 0, cbSize = 0;
     if (!comBlockLookupTable(fc, index, &cbAddr, &cbSize))
         fatalf(E_APP, "error looking up compression block: %d\n", index);
+
+    assert(cbAddr > 32);
+    assert(cbSize > 0);
 
     const size_t dInSize = cbSize;
     void *dIn = mustMalloc(dInSize);
