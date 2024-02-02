@@ -11,38 +11,32 @@
 
 #define COMPRESSION_BLOCK_SIZE 8
 
-typedef struct com_block_t {
-    uint32_t addr;
-    uint32_t size;
-} ComBlock;
+static bool comBlockLookupTable(FCHandle fc,
+                                const int index,
+                                uint32_t *const cbAddr,
+                                uint32_t *const cbSize) {
+    if (index < 0 || index >= curSequence.compressionBlockCount) return false;
 
-static ComBlock *gBlocks;
+    // read each table entry up to and including index
+    // the leading entries are used to calculate the absolute address of a block
+    // additional leading entries may exist but aren't required to calculate the address and are ignored
+    const int tableSize = (index + 1) * COMPRESSION_BLOCK_SIZE;
+    uint8_t *const table = mustMalloc(tableSize);
 
-static void comBlocksLoadAddrs(FCHandle fc) {
-    const uint8_t nBlocks = curSequence.compressionBlockCount;
+    // header is 32 bytes, followed by compression block table
+    FC_read(fc, 32, tableSize, table);
 
-    if (nBlocks == 0) return;
-
-    const int size = nBlocks * COMPRESSION_BLOCK_SIZE;
-
-    uint8_t *const b = mustMalloc(size);
-
-    // fseq header is fixed to 32 bytes, followed by compression block array
-    FC_read(fc, 32, COMPRESSION_BLOCK_SIZE * nBlocks, b);
-
-    // individually parse and validate each block
-    // append to a std_ds.h array to avoid managing the resizing
-    arrsetcap(gBlocks, nBlocks);
-
-    uint8_t *head = b;
-
+    uint8_t *head = table;
     uint32_t offset = curSequence.channelDataOffset;
 
-    for (int i = 0; i < nBlocks; i++) {
+    // sum size of each leading compression block to get the absolute address
+    // also read the final block at index to return its size
+    for (int i = 0; i <= index; i++) {
+        const int remaining = tableSize - i * COMPRESSION_BLOCK_SIZE;
+
         TFError err;
         TFCompressionBlock block;
-        if ((err = TFCompressionBlock_read(
-                     head, size - i * COMPRESSION_BLOCK_SIZE, &block, &head)))
+        if ((err = TFCompressionBlock_read(head, remaining, &block, &head)))
             fatalf(E_APP, "error parsing compression block: %s\n",
                    TFError_string(err));
 
@@ -50,25 +44,27 @@ static void comBlocksLoadAddrs(FCHandle fc) {
         // these will appear with a 0 size value, trailing previously valid blocks
         if (block.size == 0) break;
 
-        const ComBlock comBlock = (ComBlock){
-                .addr = offset,
-                .size = block.size,
-        };
-
-        arrput(gBlocks, comBlock);
-
-        offset += block.size;
+        if (i == index) {
+            // final block, return sum and read file data
+            *cbAddr = offset;
+            *cbSize = block.size;
+        } else {
+            offset += block.size;
+        }
     }
 
-    free(b);
+    free(table);
+
+    return true;
 }
 
 static uint8_t **comBlockGetZstd(FCHandle fc, const int index) {
-    assert(index >= 0 && index < arrlen(gBlocks));
+    // attempt to read the address and size of the compression block
+    uint32_t cbAddr, cbSize;
+    if (!comBlockLookupTable(fc, index, &cbAddr, &cbSize))
+        fatalf(E_APP, "error looking up compression block: %d\n", index);
 
-    const ComBlock comBlock = gBlocks[index];
-
-    const size_t dInSize = comBlock.size;
+    const size_t dInSize = cbSize;
     void *dIn = mustMalloc(dInSize);
 
     const size_t dOutSize = ZSTD_DStreamOutSize();
@@ -78,7 +74,7 @@ static uint8_t **comBlockGetZstd(FCHandle fc, const int index) {
     if (ctx == NULL) fatalf(E_SYS, NULL);
 
     // read full compression block entry
-    FC_read(fc, comBlock.addr, dInSize, dIn);
+    FC_read(fc, cbAddr, dInSize, dIn);
 
     ZSTD_inBuffer in = {
             .src = dIn,
@@ -107,8 +103,8 @@ static uint8_t **comBlockGetZstd(FCHandle fc, const int index) {
         // otherwise the data (is most likely) decompressed incorrectly
         if (out.pos % frameSize != 0)
             fatalf(E_APP,
-                   "decompressed frame data size (%d) is not multiple of frame "
-                   "size (%d)\n",
+                   "decompressed frame data size (%d) is not multiple of "
+                   "frame size (%d)\n",
                    out.pos, frameSize);
 
         // break each chunk into its own allocation
@@ -132,10 +128,6 @@ static uint8_t **comBlockGetZstd(FCHandle fc, const int index) {
     return frames;
 }
 
-void comBlocksInit(FCHandle fc) {
-    comBlocksLoadAddrs(fc);
-}
-
 uint8_t **comBlockGet(FCHandle fc, const int index) {
     const TFCompressionType compression = curSequence.compressionType;
 
@@ -146,8 +138,4 @@ uint8_t **comBlockGet(FCHandle fc, const int index) {
             fatalf(E_APP, "cannot decompress type: %d\n", compression);
             return NULL;
     }
-}
-
-void comBlocksFree(void) {
-    arrfree(gBlocks);
 }

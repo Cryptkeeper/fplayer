@@ -5,10 +5,6 @@
 
 #include "std/fc.h"
 
-void comBlocksInit(FCHandle fc);
-
 uint8_t **comBlockGet(FCHandle fc, int index);
-
-void comBlocksFree(void);
 
 #endif//FPLAYER_COMBLOCK_H

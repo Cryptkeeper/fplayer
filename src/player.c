@@ -206,8 +206,6 @@ void playerRun(FCHandle fc,
                const PlayerOpts opts) {
     Seq_initHeader(fc);
 
-    comBlocksInit(fc);
-
     if (opts.precomputeFades) {
         char *const cacheFilePath = dsprintf("%s.pcf", FC_filepath(fc));
 
@@ -231,7 +229,6 @@ void playerRun(FCHandle fc,
 
     // playback finished, free resources and exit cleanly
     precomputeFree();
-    comBlocksFree();
 
     framePumpFree(&gFramePump);
 
