@@ -1,6 +1,7 @@
 #include "comblock.h"
 
 #include <assert.h>
+#include <stdio.h>
 
 #include <zstd.h>
 
@@ -27,7 +28,10 @@ static bool comBlockLookupTable(FCHandle fc,
     FC_read(fc, 32, tableSize, table);
 
     uint8_t *head = table;
-    uint32_t offset = curSequence.channelDataOffset;
+
+    // base absolute address of the first compression block
+    *cbAddr = curSequence.channelDataOffset;
+    *cbSize = 0;
 
     // sum size of each leading compression block to get the absolute address
     // also read the final block at index to return its size
@@ -36,21 +40,25 @@ static bool comBlockLookupTable(FCHandle fc,
 
         TFError err;
         TFCompressionBlock block;
-        if ((err = TFCompressionBlock_read(head, remaining, &block, &head)))
-            fatalf(E_APP, "error parsing compression block: %s\n",
-                   TFError_string(err));
+        if ((err = TFCompressionBlock_read(head, remaining, &block, &head))) {
+            fprintf(stderr, "error parsing compression block: %s\n",
+                    TFError_string(err));
+
+            free(table);
+
+            return false;
+        }
 
         // a fseq file may include multiple empty compression blocks for padding purposes
         // these will appear with a 0 size value, trailing previously valid blocks
         if (block.size == 0) break;
 
-        if (i == index) {
-            // final block, return sum and read file data
-            *cbAddr = offset;
-            *cbSize = block.size;
-        } else {
-            offset += block.size;
-        }
+        // always update to the "last valid" size, even if it isn't the final block
+        *cbSize = block.size;
+
+        // if this isn't the final block, continuing summing the relative offsets
+        // into an absolute position
+        if (i < index) *cbAddr += block.size;
     }
 
     free(table);
