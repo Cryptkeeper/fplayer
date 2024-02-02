@@ -35,7 +35,8 @@ static bool ComBlock_findAbsoluteAddr(FCHandle fc,
 
     // sum size of each leading compression block to get the absolute address
     // also read the final block at index to return its size
-    for (int i = 0; i <= index; i++) {
+    int i = 0;
+    for (; i <= index; i++) {
         const int remaining = tableSize - i * COMPRESSION_BLOCK_SIZE;
 
         TFError err;
@@ -63,7 +64,9 @@ static bool ComBlock_findAbsoluteAddr(FCHandle fc,
 
     free(table);
 
-    return true;
+    // only return success if at least one block was read
+    // this avoids a 0-size block @ 0 from being considered valid
+    return i > 0;
 }
 
 static uint8_t **ComBlock_readZstd(FCHandle fc, const int index) {
