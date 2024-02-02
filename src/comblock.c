@@ -72,7 +72,7 @@ static uint8_t **comBlockGetZstd(FCHandle fc, const int index) {
     if (!comBlockLookupTable(fc, index, &cbAddr, &cbSize))
         fatalf(E_APP, "error looking up compression block: %d\n", index);
 
-    assert(cbAddr >= 32);
+    assert(cbAddr >= curSequence.channelDataOffset);
     assert(cbSize > 0);
 
     const size_t dInSize = cbSize;
