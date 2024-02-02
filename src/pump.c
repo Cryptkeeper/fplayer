@@ -64,7 +64,7 @@ static uint8_t **framePumpChargeCompressionBlock(FCHandle fc,
     if (pump->consumedComBlocks >= curSequence.compressionBlockCount)
         return NULL;
 
-    return comBlockGet(fc, pump->consumedComBlocks++);
+    return ComBlock_read(fc, pump->consumedComBlocks++);
 }
 
 static void framePumpFreeFrames(FramePump *const pump) {

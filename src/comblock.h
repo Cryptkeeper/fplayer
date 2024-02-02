@@ -5,6 +5,10 @@
 
 #include "std/fc.h"
 
-uint8_t **comBlockGet(FCHandle fc, int index);
+/// \brief Reads the given compression block (by index) from the given file controller and decompresses it (if supported).
+/// \param fc target file controller instance
+/// \param index index of the compression block to read, must be >= 0 and < `curSequence.compressionBlockCount`
+/// \return A decompressed copy of the block's contained frame data, or NULL if an error occurred
+uint8_t **ComBlock_read(FCHandle fc, int index);
 
 #endif//FPLAYER_COMBLOCK_H

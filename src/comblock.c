@@ -12,10 +12,10 @@
 
 #define COMPRESSION_BLOCK_SIZE 8
 
-static bool comBlockLookupTable(FCHandle fc,
-                                const int index,
-                                uint32_t *const cbAddr,
-                                uint32_t *const cbSize) {
+static bool ComBlock_findAbsoluteAddr(FCHandle fc,
+                                      const int index,
+                                      uint32_t *const cbAddr,
+                                      uint32_t *const cbSize) {
     if (index < 0 || index >= curSequence.compressionBlockCount) return false;
 
     // read each table entry up to and including index
@@ -66,10 +66,10 @@ static bool comBlockLookupTable(FCHandle fc,
     return true;
 }
 
-static uint8_t **comBlockGetZstd(FCHandle fc, const int index) {
+static uint8_t **ComBlock_readZstd(FCHandle fc, const int index) {
     // attempt to read the address and size of the compression block
     uint32_t cbAddr = 0, cbSize = 0;
-    if (!comBlockLookupTable(fc, index, &cbAddr, &cbSize))
+    if (!ComBlock_findAbsoluteAddr(fc, index, &cbAddr, &cbSize))
         fatalf(E_APP, "error looking up compression block: %d\n", index);
 
     assert(cbAddr >= curSequence.channelDataOffset);
@@ -139,12 +139,12 @@ static uint8_t **comBlockGetZstd(FCHandle fc, const int index) {
     return frames;
 }
 
-uint8_t **comBlockGet(FCHandle fc, const int index) {
+uint8_t **ComBlock_read(FCHandle fc, const int index) {
     const TFCompressionType compression = curSequence.compressionType;
 
     switch (compression) {
         case TF_COMPRESSION_ZSTD:
-            return comBlockGetZstd(fc, index);
+            return ComBlock_readZstd(fc, index);
         default:
             fatalf(E_APP, "cannot decompress type: %d\n", compression);
             return NULL;
