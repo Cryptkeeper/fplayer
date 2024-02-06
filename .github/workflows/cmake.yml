@@ -36,7 +36,7 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: ctest -C ${{env.BUILD_TYPE}}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ubuntu-${{matrix.compiler}}-bin
           path: |
@@ -78,7 +78,7 @@ jobs:
         working-directory: ${{github.workspace}}\build
         run: ctest -C ${{env.BUILD_TYPE}}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: windows-bin
           path: |
@@ -108,7 +108,7 @@ jobs:
         working-directory: ${{github.workspace}}/build
         run: ctest -C ${{env.BUILD_TYPE}}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: macos-bin
           path: |

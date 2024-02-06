@@ -40,7 +40,7 @@ jobs:
           mkdir -p corpus/fuzz_cmap_parse_csv
           ./fuzz_cmap_parse_csv -max_len=16 -max_total_time=30 -print_final_stats=1 -close_fd_mask=2 -dict=../fuzz/cmap.dict corpus/fuzz_cmap_parse_csv
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: corpus.zip
           path: ${{github.workspace}}/build/corpus
