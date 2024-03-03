@@ -69,7 +69,7 @@ static char *gSerialDevName;
 static int gSerialBaudRate = 19200;
 
 static void printSerialEnumPorts(void) {
-    char **ports = serialEnumPorts();
+    char **ports = Serial_getPorts();
 
     for (int i = 0; i < arrlen(ports); i++) {
         printf("%s\n", ports[i]);
@@ -174,7 +174,7 @@ int main(const int argc, char **const argv) {
     FCHandle fc = FC_open(gSequenceFilePath);
 
     // initialize core subsystems
-    serialInit(gSerialDevName, gSerialBaudRate);
+    Serial_init(gSerialDevName, gSerialBaudRate);
 
     // start the player as configured, this will start playback automatically
     playerRun(fc, gAudioOverrideFilePath, gPlayerOpts);
@@ -182,7 +182,7 @@ int main(const int argc, char **const argv) {
     FC_close(fc);
 
     // teardown in reverse order
-    serialExit();
+    Serial_close();
     audioExit();
 
     channelMapFree();

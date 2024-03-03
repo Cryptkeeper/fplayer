@@ -1,17 +1,18 @@
 #ifndef FPLAYER_SERIAL_H
 #define FPLAYER_SERIAL_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-void serialInit(const char *devName, int baudRate);
+bool Serial_init(const char *devName, int baudRate);
 
-void serialWrite(const uint8_t *b, size_t size);
+void Serial_write(const uint8_t *b, size_t size);
 
-void serialWaitForDrain(void);
+void Serial_drain(void);
 
-void serialExit(void);
+void Serial_close(void);
 
-char **serialEnumPorts(void);
+char **Serial_getPorts(void);
 
 #endif//FPLAYER_SERIAL_H

@@ -25,7 +25,7 @@ static size_t ProtoWriter_returnMsg(const LorBuffer *const b) {
     netstats.written += written;
     netstats.packets += 1;
 
-    serialWrite(b->buffer, written);
+    Serial_write(b->buffer, written);
 
     return written;
 }

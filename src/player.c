@@ -143,7 +143,7 @@ static void playerHandleNextFrame(struct sleep_loop_t *const loop,
 
     // wait for serial to drain outbound
     // this creates back pressure that results in fps loss if the serial can't keep up
-    serialWaitForDrain();
+    Serial_drain();
 
     // copy previous frame to the secondary frame buffer
     // this enables the serial system to diff between the two frames and only
