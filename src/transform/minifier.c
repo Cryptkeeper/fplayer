@@ -139,28 +139,16 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
             static union LorEffectArgs gEffectArgs;
 
             if (hasFade) {
-                switch (fade.type) {
-                    case FADE_SLOPE:
-                        gEffectArgs = (union LorEffectArgs){
-                                .fade = {
-                                        .startIntensity = minifyEncodeIntensity(
-                                                fade.from),
-                                        .endIntensity =
-                                                minifyEncodeIntensity(fade.to),
-                                        .deciseconds =
-                                                minifyGetFadeDuration(fade),
-                                }};
+                gEffectArgs = (union LorEffectArgs){
+                        .fade = {
+                                .startIntensity =
+                                        minifyEncodeIntensity(fade.from),
+                                .endIntensity = minifyEncodeIntensity(fade.to),
+                                .deciseconds = minifyGetFadeDuration(fade),
+                        }};
 
-                        request.effect = LOR_EFFECT_FADE;
-                        request.args = &gEffectArgs;
-
-                        break;
-
-                    case FADE_FLASH:
-                        request.effect = LOR_EFFECT_SHIMMER;
-
-                        break;
-                }
+                request.effect = LOR_EFFECT_FADE;
+                request.args = &gEffectArgs;
             } else {
                 gEffectArgs = (union LorEffectArgs){
                         .setIntensity = {

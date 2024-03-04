@@ -49,7 +49,7 @@ static struct fade_handle_kvp_t *gFades;
 
 static bool fadeEqual(const Fade a, const Fade b) {
     return a.from == b.from && a.to == b.to && a.startFrame == b.startFrame &&
-           a.frames == b.frames && a.type == b.type;
+           a.frames == b.frames;
 }
 
 static int fadeCreateHandleRef(const Fade fade) {
@@ -147,9 +147,7 @@ bool fadeTableCache(const char *const fp) {
 
                     if (prevFade.from == fade->value.fade.from &&
                         prevFade.to == fade->value.fade.to &&
-                        prevFade.frames == fade->value.fade.frames &&
-                        prevFade.isFlash ==
-                                (fade->value.fade.type == FADE_FLASH)) {
+                        prevFade.frames == fade->value.fade.frames) {
                         index = k;
                         didMatch = true;
 
@@ -162,14 +160,12 @@ bool fadeTableCache(const char *const fp) {
                 if (!didMatch) {
                     index = arrlen(file.fades);
 
-                    // uint16_t `frames` value is stored in 12 bits
-                    // ensure < 2^12 before implicitly trimming the type
-                    assert(fade->value.fade.frames < 4096);
+                    // ensure uint16_t `frames` value is < 2^16 before trimming the type
+                    assert(fade->value.fade.frames < UINT16_MAX);
 
                     const pcf_fade_t newFade = (pcf_fade_t){
                             .from = fade->value.fade.from,
                             .to = fade->value.fade.to,
-                            .isFlash = fade->value.fade.type == FADE_FLASH,
                             .frames = fade->value.fade.frames,
                     };
 
@@ -227,14 +223,12 @@ bool fadeTableLoadCache(const char *const fp) {
             const pcf_event_t event = events[j];
             const pcf_fade_t fade = file.fades[event.fade];
 
-            fadePush(event.circuit,
-                     (Fade){
-                             .from = fade.from,
-                             .to = fade.to,
-                             .frames = fade.frames,
-                             .startFrame = frame.frame,
-                             .type = fade.isFlash ? FADE_FLASH : FADE_SLOPE,
-                     });
+            fadePush(event.circuit, (Fade){
+                                            .from = fade.from,
+                                            .to = fade.to,
+                                            .frames = fade.frames,
+                                            .startFrame = frame.frame,
+                                    });
         }
     }
 

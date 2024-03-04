@@ -18,7 +18,6 @@ struct precompute_history_t {
     uint8_t lastIntensity;
     uint16_t frames;
     int slope;
-    enum fade_type_t type;
 };
 
 struct precompute_history_kv_t {
@@ -47,23 +46,11 @@ static void precomputeHistoryReset(struct precompute_history_t *const history) {
 
 static int gFadesGenerated;
 
-static int precomputeHistoryGetMinFrames(const enum fade_type_t type) {
-    switch (type) {
-        case FADE_SLOPE:
-            return 2;
-        case FADE_FLASH:
-            return 5;
-        default:
-            return -1;
-    }
-}
-
 static void precomputeHistoryFlush(const uint32_t id,
                                    struct precompute_history_t *const history) {
     // require at least N repeat frames of the slope to be considered a fade
     // otherwise it is a static change between two intensity levels
-    if (history->frames < precomputeHistoryGetMinFrames(history->type))
-        goto reset;
+    if (history->frames < 2) goto reset;
 
     gFadesGenerated++;
 
@@ -72,7 +59,6 @@ static void precomputeHistoryFlush(const uint32_t id,
                          .to = history->lastIntensity,
                          .startFrame = history->startFrame,
                          .frames = history->frames,
-                         .type = history->type,
                  });
 
 reset:
@@ -85,11 +71,6 @@ static bool precomputeHistoryAligned(const int slope, const int dt) {
     // this controls when fading detects "shifts" and interrupts the fade state
     const int r = 1;
     return dt >= slope - r && dt <= slope + r;
-}
-
-static bool isIntensityFlash(const uint8_t old, const uint8_t new) {
-    const int d = old > new ? old - new : new - old;
-    return d >= 200;
 }
 
 static void precomputeHistoryPush(const uint32_t id,
@@ -109,19 +90,9 @@ static void precomputeHistoryPush(const uint32_t id,
         return;
     }
 
-    const bool isFlash = isIntensityFlash(oldIntensity, newIntensity);
-
     if (history->frames > 0) {
-        switch (history->type) {
-            case FADE_FLASH:
-                if (!isFlash) precomputeHistoryFlush(id, history);
-                break;
-
-            case FADE_SLOPE:
-                if (!precomputeHistoryAligned(history->slope, dt))
-                    precomputeHistoryFlush(id, history);
-                break;
-        }
+        if (!precomputeHistoryAligned(history->slope, dt))
+            precomputeHistoryFlush(id, history);
     }
 
     history->slope = dt;
@@ -132,7 +103,6 @@ static void precomputeHistoryPush(const uint32_t id,
         // -1 since it started with the frame id which owns oldIntensity, not newIntensity
         history->startFrame = frame - 1;
         history->firstIntensity = oldIntensity;
-        history->type = isFlash ? FADE_FLASH : FADE_SLOPE;
     }
 }
 

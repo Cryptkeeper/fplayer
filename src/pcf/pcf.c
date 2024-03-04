@@ -7,11 +7,11 @@
 
 #include "std/err.h"
 
-// (p)re-computed (c)ache (f)file v(1)
+// (p)re-computed (c)ache (f)file v(2)
 // OR
-// (p)re-(c)omputed (f)ades v(1)
+// (p)re-(c)omputed (f)ades v(2)
 #define pcfMagicSig                                                            \
-    { 'P', 'C', 'F', '1' }
+    { 'P', 'C', 'F', '2' }
 
 #define pcfMagicSig4 ((unsigned char[4]) pcfMagicSig)
 
