@@ -137,10 +137,9 @@ cleanup:
 static struct channel_range_t *gRanges;
 
 enum cmap_parse_res_t channelMapParseCSVLine(const int line,
-                                             const char *const row,
-                                             const size_t len) {
+                                             const char *const row) {
     // ignoring empty new lines
-    if (len == 0) return CMAP_PARSE_EMPTY;
+    if (row == NULL || strlen(row) == 0) return CMAP_PARSE_EMPTY;
 
     // ignore comment lines beginning with '#'
     if (row[0] == '#') return CMAP_PARSE_EMPTY;
@@ -162,18 +161,23 @@ enum cmap_parse_res_t channelMapParseCSVLine(const int line,
     return CMAP_PARSE_OK;
 }
 
-cmap_parse_info_t channelMapParseCSV(const char *const b, const size_t len) {
+cmap_parse_info_t channelMapParseCSV(const char *const b) {
     cmap_parse_info_t info = {0};
 
     char *str = mustStrdup(b); /* mutable strsep duplicate */
+    char *orig = str;          /* stored pointer to free */
     int line = 0;              /* current line number */
 
 next_row:
-    const char *row = strsep(&str, "\n");
-    if (row == NULL) goto do_return;
+    strsep(&str, "\n");
 
-    const enum cmap_parse_res_t result =
-            channelMapParseCSVLine(line++, row, len);
+    if (str == NULL) {
+        free(orig);
+
+        return info;
+    }
+
+    const enum cmap_parse_res_t result = channelMapParseCSVLine(line++, str);
 
     switch (result) {
         case CMAP_PARSE_OK:
@@ -187,11 +191,6 @@ next_row:
     }
 
     goto next_row;
-
-do_return:
-    free(str);
-
-    return info;
 }
 
 void channelMapInit(const char *const filepath) {
@@ -206,7 +205,7 @@ void channelMapInit(const char *const filepath) {
     // ensure file contents are treated as null terminated string
     b[filesize] = '\0';
 
-    const cmap_parse_info_t info = channelMapParseCSV((char *) b, filesize);
+    const cmap_parse_info_t info = channelMapParseCSV((char *) b);
 
     // print parsed statistics
     printf("configured %d valid channel map %s\n", info.valid_rows,
