@@ -139,7 +139,7 @@ static struct channel_range_t *gRanges;
 enum cmap_parse_res_t channelMapParseCSVLine(const int line,
                                              const char *const row) {
     // ignoring empty new lines
-    if (strlen(row) == 0) return CMAP_PARSE_EMPTY;
+    if (row == NULL || *row == '\0') return CMAP_PARSE_EMPTY;
 
     // ignore comment lines beginning with '#'
     if (row[0] == '#') return CMAP_PARSE_EMPTY;
