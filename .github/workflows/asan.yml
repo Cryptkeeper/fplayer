@@ -30,7 +30,7 @@ jobs:
 
       - name: CTest
         working-directory: ${{github.workspace}}/build
-        run: ctest -C ${{env.BUILD_TYPE}}
+        run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
 
       - name: Test help menu
         run: |
