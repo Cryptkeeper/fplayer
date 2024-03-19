@@ -3,6 +3,12 @@ project(fplayer C)
 
 set(CMAKE_C_STANDARD 99)
 
+# AddressSanitizer
+if (ENABLE_ASAN)
+    add_compile_options(-fsanitize=address)
+    link_libraries(-fsanitize=address)
+endif ()
+
 enable_testing()
 
 if (APPLE)
@@ -75,12 +81,6 @@ target_include_directories(test_dsprintf PRIVATE common)
 target_link_libraries(test_dsprintf common)
 
 add_test(NAME dsprintf COMMAND test_dsprintf)
-
-# AddressSanitizer
-if (ENABLE_ASAN)
-    target_compile_options(fplayer PRIVATE -fsanitize=address)
-    target_link_libraries(fplayer -fsanitize=address)
-endif ()
 
 # Fuzzing (libFuzzer)
 if (ENABLE_FUZZING)
