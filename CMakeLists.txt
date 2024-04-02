@@ -58,7 +58,7 @@ add_executable(fplayer ${SRC_FILES})
 # compiling on FreeBSD without explicitly linking libusb (used by libserialport)
 #	results in a build error
 if (CMAKE_HOST_SYSTEM MATCHES "FreeBSD-*")
-	target_link_libraries(usb)
+	target_link_libraries(fplayer usb)
 endif()
 
 target_include_directories(fplayer PRIVATE common)
