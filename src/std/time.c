@@ -9,7 +9,7 @@
 timeInstant timeGetNow(void) {
     timeInstant now = {0};
 
-#ifdef _WIN32
+#if defined(_WIN32)
     FILETIME ft = {0};
     GetSystemTimeAsFileTime(&ft);
 
@@ -22,7 +22,9 @@ timeInstant timeGetNow(void) {
 
     now.tv_sec = abs / 10000000;
     now.tv_nsec = abs % 10000000 * 100;
-#else
+#elif defined(__FreeBSD__)
+    clock_gettime(CLOCK_REALTIME, &now);
+#elif defined(__linux__)
     clock_gettime(CLOCK_MONOTONIC_RAW, &now);
 #endif
 
