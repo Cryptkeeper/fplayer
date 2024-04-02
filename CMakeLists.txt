@@ -52,8 +52,14 @@ set_source_files_properties(${SRC_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COM
 
 add_executable(fplayer ${SRC_FILES})
 
+# compiling on FreeBSD without explicitly linking libusb (used by libserialport)
+#	results in a build error
+if (CMAKE_HOST_SYSTEM MATCHES "FreeBSD-*")
+	target_link_libraries(usb)
+endif()
+
 target_include_directories(fplayer PRIVATE common)
-target_link_libraries(fplayer common lorproto m serialport)
+target_link_libraries(fplayer m pthread common lorproto serialport)
 
 # OpenAL
 target_link_libraries(fplayer alut)
