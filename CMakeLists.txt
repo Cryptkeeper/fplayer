@@ -5,10 +5,13 @@ set(CMAKE_C_STANDARD 99)
 
 enable_testing()
 
-if (APPLE)
-    include_directories(/usr/local/include)
-    link_directories(/usr/local/lib)
+# these search paths don't link by default on macOS or FreeBSD
+if (APPLE OR (CMAKE_HOST_SYSTEM MATCHES "FreeBSD-*"))
+	include_directories(/usr/local/include)
+	link_directories(/usr/local/lib)
+endif ()
 
+if (APPLE)
     # silence macOS OpenAL deprecation warning messages
     add_compile_definitions(OPENAL_DEPRECATED=)
 endif ()
