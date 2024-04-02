@@ -24,7 +24,7 @@ timeInstant timeGetNow(void) {
     now.tv_nsec = abs % 10000000 * 100;
 #elif defined(__FreeBSD__)
     clock_gettime(CLOCK_REALTIME, &now);
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
     clock_gettime(CLOCK_MONOTONIC_RAW, &now);
 #endif
 
