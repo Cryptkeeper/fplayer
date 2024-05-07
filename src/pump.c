@@ -7,7 +7,7 @@
 
 #include "stb_ds.h"
 
-#include "comblock.h"
+#include "fseq/comblock.h"
 #include "seq.h"
 #include "std/err.h"
 #include "std2/time.h"

@@ -7,7 +7,7 @@
 
 #include "stb_ds.h"
 
-#include "seq.h"
+#include "../seq.h"
 #include "std/err.h"
 
 #define COMPRESSION_BLOCK_SIZE 8

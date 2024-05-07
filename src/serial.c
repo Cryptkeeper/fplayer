@@ -7,8 +7,9 @@
 
 #include "stb_ds.h"
 
-#include "protowriter.h"
+#include "lor/protowriter.h"
 #include "std/err.h"
+#include "transform/netstats.h"
 
 static void Serial_printError(const enum sp_return err) {
     fprintf(stderr, "libserialport error: %d\n", err);
@@ -16,7 +17,7 @@ static void Serial_printError(const enum sp_return err) {
     // global error handling is only used with a single super error type
     if (err != SP_ERR_FAIL) return;
 
-    char *msg = NULL;
+    char* msg = NULL;
     if ((msg = sp_last_error_message()) != NULL) {
         fprintf(stderr, "%s\n", msg);
 
@@ -24,12 +25,12 @@ static void Serial_printError(const enum sp_return err) {
     }
 }
 
-typedef void (*SerialWriteFn)(const uint8_t *b, size_t size);
+typedef void (*SerialWriteFn)(const uint8_t* b, size_t size);
 
 static SerialWriteFn gSerialWriteFn;
-static struct sp_port *gPort;// !NULL if `gSerialWriteFn == Serial_write_port`
+static struct sp_port* gPort;// !NULL if `gSerialWriteFn == Serial_write_port`
 
-static bool Serial_openPort(const char *const devName, const int baudRate) {
+static bool Serial_openPort(const char* const devName, const int baudRate) {
     enum sp_return err;
     if ((err = sp_get_port_by_name(devName, &gPort))) {
         Serial_printError(err);
@@ -49,11 +50,11 @@ static bool Serial_openPort(const char *const devName, const int baudRate) {
     return true;
 }
 
-static void Serial_write_null(__attribute__((unused)) const uint8_t *const b,
+static void Serial_write_null(__attribute__((unused)) const uint8_t* const b,
                               __attribute__((unused)) const size_t size) {
 }
 
-static void Serial_write_stdio(const uint8_t *const b, const size_t size) {
+static void Serial_write_stdio(const uint8_t* const b, const size_t size) {
     for (size_t i = 0; i < size; i++) {
         const uint8_t c = b[i];
 
@@ -63,12 +64,12 @@ static void Serial_write_stdio(const uint8_t *const b, const size_t size) {
     }
 }
 
-static void Serial_write_port(const uint8_t *const b, const size_t size) {
+static void Serial_write_port(const uint8_t* const b, const size_t size) {
     enum sp_return err;
     if ((err = sp_nonblocking_write(gPort, b, size))) Serial_printError(err);
 }
 
-bool Serial_init(const char *const devName, const int baudRate) {
+bool Serial_init(const char* const devName, const int baudRate) {
     if (devName == NULL || strcasecmp(devName, "null") == 0) {
         gSerialWriteFn = Serial_write_null;
         return true;
@@ -83,7 +84,10 @@ bool Serial_init(const char *const devName, const int baudRate) {
     return Serial_openPort(devName, baudRate);
 }
 
-void Serial_write(const uint8_t *const b, const size_t size) {
+void Serial_write(const uint8_t* const b, const size_t size) {
+    netstats.written += size;
+    netstats.packets += 1;
+
     assert(gSerialWriteFn != NULL);
     if (gSerialWriteFn) gSerialWriteFn(b, size);
 }
@@ -104,8 +108,8 @@ void Serial_close(void) {
     gPort = NULL;
 }
 
-char **Serial_getPorts(void) {
-    struct sp_port **pl;
+char** Serial_getPorts(void) {
+    struct sp_port** pl;
 
     // FIXME: exit if sp query fails
     const enum sp_return err = sp_list_ports(&pl);
@@ -114,11 +118,11 @@ char **Serial_getPorts(void) {
         return NULL;
     }
 
-    char **ports = NULL;
+    char** ports = NULL;
 
     // https://github.com/martinling/libserialport/blob/master/examples/list_ports.c#L28
     for (int i = 0; pl[i] != NULL; i++) {
-        char *portName = mustStrdup(sp_get_port_name(pl[i]));
+        char* portName = mustStrdup(sp_get_port_name(pl[i]));
         arrpush(ports, portName);
     }
 

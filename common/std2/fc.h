@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/// @brief File controller that wraps a stdlib file pointer and provides
+/// additional functionality for reading files, including thread-safe access.
 struct FC;
 
 /// @brief Opens a file controller instance for the given file path.

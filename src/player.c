@@ -10,8 +10,8 @@
 
 #include "audio.h"
 #include "cmap.h"
-#include "comblock.h"
-#include "protowriter.h"
+#include "fseq/comblock.h"
+#include "lor/protowriter.h"
 #include "pump.h"
 #include "seq.h"
 #include "serial.h"
@@ -31,7 +31,7 @@ static FramePump gFramePump;
 
 static uint32_t gNextFrame;
 
-static uint8_t *gLastFrameData;
+static uint8_t* gLastFrameData;
 
 // LOR hardware may require several heartbeat messages are sent
 // before it considers itself connected to the player
@@ -43,12 +43,14 @@ static void playerWaitForConnection(const unsigned int seconds) {
     printf("waiting %u seconds for connection...\n", seconds);
 
     // generate a single heartbeat message to repeatedly send
-    LorBuffer *msg = protowriter.checkout_msg();
+    LorBuffer* msg = LB_alloc();
+    if (msg == NULL) fatalf(E_SYS, NULL);
+
     lorAppendHeartbeat(msg);
 
     // assumes 2 heartbeat messages per second (500ms delay)
     for (unsigned int toSend = seconds * 2; toSend > 0; toSend--) {
-        protowriter.return_msg(msg);
+        Serial_write(msg->buffer, msg->offset);
 
 #ifdef _WIN32
         Sleep(LOR_HEARTBEAT_DELAY_MS);
@@ -61,12 +63,14 @@ static void playerWaitForConnection(const unsigned int seconds) {
         nanosleep(&itrSleep, NULL);
 #endif
     }
+
+    LB_free(msg);
 }
 
-static void playerPlayFirstAudioFile(const char *const override,
-                                     const char *const sequence) {
+static void playerPlayFirstAudioFile(const char* const override,
+                                     const char* const sequence) {
     // select the override, if set, otherwise fallback to the sequence's hint
-    const char *const priority = override != NULL ? override : sequence;
+    const char* const priority = override != NULL ? override : sequence;
 
     if (priority != NULL) {
         printf("preparing to play %s\n", priority);
@@ -77,7 +81,7 @@ static void playerPlayFirstAudioFile(const char *const override,
     }
 }
 
-static char *playerGetRemaining(void) {
+static char* playerGetRemaining(void) {
     const uint32_t framesRemaining = curSequence.frameCount - gNextFrame;
     const long seconds =
             framesRemaining / (1000 / curSequence.frameStepTimeMillis);
@@ -94,9 +98,9 @@ static void playerLogStatus(void) {
 
     gLastLog = now;
 
-    char *const remaining = playerGetRemaining();
-    char *const sleep = Sleep_status();
-    char *const netstats = nsGetStatus();
+    char* const remaining = playerGetRemaining();
+    char* const sleep = Sleep_status();
+    char* const netstats = nsGetStatus();
 
     printf("remaining: %s\tdt: %s\tpump: %4d\t%s\n", remaining, sleep,
            framePumpGetRemaining(&gFramePump), netstats);
@@ -106,8 +110,8 @@ static void playerLogStatus(void) {
     free(netstats);
 }
 
-static void playerHandleNextFrame(struct sleep_loop_t *const loop,
-                                  void *const args) {
+static void playerHandleNextFrame(struct sleep_loop_t* const loop,
+                                  void* const args) {
     if (gNextFrame >= curSequence.frameCount) {
         Sleep_halt(loop, "out of frames");
         return;
@@ -130,13 +134,17 @@ static void playerHandleNextFrame(struct sleep_loop_t *const loop,
     if (timeElapsedNs(lastHeartbeat, timeGetNow()) > LOR_HEARTBEAT_DELAY_NS) {
         lastHeartbeat = timeGetNow();
 
-        LorBuffer *msg = protowriter.checkout_msg();
+        LorBuffer* msg = LB_alloc();
+        if (msg == NULL) fatalf(E_SYS, NULL);
+
         lorAppendHeartbeat(msg);
-        protowriter.return_msg(msg);
+        Serial_write(msg->buffer, msg->offset);
+
+        LB_free(msg);
     }
 
     // fetch the current frame data
-    const uint8_t *const frameData =
+    const uint8_t* const frameData =
             framePumpGet(args, &gFramePump, frame, true);
 
     minifyStream(frameData, gLastFrameData, frameSize, frame);
@@ -154,13 +162,18 @@ static void playerHandleNextFrame(struct sleep_loop_t *const loop,
 }
 
 static void playerTurnOffAllLights(void) {
-    uint8_t *uids = channelMapGetUids();
+    uint8_t* uids = channelMapGetUids();
+
+    LorBuffer* msg = LB_alloc();
+    if (msg == NULL) fatalf(E_SYS, NULL);
 
     for (size_t i = 0; i < arrlenu(uids); i++) {
-        LorBuffer *msg = protowriter.checkout_msg();
         lorAppendUnitEffect(msg, LOR_EFFECT_SET_OFF, NULL, uids[i]);
-        protowriter.return_msg(msg);
+        Serial_write(msg->buffer, msg->offset);
+        LB_rewind(msg);
     }
+
+    LB_free(msg);
 
     arrfree(uids);
 }
@@ -188,7 +201,7 @@ static void playerStartPlayback(struct FC* fc) {
     printf("end of sequence!\n");
 
     // print closing remarks
-    char *const netstats = nsGetSummary();
+    char* const netstats = nsGetSummary();
 
     printf("%s\n", netstats);
     free(netstats);
@@ -202,12 +215,12 @@ static void playerFree(void) {
 }
 
 void playerRun(struct FC* fc,
-               const char *const audioOverrideFilePath,
+               const char* const audioOverrideFilePath,
                const PlayerOpts opts) {
     Seq_initHeader(fc);
 
     if (opts.precomputeFades) {
-        char *const cacheFilePath = dsprintf("%s.pcf", FC_filepath(fc));
+        char* const cacheFilePath = dsprintf("%s.pcf", FC_filepath(fc));
 
         // load existing data or precompute and save new data
         precomputeRun(cacheFilePath, fc);
@@ -217,7 +230,7 @@ void playerRun(struct FC* fc,
 
     playerWaitForConnection(opts.connectionWaitS);
 
-    char *audioFilePath = Seq_getMediaFile(fc);
+    char* audioFilePath = Seq_getMediaFile(fc);
     playerPlayFirstAudioFile(audioOverrideFilePath, audioFilePath);
     free(audioFilePath);// only needed to init playback
 

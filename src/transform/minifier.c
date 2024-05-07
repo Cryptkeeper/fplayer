@@ -8,11 +8,13 @@
 #include "stb_ds.h"
 
 #include "../cmap.h"
-#include "../protowriter.h"
+#include "lor/protowriter.h"
 #include "../seq.h"
+#include "../serial.h"
 #include "encode.h"
 #include "fade.h"
 #include "netstats.h"
+#include "std/err.h"
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
 
@@ -22,7 +24,7 @@ struct encoding_request_t {
     uint16_t circuits;
     uint8_t nCircuits;
     LorEffect effect;
-    union LorEffectArgs *args;
+    union LorEffectArgs* args;
     uint16_t nFrames;
 };
 
@@ -32,7 +34,8 @@ static void minifyEncodeRequest(const struct encoding_request_t request) {
 
     netstats.fades += request.nFrames > 1 ? 1 : 0;// only fades are >1 frame
 
-    LorBuffer *msg = protowriter.checkout_msg();
+    LorBuffer* msg = LB_alloc();
+    if (msg == NULL) fatalf(E_SYS, NULL);
 
     if (request.nCircuits == 1) {
         assert(request.groupOffset == 0);
@@ -40,12 +43,10 @@ static void minifyEncodeRequest(const struct encoding_request_t request) {
         lorAppendChannelEffect(msg, request.effect, request.args,
                                request.circuits - 1, request.unit);
 
-        const size_t written = protowriter.return_msg(msg);
-
         if (request.effect == LOR_EFFECT_FADE) {
             // 4 bytes per individual set normally
             // +2 to written size since it doesn't include padding yet
-            netstats.saved += request.nFrames * 6 - (written + 2);
+            netstats.saved += request.nFrames * 6 - (msg->offset + 2);
         }
     } else {
         lorAppendChannelSetEffect(msg, request.effect, request.args,
@@ -55,8 +56,6 @@ static void minifyEncodeRequest(const struct encoding_request_t request) {
                                   },
                                   request.unit);
 
-        const size_t written = protowriter.return_msg(msg);
-
         // N bytes per individual set/fade normally + 2 bytes padding each
         const int ungroupedSize =
                 (request.effect == LOR_EFFECT_FADE ? 7 : 4) + 2;
@@ -64,8 +63,12 @@ static void minifyEncodeRequest(const struct encoding_request_t request) {
         // if the effect is sent once, mark the individual step frames as saved
         // +2 to written size since it doesn't include padding yet
         netstats.saved += request.nFrames * request.nCircuits * ungroupedSize -
-                          (written + 2);
+                          (msg->offset + 2);
     }
+
+    if (msg->offset > 0) Serial_write(msg->buffer, msg->offset);
+
+    LB_free(msg);
 }
 
 static LorIntensity minifyEncodeIntensity(const uint8_t abs) {
@@ -78,7 +81,7 @@ static uint16_t minifyGetFadeDuration(const Fade fade) {
     return ms / 100;
 }
 
-static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
+static void minifyEncodeStack(const uint8_t unit, EncodeChange* const stack) {
     assert(arrlen(stack) > 0);
 
     const int firstCircuit = stack[0].circuit - 1;
@@ -172,13 +175,13 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange *const stack) {
     } while (arrlen(stack) > 0);
 }
 
-void minifyStream(const uint8_t *const frameData,
-                  const uint8_t *const lastFrameData,
+void minifyStream(const uint8_t* const frameData,
+                  const uint8_t* const lastFrameData,
                   const uint32_t size,
                   const uint32_t frame) {
     uint8_t prevUnit = 0;
 
-    EncodeChange *stack = NULL;
+    EncodeChange* stack = NULL;
 
     arrsetcap(stack, 16);
 

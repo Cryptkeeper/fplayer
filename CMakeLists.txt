@@ -22,8 +22,8 @@ add_subdirectory(dep/liblorproto)
 
 file(GLOB_RECURSE COMMON_FILES "common/*.[ch]")
 add_library(common STATIC ${COMMON_FILES})
-
 target_include_directories(common PUBLIC "dep/libtinyfseq" "dep/stb")
+target_link_libraries(common PUBLIC lorproto)
 
 option(BUILD_MFTOOL "enable building mftool executable" true)
 if (BUILD_MFTOOL)
@@ -38,7 +38,7 @@ if (BUILD_GENTOOL)
     file(GLOB_RECURSE GENTOOL_FILES "tool/gentool/*.c")
     add_executable(gentool ${GENTOOL_FILES})
     target_include_directories(gentool PRIVATE common)
-    target_link_libraries(gentool common lorproto)
+    target_link_libraries(gentool common)
 endif ()
 
 file(GLOB_RECURSE SRC_FILES "src/*.[ch]")
@@ -50,7 +50,7 @@ if (CMAKE_HOST_SYSTEM MATCHES "FreeBSD-*")
 endif ()
 
 target_include_directories(fplayer PRIVATE common)
-target_link_libraries(fplayer m pthread common lorproto serialport)
+target_link_libraries(fplayer m pthread common serialport)
 
 # OpenAL
 if (APPLE)

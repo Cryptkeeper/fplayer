@@ -12,8 +12,8 @@ struct netstats_t {
 
 extern struct netstats_t netstats; /* last second stats tracker */
 
-char *nsGetStatus(void);
+char* nsGetStatus(void);
 
-char *nsGetSummary(void);
+char* nsGetSummary(void);
 
 #endif//FPLAYER_NETSTATS_H
