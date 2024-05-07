@@ -1,5 +1,6 @@
 #include "player.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,7 +17,7 @@
 #include "seq.h"
 #include "serial.h"
 #include "std/err.h"
-#include "std/sleep.h"
+#include "std2/sleep.h"
 #include "std2/string.h"
 #include "std2/time.h"
 #include "transform/minifier.h"
@@ -89,17 +90,19 @@ static char* playerGetRemaining(void) {
     return dsprintf("%02ldm %02lds", seconds / 60, seconds % 60);
 }
 
-static void playerLogStatus(void) {
+static void playerLogStatus(const struct sleep_coll_s* coll) {
     static timeInstant gLastLog;
 
     const timeInstant now = timeGetNow();
-
     if (timeElapsedNs(gLastLog, now) < 1000000000) return;
 
     gLastLog = now;
 
+    const double ms = (double) Sleep_average(coll) / 1e6;
+    const double fps = ms > 0 ? 1000 / ms : 0;
+    char* const sleep = dsprintf("%.4fms (%.2f fps)", ms, fps);
+
     char* const remaining = playerGetRemaining();
-    char* const sleep = Sleep_status();
     char* const netstats = nsGetStatus();
 
     printf("remaining: %s\tdt: %s\tpump: %4d\t%s\n", remaining, sleep,
@@ -110,12 +113,8 @@ static void playerLogStatus(void) {
     free(netstats);
 }
 
-static void playerHandleNextFrame(struct sleep_loop_t* const loop,
-                                  void* const args) {
-    if (gNextFrame >= curSequence.frameCount) {
-        Sleep_halt(loop, "out of frames");
-        return;
-    }
+static void playerHandleNextFrame(struct FC* fc) {
+    assert(gNextFrame < curSequence.frameCount);
 
     const uint32_t frameSize = curSequence.channelCount;
 
@@ -144,8 +143,7 @@ static void playerHandleNextFrame(struct sleep_loop_t* const loop,
     }
 
     // fetch the current frame data
-    const uint8_t* const frameData =
-            framePumpGet(args, &gFramePump, frame, true);
+    const uint8_t* const frameData = framePumpGet(fc, &gFramePump, frame, true);
 
     minifyStream(frameData, gLastFrameData, frameSize, frame);
 
@@ -157,8 +155,6 @@ static void playerHandleNextFrame(struct sleep_loop_t* const loop,
     // this enables the serial system to diff between the two frames and only
     // write outgoing state changes
     memcpy(gLastFrameData, frameData, frameSize);
-
-    playerLogStatus();
 }
 
 static void playerTurnOffAllLights(void) {
@@ -179,16 +175,15 @@ static void playerTurnOffAllLights(void) {
 }
 
 static void playerStartPlayback(struct FC* fc) {
-    struct sleep_loop_t loop = {
-            .intervalMs = curSequence.frameStepTimeMillis,
-            .fn = playerHandleNextFrame,
-    };
+    // iterate over all frames, sleeping the appropriate time between each output
+    struct sleep_coll_s coll = {0};
+    while (gNextFrame < curSequence.frameCount) {
+        Sleep_do(&coll, curSequence.frameStepTimeMillis);
 
-    // start sequence timer loop
-    // this call blocks until playback is completed
-    Sleep_loop(&loop, fc);
+        playerHandleNextFrame(fc);
+        playerLogStatus(&coll);
+    }
 
-    printf("sequence stopped: %s\n", loop.msg);
     printf("turning off lights, waiting for end of audio...\n");
 
     playerTurnOffAllLights();
