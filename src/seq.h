@@ -12,14 +12,14 @@ extern TFHeader curSequence; /* current sequence opened for playback */
  * \brief Reads a FSEQ header and initializes the `curSequence` global. This function must be called before any other sequence functions.
  * \param fc target file controller instance
  */
-void Seq_initHeader(FCHandle fc);
+void Seq_initHeader(struct FC* fc);
 
 /**
  * \brief Retrieves the audio file path from the sequence for playback by searching the FSEQ's variable table for the `mf` (media file) variable.
  * \param fc target file controller instance
  * \return Either NULL indicating no matching variable was found, or a duplicated `char *` containing the value of the `mf` (media file) variable. Caller is responsible for freeing the returned string.
  */
-char *Seq_getMediaFile(FCHandle fc);
+char *Seq_getMediaFile(struct FC* fc);
 
 struct seq_read_args_t {
     uint32_t startFrame; /* the frame index to begin reading at */
@@ -34,6 +34,6 @@ struct seq_read_args_t {
  * \param b frame data copy buffer, must be pre-sized correctly
  * \return the number of frames read, up to `args.frameCount`
  */
-uint32_t Seq_readFrames(FCHandle fc, struct seq_read_args_t args, uint8_t *b);
+uint32_t Seq_readFrames(struct FC* fc, struct seq_read_args_t args, uint8_t *b);
 
 #endif//FPLAYER_SEQ_H

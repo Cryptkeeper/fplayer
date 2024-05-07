@@ -12,6 +12,6 @@ typedef struct player_opts_t {
     bool precomputeFades;
 } PlayerOpts;
 
-void playerRun(FCHandle fc, const char *audioOverrideFilePath, PlayerOpts opts);
+void playerRun(struct FC* fc, const char *audioOverrideFilePath, PlayerOpts opts);
 
 #endif//FPLAYER_PLAYER_H

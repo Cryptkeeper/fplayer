@@ -12,7 +12,7 @@
 
 #define COMPRESSION_BLOCK_SIZE 8
 
-static bool ComBlock_findAbsoluteAddr(FCHandle fc,
+static bool ComBlock_findAbsoluteAddr(struct FC* fc,
                                       const int index,
                                       uint32_t *const cbAddr,
                                       uint32_t *const cbSize) {
@@ -69,7 +69,7 @@ static bool ComBlock_findAbsoluteAddr(FCHandle fc,
     return i > 0;
 }
 
-static uint8_t **ComBlock_readZstd(FCHandle fc, const int index) {
+static uint8_t **ComBlock_readZstd(struct FC* fc, const int index) {
     // attempt to read the address and size of the compression block
     uint32_t cbAddr = 0, cbSize = 0;
     if (!ComBlock_findAbsoluteAddr(fc, index, &cbAddr, &cbSize))
@@ -142,7 +142,7 @@ static uint8_t **ComBlock_readZstd(FCHandle fc, const int index) {
     return frames;
 }
 
-uint8_t **ComBlock_read(FCHandle fc, const int index) {
+uint8_t **ComBlock_read(struct FC* fc, const int index) {
     const TFCompressionType compression = curSequence.compressionType;
 
     switch (compression) {

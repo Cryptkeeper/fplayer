@@ -3,92 +3,66 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "err.h"
+#include <string.h>
 
 struct FC {
-    char *fp;              /* duplicate of filepath provided to `FC_open` */
-    FILE *file;            /* file pointer */
+    char* fp;              /* duplicate of filepath provided to `FC_open` */
+    FILE* file;            /* file pointer */
     pthread_mutex_t mutex; /* mutex for file access */
 };
 
-FCHandle FC_open(const char *const fp) {
-    FILE *f = fopen(fp, "rb");
-    if (f == NULL) fatalf(E_FIO, "error opening file: %s", fp);
-
-    struct FC *const fc = mustMalloc(sizeof(struct FC));
-    fc->fp = mustStrdup(fp);
-    fc->file = f;
-
-    int err;
-    if ((err = pthread_mutex_init(&fc->mutex, NULL)) != 0)
-        fatalf(E_SYS, "error initializing mutex: %d\n", err);
-
+struct FC* FC_open(const char* const fp) {
+    struct FC* fc = calloc(1, sizeof(struct FC));
+    if (fc == NULL) return NULL;
+    if ((fc->file = fopen(fp, "rb")) == NULL || (fc->fp = strdup(fp)) == NULL ||
+        pthread_mutex_init(&fc->mutex, NULL) != 0) {
+        FC_close(fc);
+        fc = NULL;
+    }
     return fc;
 }
 
-void FC_close(const FCHandle fc) {
-    struct FC *const s = fc;
-
-    if (s->file != NULL) fclose(s->file);
-
-    int err;
-    if ((err = pthread_mutex_destroy(&s->mutex)) != 0)
-        fatalf(E_SYS, "error destroying mutex: %d\n", err);
-
+void FC_close(struct FC* fc) {
+    if (fc == NULL) return;
+    if (fc->file != NULL) fclose(fc->file);
     free(fc->fp);
+    pthread_mutex_destroy(&fc->mutex);
     free(fc);
 }
 
-void FC_read(const FCHandle fc,
-             const uint32_t offset,
-             const uint32_t size,
-             uint8_t *const b) {
-    struct FC *const s = fc;
-
-    pthread_mutex_lock(&s->mutex);
-
-    if (fseek(s->file, offset, SEEK_SET) < 0) fatalf(E_FIO, NULL);
-    if (fread(b, 1, size, s->file) != size) fatalf(E_FIO, NULL);
-
-    pthread_mutex_unlock(&s->mutex);
+uint32_t FC_read(struct FC* fc,
+                 const uint32_t offset,
+                 const uint32_t size,
+                 uint8_t* const b) {
+    uint32_t r = 0;
+    pthread_mutex_lock(&fc->mutex);
+    if (fseek(fc->file, offset, SEEK_SET) == 0) r = fread(b, 1, size, fc->file);
+    pthread_mutex_unlock(&fc->mutex);
+    return r;
 }
 
-uint32_t FC_readto(const FCHandle fc,
+uint32_t FC_readto(struct FC* fc,
                    const uint32_t offset,
                    const uint32_t size,
                    const uint32_t maxCount,
-                   uint8_t *const b) {
-    struct FC *const s = fc;
-
-    pthread_mutex_lock(&s->mutex);
-
-    if (fseek(s->file, offset, SEEK_SET) < 0) fatalf(E_FIO, NULL);
-
-    const size_t read = fread(b, size, maxCount, s->file);
-
-    pthread_mutex_unlock(&s->mutex);
-
-    return read;
+                   uint8_t* const b) {
+    uint32_t r = 0;
+    pthread_mutex_lock(&fc->mutex);
+    if (fseek(fc->file, offset, SEEK_SET) == 0)
+        r = fread(b, size, maxCount, fc->file);
+    pthread_mutex_unlock(&fc->mutex);
+    return r;
 }
 
-uint32_t FC_filesize(const FCHandle fc) {
-    struct FC *const s = fc;
-
-    pthread_mutex_lock(&s->mutex);
-
-    if (fseek(s->file, 0, SEEK_END) < 0) fatalf(E_FIO, NULL);
-
-    const long size = ftell(s->file);
-    if (size < 0) fatalf(E_FIO, "error getting EOF position");
-
-    rewind(s->file);
-
-    pthread_mutex_unlock(&s->mutex);
-
-    return size;
+uint32_t FC_filesize(struct FC* fc) {
+    uint32_t s = 0;
+    pthread_mutex_lock(&fc->mutex);
+    if (fseek(fc->file, 0, SEEK_END) == 0) s = ftell(fc->file);
+    rewind(fc->file);
+    pthread_mutex_unlock(&fc->mutex);
+    return s;
 }
 
-const char *FC_filepath(FCHandle fc) {
+const char* FC_filepath(const struct FC* fc) {
     return fc->fp;
 }

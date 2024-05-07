@@ -3,7 +3,7 @@
 
 #include "std/fc.h"
 
-void precomputeRun(const char *fp, FCHandle fc);
+void precomputeRun(const char *fp, struct FC* fc);
 
 void precomputeFree(void);
 

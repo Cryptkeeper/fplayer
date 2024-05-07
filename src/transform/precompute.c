@@ -114,7 +114,7 @@ static uint8_t *gLastFrameData;
 
 static int64_t gNextFrame;
 
-static bool precomputeHandleNextFrame(FCHandle fc, FramePump *const pump) {
+static bool precomputeHandleNextFrame(struct FC* fc, FramePump *const pump) {
     if (gNextFrame >= curSequence.frameCount) return false;
 
     const uint32_t frameSize = curSequence.channelCount;
@@ -160,7 +160,7 @@ static void precomputeFlush(void) {
     }
 }
 
-void precomputeRun(const char *const fp, FCHandle fc) {
+void precomputeRun(const char *const fp, struct FC* fc) {
     const timeInstant start = timeGetNow();
 
     if (fadeTableLoadCache(fp)) {

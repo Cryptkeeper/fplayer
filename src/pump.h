@@ -15,7 +15,7 @@ typedef struct frame_pump_t {
 
 uint32_t framePumpGetRemaining(const FramePump *pump);
 
-const uint8_t *framePumpGet(FCHandle fc,
+const uint8_t *framePumpGet(struct FC* fc,
                             FramePump *pump,
                             uint32_t currentFrame,
                             bool canHintPreload);

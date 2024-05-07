@@ -10,7 +10,7 @@
 
 TFHeader curSequence;
 
-void Seq_initHeader(FCHandle fc) {
+void Seq_initHeader(struct FC* fc) {
     uint8_t b[32];
     FC_read(fc, 0, sizeof(b), b);
 
@@ -44,7 +44,7 @@ static char *Seq_readVar(uint8_t **readIdx,
     return varString;
 }
 
-char *Seq_getMediaFile(FCHandle fc) {
+char *Seq_getMediaFile(struct FC* fc) {
     const uint16_t varTableSize =
             curSequence.channelDataOffset - curSequence.variableDataOffset;
 
@@ -85,7 +85,7 @@ char *Seq_getMediaFile(FCHandle fc) {
     return mf;
 }
 
-uint32_t Seq_readFrames(FCHandle fc,
+uint32_t Seq_readFrames(struct FC* fc,
                         const struct seq_read_args_t args,
                         uint8_t *const b) {
     uint32_t frameCount = args.frameCount;

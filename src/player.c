@@ -165,7 +165,7 @@ static void playerTurnOffAllLights(void) {
     arrfree(uids);
 }
 
-static void playerStartPlayback(FCHandle fc) {
+static void playerStartPlayback(struct FC* fc) {
     struct sleep_loop_t loop = {
             .intervalMs = curSequence.frameStepTimeMillis,
             .fn = playerHandleNextFrame,
@@ -201,7 +201,7 @@ static void playerFree(void) {
     gNextFrame = 0;
 }
 
-void playerRun(FCHandle fc,
+void playerRun(struct FC* fc,
                const char *const audioOverrideFilePath,
                const PlayerOpts opts) {
     Seq_initHeader(fc);

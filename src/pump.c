@@ -20,7 +20,7 @@ uint32_t framePumpGetRemaining(const FramePump *pump) {
     return remaining - pump->head;
 }
 
-static uint8_t **framePumpChargeSequentialRead(FCHandle fc,
+static uint8_t **framePumpChargeSequentialRead(struct FC* fc,
                                                const uint32_t currentFrame) {
     const uint32_t frameSize = curSequence.channelCount;
 
@@ -59,7 +59,7 @@ static uint8_t **framePumpChargeSequentialRead(FCHandle fc,
     return frames;
 }
 
-static uint8_t **framePumpChargeCompressionBlock(FCHandle fc,
+static uint8_t **framePumpChargeCompressionBlock(struct FC* fc,
                                                  FramePump *const pump) {
     if (pump->consumedComBlocks >= curSequence.compressionBlockCount)
         return NULL;
@@ -76,7 +76,7 @@ static void framePumpFreeFrames(FramePump *const pump) {
     arrfree(pump->frames);
 }
 
-static void framePumpRecharge(FCHandle fc,
+static void framePumpRecharge(struct FC* fc,
                               FramePump *const pump,
                               const uint32_t currentFrame,
                               const bool preload) {
@@ -113,7 +113,7 @@ static void framePumpRecharge(FCHandle fc,
 }
 
 struct frame_pump_thread_args_t {
-    FCHandle fc;
+    struct FC* fc;
     uint32_t startFrame;
     int16_t consumedComBlocks;
 };
@@ -141,7 +141,7 @@ static void *framePumpThread(void *pargs) {
 static pthread_t gPumpThread = PTHREAD_NULL;
 static struct frame_pump_thread_args_t gThreadArgs;
 
-static void framePumpHintPreload(FCHandle fc,
+static void framePumpHintPreload(struct FC* fc,
                                  const uint32_t startFrame,
                                  const int16_t consumedComBlocks) {
     if (gPumpThread != PTHREAD_NULL) return;
@@ -185,7 +185,7 @@ static bool framePumpSwapPreload(FramePump *const pump) {
     return true;
 }
 
-const uint8_t *framePumpGet(FCHandle fc,
+const uint8_t *framePumpGet(struct FC* fc,
                             FramePump *const pump,
                             const uint32_t currentFrame,
                             const bool canHintPreload) {

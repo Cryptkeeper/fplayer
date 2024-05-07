@@ -17,7 +17,7 @@ struct channel_range_t {
     uint16_t ecircuit;
 };
 
-static char *channelRangeValidate(const struct channel_range_t range) {
+static char* channelRangeValidate(const struct channel_range_t range) {
     const int64_t rid = range.eid - range.sid;
 
     if (rid < 0)
@@ -48,7 +48,7 @@ static char *channelRangeValidate(const struct channel_range_t range) {
 #ifdef _WIN32
 // Public Domain strsep implementation by Dan Cross
 // via https://unixpapa.com/incnote/string.html
-static char *strsep(char **sp, char *sep) {
+static char* strsep(char** sp, char* sep) {
     char *p, *s;
     if (sp == NULL || *sp == NULL || **sp == '\0') return (NULL);
     s = *sp;
@@ -60,16 +60,16 @@ static char *strsep(char **sp, char *sep) {
 #endif
 
 static bool channelMapParseCSVRow(const int line,
-                                  const char *const row,
-                                  struct channel_range_t *const range) {
-    char *dup;
-    char *ptr = dup = mustStrdup(row);
+                                  const char* const row,
+                                  struct channel_range_t* const range) {
+    char* dup;
+    char* ptr = dup = mustStrdup(row);
 
     bool ok = true;
 
     int col = 0;
 
-    char *token;
+    char* token;
     while ((token = strsep(&dup, ",")) != NULL) {
         if (token == NULL || strlen(token) == 0) {
             fprintf(stderr,
@@ -134,10 +134,10 @@ cleanup:
     return ok;
 }
 
-static struct channel_range_t *gRanges;
+static struct channel_range_t* gRanges;
 
 enum cmap_parse_res_t channelMapParseCSVLine(const int line,
-                                             const char *const row) {
+                                             const char* const row) {
     // ignoring empty new lines
     if (strlen(row) == 0) return CMAP_PARSE_EMPTY;
 
@@ -147,7 +147,7 @@ enum cmap_parse_res_t channelMapParseCSVLine(const int line,
     struct channel_range_t cr;
     if (!channelMapParseCSVRow(line, row, &cr)) return CMAP_PARSE_ERROR;
 
-    char *const error = channelRangeValidate(cr);
+    char* const error = channelRangeValidate(cr);
 
     if (error != NULL) {
         fprintf(stderr, "unmappable channel range L%d: %s\n", line, error);
@@ -161,15 +161,15 @@ enum cmap_parse_res_t channelMapParseCSVLine(const int line,
     return CMAP_PARSE_OK;
 }
 
-cmap_parse_info_t channelMapParseCSV(const char *const b) {
-    char *const str = mustStrdup(b);
-    char *last;
+cmap_parse_info_t channelMapParseCSV(const char* const b) {
+    char* const str = mustStrdup(b);
+    char* last;
 
     cmap_parse_info_t info = {0};
 
     int line = 0;
 
-    for (const char *row = strtok_r(str, "\n", &last); row != NULL;
+    for (const char* row = strtok_r(str, "\n", &last); row != NULL;
          row = strtok_r(NULL, "\n", &last)) {
 
         const enum cmap_parse_res_t result =
@@ -192,11 +192,13 @@ cmap_parse_info_t channelMapParseCSV(const char *const b) {
     return info;
 }
 
-void channelMapInit(const char *const filepath) {
-    FCHandle fc = FC_open(filepath);
+void channelMapInit(const char* const filepath) {
+    struct FC* fc = FC_open(filepath);
+    if (fc == NULL)
+        fatalf(E_SYS, "failed to open channel map file `%s`", filepath);
 
     const uint32_t filesize = FC_filesize(fc);
-    uint8_t *b = mustMalloc(filesize + 1);
+    uint8_t* b = mustMalloc(filesize + 1);
 
     FC_read(fc, 0, filesize, b);
     FC_close(fc);
@@ -204,7 +206,7 @@ void channelMapInit(const char *const filepath) {
     // ensure file contents are treated as null terminated string
     b[filesize] = '\0';
 
-    const cmap_parse_info_t info = channelMapParseCSV((char *) b);
+    const cmap_parse_info_t info = channelMapParseCSV((char*) b);
 
     // print parsed statistics
     printf("configured %d valid channel map %s\n", info.valid_rows,
@@ -218,8 +220,8 @@ void channelMapInit(const char *const filepath) {
 }
 
 bool channelMapFind(const uint32_t id,
-                    uint8_t *const unit,
-                    uint16_t *const circuit) {
+                    uint8_t* const unit,
+                    uint16_t* const circuit) {
     for (int i = 0; i < arrlen(gRanges); i++) {
         const struct channel_range_t range = gRanges[i];
 
@@ -237,7 +239,7 @@ bool channelMapFind(const uint32_t id,
     return false;
 }
 
-static bool channelMapContainsUid(const uint8_t *const set,
+static bool channelMapContainsUid(const uint8_t* const set,
                                   const uint8_t value) {
     const int size = arrlen(set);
 
@@ -250,8 +252,8 @@ static bool channelMapContainsUid(const uint8_t *const set,
     return false;
 }
 
-uint8_t *channelMapGetUids(void) {
-    uint8_t *uids = NULL;
+uint8_t* channelMapGetUids(void) {
+    uint8_t* uids = NULL;
 
     for (int i = 0; i < arrlen(gRanges); i++) {
         const struct channel_range_t range = gRanges[i];

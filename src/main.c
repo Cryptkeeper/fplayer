@@ -58,18 +58,18 @@ static void printVersions(void) {
     printf("zstd %s\n", ZSTD_versionString());
 }
 
-static char *gSequenceFilePath;
-static char *gAudioOverrideFilePath;
+static char* gSequenceFilePath;
+static char* gAudioOverrideFilePath;
 
-static char *gChannelMapFilePath;
+static char* gChannelMapFilePath;
 
 static PlayerOpts gPlayerOpts;
 
-static char *gSerialDevName;
+static char* gSerialDevName;
 static int gSerialBaudRate = 19200;
 
 static void printSerialEnumPorts(void) {
-    char **ports = Serial_getPorts();
+    char** ports = Serial_getPorts();
 
     for (int i = 0; i < arrlen(ports); i++) {
         printf("%s\n", ports[i]);
@@ -80,7 +80,7 @@ static void printSerialEnumPorts(void) {
     arrfree(ports);
 }
 
-static bool parseOpts(const int argc, char **const argv, int *const ec) {
+static bool parseOpts(const int argc, char** const argv, int* const ec) {
     int c;
     while ((c = getopt(argc, argv, ":t:ilhvf:c:a:r:w:pd:b:")) != -1) {
         switch (c) {
@@ -163,7 +163,7 @@ static void freeArgs(void) {
     free(gSerialDevName);
 }
 
-int main(const int argc, char **const argv) {
+int main(const int argc, char** const argv) {
     int ec = EXIT_SUCCESS;
     if (parseOpts(argc, argv, &ec)) return ec;
 
@@ -171,7 +171,10 @@ int main(const int argc, char **const argv) {
     channelMapInit(gChannelMapFilePath);
 
     // open sequence file and init controller handler
-    FCHandle fc = FC_open(gSequenceFilePath);
+    struct FC* fc = FC_open(gSequenceFilePath);
+    if (fc == NULL) {
+        fatalf(E_FIO, "failed to open sequence file `%s`\n", gSequenceFilePath);
+    }
 
     // initialize core subsystems
     Serial_init(gSerialDevName, gSerialBaudRate);
