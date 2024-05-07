@@ -32,8 +32,6 @@ static void printUsage(void) {
            "\t-d <device name|stdout>\tDevice name for serial port "
            "connection\n"
            "\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n"
-           "\t-p\t\t\tPrecompute fades for smoother playback and reduced "
-           "bandwidth (experimental)\n\n"
 
            "[Controls]\n"
            "\t-a <file>\t\tOverride audio with specified filepath\n"
@@ -45,17 +43,7 @@ static void printUsage(void) {
            "[CLI]\n"
            "\t-t <file>\t\tTest load channel map and exit\n"
            "\t-l\t\t\tPrint available serial port list and exit\n"
-           "\t-h\t\t\tPrint this message and exit\n"
-           "\t-v\t\t\tPrint library versions and exit\n");
-}
-
-static void printVersions(void) {
-    printf("ALUT %d.%d\n", alutGetMajorVersion(), alutGetMinorVersion());
-    printf("OpenAL %s\n", alGetString(AL_VERSION));
-    printf("liblorproto %s\n", LIBLORPROTO_VERSION_STRING);
-    printf("libserialport %s\n", SP_PACKAGE_VERSION_STRING);
-    printf("libtinyfseq %s\n", TINYFSEQ_VERSION);
-    printf("zstd %s\n", ZSTD_versionString());
+           "\t-h\t\t\tPrint this message and exit\n");
 }
 
 static char* gSequenceFilePath;
@@ -82,7 +70,7 @@ static void printSerialEnumPorts(void) {
 
 static bool parseOpts(const int argc, char** const argv, int* const ec) {
     int c;
-    while ((c = getopt(argc, argv, ":t:ilhvf:c:a:r:w:pd:b:")) != -1) {
+    while ((c = getopt(argc, argv, ":t:ilhf:c:a:r:w:d:b:")) != -1) {
         switch (c) {
             case 't':
                 channelMapInit(optarg);
@@ -93,9 +81,6 @@ static bool parseOpts(const int argc, char** const argv, int* const ec) {
                 return true;
             case 'h':
                 printUsage();
-                return true;
-            case 'v':
-                printVersions();
                 return true;
             case 'f':
                 gSequenceFilePath = mustStrdup(optarg);
@@ -121,9 +106,6 @@ static bool parseOpts(const int argc, char** const argv, int* const ec) {
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 *ec = EXIT_FAILURE;
                 return true;
-            case 'p':
-                gPlayerOpts.precomputeFades = true;
-                break;
             case 'd':
                 gSerialDevName = mustStrdup(optarg);
                 break;

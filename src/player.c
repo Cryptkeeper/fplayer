@@ -21,8 +21,6 @@
 #include "std2/string.h"
 #include "std2/time.h"
 #include "transform/minifier.h"
-#include "transform/netstats.h"
-#include "transform/precompute.h"
 
 #ifdef _WIN32
     #include <windows.h>
@@ -103,14 +101,12 @@ static void playerLogStatus(const struct sleep_coll_s* coll) {
     char* const sleep = dsprintf("%.4fms (%.2f fps)", ms, fps);
 
     char* const remaining = playerGetRemaining();
-    char* const netstats = nsGetStatus();
 
-    printf("remaining: %s\tdt: %s\tpump: %4d\t%s\n", remaining, sleep,
-           framePumpGetRemaining(&gFramePump), netstats);
+    printf("remaining: %s\tdt: %s\tpump: %4d\n", remaining, sleep,
+           framePumpGetRemaining(&gFramePump));
 
     free(remaining);
     free(sleep);
-    free(netstats);
 }
 
 static void playerHandleNextFrame(struct FC* fc) {
@@ -145,7 +141,7 @@ static void playerHandleNextFrame(struct FC* fc) {
     // fetch the current frame data
     const uint8_t* const frameData = framePumpGet(fc, &gFramePump, frame, true);
 
-    minifyStream(frameData, gLastFrameData, frameSize, frame);
+    minifyStream(frameData, gLastFrameData, frameSize);
 
     // wait for serial to drain outbound
     // this creates back pressure that results in fps loss if the serial can't keep up
@@ -194,12 +190,6 @@ static void playerStartPlayback(struct FC* fc) {
         ;
 
     printf("end of sequence!\n");
-
-    // print closing remarks
-    char* const netstats = nsGetSummary();
-
-    printf("%s\n", netstats);
-    free(netstats);
 }
 
 static void playerFree(void) {
@@ -214,15 +204,6 @@ void playerRun(struct FC* fc,
                const PlayerOpts opts) {
     Seq_initHeader(fc);
 
-    if (opts.precomputeFades) {
-        char* const cacheFilePath = dsprintf("%s.pcf", FC_filepath(fc));
-
-        // load existing data or precompute and save new data
-        precomputeRun(cacheFilePath, fc);
-
-        free(cacheFilePath);
-    }
-
     playerWaitForConnection(opts.connectionWaitS);
 
     char* audioFilePath = Seq_getMediaFile(fc);
@@ -234,9 +215,6 @@ void playerRun(struct FC* fc,
         curSequence.frameStepTimeMillis = opts.frameStepTimeOverrideMs;
 
     playerStartPlayback(fc);
-
-    // playback finished, free resources and exit cleanly
-    precomputeFree();
 
     framePumpFree(&gFramePump);
 

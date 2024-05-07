@@ -3,9 +3,8 @@
 
 #include <stdint.h>
 
-void minifyStream(const uint8_t *frameData,
-                  const uint8_t *lastFrameData,
-                  uint32_t size,
-                  uint32_t frame);
+void minifyStream(const uint8_t* frameData,
+                  const uint8_t* lastFrameData,
+                  uint32_t size);
 
 #endif//FPLAYER_MINIFIER_H

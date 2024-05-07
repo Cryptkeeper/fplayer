@@ -8,12 +8,10 @@
 #include "stb_ds.h"
 
 #include "../cmap.h"
-#include "lor/protowriter.h"
 #include "../seq.h"
 #include "../serial.h"
 #include "encode.h"
-#include "fade.h"
-#include "netstats.h"
+#include "lor/protowriter.h"
 #include "std/err.h"
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
@@ -23,47 +21,32 @@ struct encoding_request_t {
     uint8_t groupOffset;
     uint16_t circuits;
     uint8_t nCircuits;
-    LorEffect effect;
-    union LorEffectArgs* args;
-    uint16_t nFrames;
+    LorIntensity setIntensity;
 };
 
 static void minifyEncodeRequest(const struct encoding_request_t request) {
     assert(request.circuits > 0);
     assert(request.nCircuits > 0);
 
-    netstats.fades += request.nFrames > 1 ? 1 : 0;// only fades are >1 frame
-
     LorBuffer* msg = LB_alloc();
     if (msg == NULL) fatalf(E_SYS, NULL);
+
+    const union LorEffectArgs args = {
+            .setIntensity = {request.setIntensity},
+    };
 
     if (request.nCircuits == 1) {
         assert(request.groupOffset == 0);
 
-        lorAppendChannelEffect(msg, request.effect, request.args,
+        lorAppendChannelEffect(msg, LOR_EFFECT_SET_INTENSITY, &args,
                                request.circuits - 1, request.unit);
-
-        if (request.effect == LOR_EFFECT_FADE) {
-            // 4 bytes per individual set normally
-            // +2 to written size since it doesn't include padding yet
-            netstats.saved += request.nFrames * 6 - (msg->offset + 2);
-        }
     } else {
-        lorAppendChannelSetEffect(msg, request.effect, request.args,
+        lorAppendChannelSetEffect(msg, LOR_EFFECT_SET_INTENSITY, &args,
                                   (LorChannelSet){
                                           .offset = request.groupOffset,
                                           .channelBits = request.circuits,
                                   },
                                   request.unit);
-
-        // N bytes per individual set/fade normally + 2 bytes padding each
-        const int ungroupedSize =
-                (request.effect == LOR_EFFECT_FADE ? 7 : 4) + 2;
-
-        // if the effect is sent once, mark the individual step frames as saved
-        // +2 to written size since it doesn't include padding yet
-        netstats.saved += request.nFrames * request.nCircuits * ungroupedSize -
-                          (msg->offset + 2);
     }
 
     if (msg->offset > 0) Serial_write(msg->buffer, msg->offset);
@@ -73,12 +56,6 @@ static void minifyEncodeRequest(const struct encoding_request_t request) {
 
 static LorIntensity minifyEncodeIntensity(const uint8_t abs) {
     return LorIntensityCurveVendor(abs / 255.0);
-}
-
-static uint16_t minifyGetFadeDuration(const Fade fade) {
-    const uint64_t ms = curSequence.frameStepTimeMillis * fade.frames;
-    assert(ms / 100 <= UINT16_MAX);
-    return ms / 100;
 }
 
 static void minifyEncodeStack(const uint8_t unit, EncodeChange* const stack) {
@@ -122,50 +99,13 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange* const stack) {
             // build encoding request
             // this serves as a generic layer specifying the intended data,
             // which is processed by the encoder and written as LOR protocol data
-            struct encoding_request_t request = {
+            minifyEncodeRequest((struct encoding_request_t){
                     .unit = unit,
                     .groupOffset = popcount == 1 ? 0 : groupOffset,
                     .circuits = popcount == 1 ? change.circuit : matches,
                     .nCircuits = popcount,
-                    .args = NULL,
-            };
-
-            Fade fade;
-            bool hasFade = false;
-
-            if (change.fadeStarted >= 0) {
-                hasFade = fadeGet(change.fadeStarted, &fade);
-            }
-
-            // FIXME: allow non-null `request.args` value in downstream encoding
-            //  or allocate a non-static instance each time for true pointers
-            static union LorEffectArgs gEffectArgs;
-
-            if (hasFade) {
-                gEffectArgs = (union LorEffectArgs){
-                        .fade = {
-                                .startIntensity =
-                                        minifyEncodeIntensity(fade.from),
-                                .endIntensity = minifyEncodeIntensity(fade.to),
-                                .deciseconds = minifyGetFadeDuration(fade),
-                        }};
-
-                request.effect = LOR_EFFECT_FADE;
-                request.args = &gEffectArgs;
-            } else {
-                gEffectArgs = (union LorEffectArgs){
-                        .setIntensity = {
-                                .intensity = minifyEncodeIntensity(
-                                        change.newIntensity),
-                        }};
-
-                request.effect = LOR_EFFECT_SET_INTENSITY;
-                request.args = &gEffectArgs;
-            }
-
-            request.nFrames = hasFade ? fade.frames : 1;
-
-            minifyEncodeRequest(request);
+                    .setIntensity = minifyEncodeIntensity(change.newIntensity),
+            });
 
             // detect when all circuits are handled and break early
             if (consumed == 0xFFFFu) break;
@@ -177,8 +117,7 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange* const stack) {
 
 void minifyStream(const uint8_t* const frameData,
                   const uint8_t* const lastFrameData,
-                  const uint32_t size,
-                  const uint32_t frame) {
+                  const uint32_t size) {
     uint8_t prevUnit = 0;
 
     EncodeChange* stack = NULL;
@@ -213,8 +152,6 @@ void minifyStream(const uint8_t* const frameData,
                 .newIntensity = frameData[id],
         };
 
-        fadeGetChange(frame, id, &change.fadeStarted, &change.fadeFinishing);
-
         arrput(stack, change);
 
         if (arrlen(stack) >= 16) minifyEncodeStack(unit, stack);
@@ -226,7 +163,4 @@ void minifyStream(const uint8_t* const frameData,
     assert(arrlen(stack) == 0);
 
     arrfree(stack);
-
-    // allow fade data to be progressively freed
-    fadeFrameFree(frame);
 }

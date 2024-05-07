@@ -9,7 +9,6 @@
 
 #include "lor/protowriter.h"
 #include "std/err.h"
-#include "transform/netstats.h"
 
 static void Serial_printError(const enum sp_return err) {
     fprintf(stderr, "libserialport error: %d\n", err);
@@ -85,9 +84,6 @@ bool Serial_init(const char* const devName, const int baudRate) {
 }
 
 void Serial_write(const uint8_t* const b, const size_t size) {
-    netstats.written += size;
-    netstats.packets += 1;
-
     assert(gSerialWriteFn != NULL);
     if (gSerialWriteFn) gSerialWriteFn(b, size);
 }
