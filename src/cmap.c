@@ -6,8 +6,8 @@
 #include "stb_ds.h"
 
 #include "std/err.h"
-#include "std/fc.h"
-#include "std/string.h"
+#include "std2/fc.h"
+#include "std2/string.h"
 
 struct channel_range_t {
     uint32_t sid;

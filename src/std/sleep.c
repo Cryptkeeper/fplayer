@@ -9,8 +9,8 @@
     #include <windows.h>
 #endif
 
-#include "std/string.h"
-#include "std/time.h"
+#include "std2/string.h"
+#include "std2/time.h"
 
 #define gSampleCount 20
 

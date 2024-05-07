@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "std/fc.h"
+#include "std2/fc.h"
 #include "tinyfseq.h"
 
 extern TFHeader curSequence; /* current sequence opened for playback */

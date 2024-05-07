@@ -2,7 +2,7 @@
 
 #include <inttypes.h>
 
-#include "std/string.h"
+#include "std2/string.h"
 
 struct netstats_t netstats; /* exposed interface */
 

@@ -8,9 +8,9 @@
 #include "stb_ds.h"
 
 #include "std/err.h"
-#include "std/fc.h"
 #include "std/fseq.h"
-#include "std/string.h"
+#include "std2/fc.h"
+#include "std2/string.h"
 
 static void
 fseqCopyConfigBlocks(FILE* const dst, const TFHeader header, struct FC* src) {

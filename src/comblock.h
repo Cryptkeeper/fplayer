@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "std/fc.h"
+#include "std2/fc.h"
 
 /// \brief Reads the given compression block (by index) from the given file controller and decompresses it (if supported).
 /// \param fc target file controller instance

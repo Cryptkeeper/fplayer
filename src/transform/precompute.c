@@ -10,7 +10,7 @@
 #include "../seq.h"
 #include "fade.h"
 #include "std/err.h"
-#include "std/time.h"
+#include "std2/time.h"
 
 struct precompute_history_t {
     uint32_t startFrame;

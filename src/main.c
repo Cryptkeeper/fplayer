@@ -19,7 +19,7 @@
 #include "player.h"
 #include "serial.h"
 #include "std/err.h"
-#include "std/fc.h"
+#include "std2/fc.h"
 
 static void printUsage(void) {
     printf("Usage: fplayer -f=FILE -c=FILE [options] ...\n\n"

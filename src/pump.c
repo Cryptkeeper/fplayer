@@ -10,7 +10,7 @@
 #include "comblock.h"
 #include "seq.h"
 #include "std/err.h"
-#include "std/time.h"
+#include "std2/time.h"
 
 uint32_t framePumpGetRemaining(const FramePump *pump) {
     const size_t remaining = arrlenu(pump->frames);
