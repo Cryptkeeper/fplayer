@@ -1,6 +1,6 @@
 #include "time.h"
 
-#include "std/string.h"
+#include "string.h"
 
 #ifdef _WIN32
     #include <windows.h>
@@ -26,6 +26,8 @@ timeInstant timeGetNow(void) {
     clock_gettime(CLOCK_REALTIME, &now);
 #elif defined(__linux__) || defined(__APPLE__)
     clock_gettime(CLOCK_MONOTONIC_RAW, &now);
+#else
+    #error "unsupported platform"
 #endif
 
     return now;
@@ -36,7 +38,7 @@ int64_t timeElapsedNs(const timeInstant start, const timeInstant end) {
            (end.tv_nsec - start.tv_nsec);
 }
 
-char *timeElapsedString(const timeInstant start, const timeInstant end) {
+char* timeElapsedString(const timeInstant start, const timeInstant end) {
     const int64_t diff = timeElapsedNs(start, end);
     const float ms = (float) diff / (float) 1e6;
 
