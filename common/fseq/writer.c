@@ -39,17 +39,17 @@ int fseqWriteHeader(struct FC* fc, const struct tf_header_t* header) {
 
     uint8_t b[32] = {'P', 'S', 'E', 'Q'};
 
-    encode_uint16(&b[4], header->channelDataOffset);
-    encode_uint8(&b[6], header->minorVersion);
-    encode_uint8(&b[7], header->majorVersion);
-    encode_uint16(&b[8], header->variableDataOffset);
-    encode_uint32(&b[10], header->channelCount);
-    encode_uint32(&b[14], header->frameCount);
-    encode_uint16(&b[18], header->frameStepTimeMillis);
-    encode_uint8(&b[20], header->compressionType);
-    encode_uint8(&b[21], header->compressionBlockCount);
-    encode_uint32(&b[22], header->channelRangeCount);
-    encode_uint64(&b[24], header->sequenceUid);
+    enc_uint16_le(&b[4], header->channelDataOffset);
+    encode_uint8_le(&b[6], header->minorVersion);
+    encode_uint8_le(&b[7], header->majorVersion);
+    enc_uint16_le(&b[8], header->variableDataOffset);
+    enc_uint32_le(&b[10], header->channelCount);
+    enc_uint32_le(&b[14], header->frameCount);
+    enc_uint16_le(&b[18], header->frameStepTimeMillis);
+    encode_uint8_le(&b[20], header->compressionType);
+    encode_uint8_le(&b[21], header->compressionBlockCount);
+    enc_uint32_le(&b[22], header->channelRangeCount);
+    enc_uint64_le(&b[24], header->sequenceUid);
 
     if (FC_write(fc, 0, sizeof(b), b) != sizeof(b)) return -FP_ESYSCALL;
 
@@ -66,8 +66,8 @@ int fseqWriteCompressionBlocks(struct FC* fc,
     for (long i = 0; i < count; i++) {
         uint8_t b[8] = {0};
 
-        encode_uint32(b, blocks[i].firstFrameId);
-        encode_uint32(&b[4], blocks[i].size);
+        enc_uint32_le(b, blocks[i].firstFrameId);
+        enc_uint32_le(&b[4], blocks[i].size);
 
         if (FC_write(fc, 32 + i * 8, sizeof(b), b) != sizeof(b))
             return -FP_ESYSCALL;
@@ -116,7 +116,8 @@ int fseqWriteVars(struct FC* fc,
     if (count == 0) return FP_EOK;// nothing to write
 
     uint16_t sect;
-    if (!fseqGetVarSectionSize(vars, count, false, &sect)) return false;
+    int err;
+    if ((err = fseqGetVarSectionSize(vars, count, false, &sect))) return err;
 
     // allocate a single buffer for encoding all variables
     uint8_t* b = malloc(sect);
@@ -126,9 +127,9 @@ int fseqWriteVars(struct FC* fc,
     for (long i = 0; i < count; i++) {
         const struct fseq_var_s* var = &vars[i];
 
-        encode_uint16(head, var->size + 4); /* include space for the id+size */
-        encode_uint8(&head[2], var->id[0]);
-        encode_uint8(&head[3], var->id[1]);
+        enc_uint16_le(head, var->size + 4); /* include space for the id+size */
+        encode_uint8_le(&head[2], var->id[0]);
+        encode_uint8_le(&head[3], var->id[1]);
 
         memcpy(&head[4], var->value, var->size);
 

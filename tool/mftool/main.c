@@ -241,6 +241,18 @@ ret:
     return err;
 }
 
+/// @brief Prints the sequence variables to the standard output.
+/// @param vars array of sequence variables
+/// @param count number of variables in the array
+static void printVars(const struct fseq_var_s* vars, const long count) {
+    for (long i = 0; i < count; i++) {
+        const struct fseq_var_s* const var = &vars[i];
+        char* value = var->value;
+        if (value[var->size - 1] != '\0') value = "(binary data)";
+        printf("%c%c\t%s\n", var->id[0], var->id[1], value);
+    }
+}
+
 /// @brief Prints the usage information for the tool.
 static void printUsage(void) {
     printf("Usage:\n\n"
@@ -295,13 +307,7 @@ int main(const int argc, char** const argv) {
 
     // print and exit if not modifying the sequence
     if (argc < 3) {
-        for (long i = 0; i < count; i++) {
-            const struct fseq_var_s* const var = &vars[i];
-            char* value = var->value;
-            if (value[var->size - 1] != '\0') value = "(binary data)";
-            printf("%c%c\t%s\n", var->id[0], var->id[1], value);
-        }
-
+        printVars(vars, count);
         err = FP_EOK;
         goto exit;
     }
@@ -312,12 +318,19 @@ int main(const int argc, char** const argv) {
         goto exit;
     }
 
+    const size_t newValueSize = strlen(newValue) + 1;
+    if (newValueSize > UINT16_MAX) {
+        err = -FP_ERANGE;
+        goto exit;
+    }
+
     // try to find a matching `mf` var to update
     for (long i = 0; i < count; i++) {
         struct fseq_var_s* const var = &vars[i];
 
         if (var->id[0] == 'm' && var->id[1] == 'f') {
-            free(var->value), var->value = newValue;
+            printf("changing `%s` to `%s`\n", var->value, newValue);
+            free(var->value), var->value = newValue, var->size = newValueSize;
             goto do_copy;
         }
     }
@@ -325,12 +338,15 @@ int main(const int argc, char** const argv) {
     // no previous matching var, insert new
     const struct fseq_var_s newVar = {
             .id = {'m', 'f'},
-            .size = strlen(newValue) + 1,
+            .size = newValueSize,
             .value = newValue,
     };
     if ((err = fseqVarsAppend(&vars, &count, &newVar))) goto exit;
 
 do_copy:
+    printf("new variable table:\n");
+    printVars(vars, count);
+
     if ((err = fseqCopySetVars(sfp, dfp, vars, count))) goto exit;
     if ((err = renamePair(sfp, dfp))) goto exit;
 
