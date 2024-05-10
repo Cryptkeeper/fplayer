@@ -91,8 +91,8 @@ static bool parseOpts(const int argc, char** const argv, int* const ec) {
                 }
                 break;
             case 'w':
-                if (strtolb(optarg, 0, UINT8_MAX, &gWaitSeconds,
-                            sizeof(gWaitSeconds)))
+                if (!strtolb(optarg, 0, UINT8_MAX, &gWaitSeconds,
+                             sizeof(gWaitSeconds)))
                     break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 *ec = EXIT_FAILURE;
@@ -104,8 +104,8 @@ static bool parseOpts(const int argc, char** const argv, int* const ec) {
                 }
                 break;
             case 'b':
-                if (strtolb(optarg, 0, INT32_MAX, &gSerialBaudRate,
-                            sizeof(gSerialBaudRate)))
+                if (!strtolb(optarg, 0, INT32_MAX, &gSerialBaudRate,
+                             sizeof(gSerialBaudRate)))
                     break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 *ec = EXIT_FAILURE;

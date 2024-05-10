@@ -84,35 +84,35 @@ static bool channelMapParseCSVRow(const int line,
 
         switch (col) {
             case 0:
-                if (!strtolb(token, 0, UINT32_MAX, &range->sid,
+                if (strtolb(token, 0, UINT32_MAX, &range->sid,
                              sizeof(range->sid))) {
                     ok = false;
                     goto cleanup;
                 }
                 break;
             case 1:
-                if (!strtolb(token, 0, UINT32_MAX, &range->eid,
+                if (strtolb(token, 0, UINT32_MAX, &range->eid,
                              sizeof(range->eid))) {
                     ok = false;
                     goto cleanup;
                 }
                 break;
             case 2:
-                if (!strtolb(token, 0, UINT8_MAX, &range->unit,
+                if (strtolb(token, 0, UINT8_MAX, &range->unit,
                              sizeof(range->unit))) {
                     ok = false;
                     goto cleanup;
                 }
                 break;
             case 3:
-                if (!strtolb(token, 0, UINT16_MAX, &range->scircuit,
+                if (strtolb(token, 0, UINT16_MAX, &range->scircuit,
                              sizeof(range->scircuit))) {
                     ok = false;
                     goto cleanup;
                 }
                 break;
             case 4:
-                if (!strtolb(token, 0, UINT16_MAX, &range->ecircuit,
+                if (strtolb(token, 0, UINT16_MAX, &range->ecircuit,
                              sizeof(range->ecircuit))) {
                     ok = false;
                     goto cleanup;
