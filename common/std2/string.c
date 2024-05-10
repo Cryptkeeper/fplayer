@@ -44,10 +44,6 @@ int strtolb(const char* const str,
     assert(p != NULL);
     assert(ps > 0);
 
-    // try to avoid values larger than what can be stored in the dest. type
-    // (e.g. 64-bit values in a 32-bit int)
-    assert(max <= ps * 8);
-
     errno = 0;
     char* endptr = NULL;
     long parsed = strtol(str, &endptr, 10);
