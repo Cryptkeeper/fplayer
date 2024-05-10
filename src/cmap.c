@@ -3,9 +3,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-#include "stb_ds.h"
+#include <stb_ds.h>
 
 #include "std/err.h"
+#include "std2/errcode.h"
 #include "std2/fc.h"
 #include "std2/string.h"
 
@@ -195,14 +196,15 @@ cmap_parse_info_t channelMapParseCSV(const char* const b) {
     return info;
 }
 
-void channelMapInit(const char* const filepath) {
+int channelMapInit(const char* const filepath) {
     struct FC* fc = FC_open(filepath, FC_MODE_READ);
-    if (fc == NULL)
-        fatalf(E_SYS, "failed to open channel map file `%s`", filepath);
+    if (fc == NULL) return -FP_ESYSCALL;
+
+    // TODO: fix error handling throughout this method
 
     const uint32_t filesize = FC_filesize(fc);
     uint8_t* b = malloc(filesize + 1);
-    if (b == NULL) fatalf(E_SYS, "failed to allocate memory for channel map");
+    if (b == NULL) return -FP_ENOMEM;
 
     FC_read(fc, 0, filesize, b);
     FC_close(fc);
@@ -221,6 +223,8 @@ void channelMapInit(const char* const filepath) {
                 info.invalid_rows);
 
     free(b);
+
+    return FP_EOK;
 }
 
 bool channelMapFind(const uint32_t id,

@@ -21,7 +21,7 @@ char* dsprintf(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
 /// @param max maximum value (inclusive) supported by the destination type
 /// @param p pointer to store the parsed value
 /// @param ps size of the destination type in bytes
-/// @return zero on success, non-zero on failure
+/// @return 0 on success, non-zero on failure
 int strtolb(const char* str, long min, long max, void* p, int ps);
 
 #endif//FPLAYER_STRING_H

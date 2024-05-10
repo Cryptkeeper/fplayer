@@ -15,7 +15,7 @@ typedef struct cmap_parse_info_t {
 
 cmap_parse_info_t channelMapParseCSV(const char* b);
 
-void channelMapInit(const char* filepath);
+int channelMapInit(const char* filepath);
 
 bool channelMapFind(uint32_t id, uint8_t* unit, uint16_t* circuit);
 

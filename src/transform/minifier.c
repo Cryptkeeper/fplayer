@@ -28,8 +28,9 @@ static void minifyEncodeRequest(const struct encoding_request_t request) {
     assert(request.circuits > 0);
     assert(request.nCircuits > 0);
 
+    // TODO: fix error handling, make this buffer static?
     LorBuffer* msg = LB_alloc();
-    if (msg == NULL) fatalf(E_SYS, NULL);
+    if (msg == NULL) exit(1);
 
     const union LorEffectArgs args = {
             .setIntensity = {request.setIntensity},
