@@ -116,10 +116,9 @@ slist_t* Serial_getPorts(void) {
 
     slist_t* ports = NULL;
     for (int i = 0; pl[i] != NULL; i++) {
-        char* portName = strdup(sp_get_port_name(pl[i]));
-
-        if (portName == NULL || sladd(&ports, portName) < 0) {
-            free(portName);
+        char* portName = sp_get_port_name(pl[i]);
+        if (portName == NULL) portName = "(null?)";
+        if (sladd(&ports, portName) < 0) {
             slfree(ports), ports = NULL;
             break;
         }
