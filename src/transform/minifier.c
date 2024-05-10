@@ -148,7 +148,7 @@ void minifyStream(const uint8_t* const frameData,
         // flush when stack is full
         EncodeChange change = (EncodeChange){
                 .circuit = circuit,
-                .oldIntensity = lastFrameData[id],
+                .oldIntensity = lastFrameData == NULL ? 0 : lastFrameData[id],
                 .newIntensity = frameData[id],
         };
 

@@ -1,240 +1,87 @@
 #include "pump.h"
 
 #include <assert.h>
-#include <pthread.h>
-#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "stb_ds.h"
+#include <tinyfseq.h>
 
 #include "fseq/comblock.h"
+#include "fseq/fd.h"
 #include "seq.h"
-#include "std/err.h"
-#include "std2/time.h"
+#include "std2/errcode.h"
 
-uint32_t framePumpGetRemaining(const FramePump *pump) {
-    const size_t remaining = arrlenu(pump->frames);
-
-    if (pump->head >= remaining) return 0;
-
-    return remaining - pump->head;
-}
-
-static uint8_t **framePumpChargeSequentialRead(struct FC* fc,
-                                               const uint32_t currentFrame) {
-    const uint32_t frameSize = curSequence.channelCount;
-
-    // generates a frame data buffer of 5 seconds worth of playback
-    const uint32_t reqFrameCount = 1000 / curSequence.frameStepTimeMillis * 5;
-
-    uint8_t *const frameData = mustMalloc(frameSize * reqFrameCount);
-
-    const uint32_t framesRead =
-            Seq_readFrames(fc,
-                           (struct seq_read_args_t){
-                                   .startFrame = currentFrame,
-                                   .frameSize = frameSize,
-                                   .frameCount = reqFrameCount,
-                           },
-                           frameData);
-
-    if (framesRead < 1) fatalf(E_APP, "unexpected end of frame data\n");
-
-    // most of this is a modified copy of how `comblock.c` handles generating
-    // the frames list of all individually free-able frames
-    uint8_t **frames = NULL;
-
-    arrsetcap(frames, framesRead);
-
-    for (uint32_t i = 0; i < framesRead; i++) {
-        uint8_t *const frame = mustMalloc(frameSize);
-
-        memcpy(frame, &frameData[i * frameSize], frameSize);
-
-        arrput(frames, frame);
-    }
-
-    free(frameData);
-
-    return frames;
-}
-
-static uint8_t **framePumpChargeCompressionBlock(struct FC* fc,
-                                                 FramePump *const pump) {
-    if (pump->consumedComBlocks >= curSequence.compressionBlockCount)
-        return NULL;
-
-    return ComBlock_read(fc, pump->consumedComBlocks++);
-}
-
-static void framePumpFreeFrames(FramePump *const pump) {
-    // by the time a pump is freed, all frames should have already
-    // been consumed and freed by `framePumpGet` calls
-    for (size_t i = 0; i < arrlenu(pump->frames); i++)
-        assert(pump->frames[i] == NULL);
-
-    arrfree(pump->frames);
-}
-
-static void framePumpRecharge(struct FC* fc,
-                              FramePump *const pump,
-                              const uint32_t currentFrame,
-                              const bool preload) {
-    const timeInstant start = timeGetNow();
-
-    uint8_t **frames = NULL;
-
-    // recharge pump depending on the compression type
-    switch (curSequence.compressionType) {
-        case TF_COMPRESSION_NONE:
-            frames = framePumpChargeSequentialRead(fc, currentFrame);
-            break;
-        case TF_COMPRESSION_ZLIB:
-        case TF_COMPRESSION_ZSTD:
-            frames = framePumpChargeCompressionBlock(fc, pump);
-            break;
-    }
-
-    if (frames == NULL || arrlen(frames) == 0)
-        fatalf(E_APP, "unexpected end of frame pump\n");
-
-    if (pump->frames != NULL) framePumpFreeFrames(pump);
-
-    pump->frames = frames;
-    pump->head = 0;
-
-    // check for performance issues after reading
-    char *const time = timeElapsedString(start, timeGetNow());
-
-    printf("%s %d frames in %s\n", preload ? "pre-loaded" : "loaded",
-           (int) arrlen(frames), time);
-
-    free(time);
-}
-
-struct frame_pump_thread_args_t {
-    struct FC* fc;
-    uint32_t startFrame;
-    int16_t consumedComBlocks;
+struct frame_pump_s {
+    struct FC* fc;          /* file controller to read frames from */
+    struct fd_node_s* curr; /* current frame set to read from */
+    struct fd_node_s* next; /* preloaded frame set to read from next */
+    int cbidx;              /* current compression block index */
 };
 
-static void *framePumpThread(void *pargs) {
-    const struct frame_pump_thread_args_t args =
-            *(struct frame_pump_thread_args_t *) pargs;
+struct frame_pump_s* FP_init(struct FC* fc) {
+    assert(fc != NULL);
 
-    FramePump *const framePump = mustMalloc(sizeof(FramePump));
-
-    memset(framePump, 0, sizeof(FramePump));
-
-    *framePump = (FramePump){
-            .consumedComBlocks = args.consumedComBlocks,
-    };
-
-    framePumpRecharge(args.fc, framePump, args.startFrame, true);
-
-    return framePump;
+    struct frame_pump_s* pump = calloc(1, sizeof(*pump));
+    if (pump == NULL) return NULL;
+    pump->fc = fc;
+    return pump;
 }
 
-// https://www.austingroupbugs.net/view.php?id=599
-#define PTHREAD_NULL ((pthread_t) NULL)
+static int FP_readZstd(struct frame_pump_s* pump, struct fd_node_s** fn) {
+    assert(pump != NULL);
+    assert(fn != NULL);
 
-static pthread_t gPumpThread = PTHREAD_NULL;
-static struct frame_pump_thread_args_t gThreadArgs;
-
-static void framePumpHintPreload(struct FC* fc,
-                                 const uint32_t startFrame,
-                                 const int16_t consumedComBlocks) {
-    if (gPumpThread != PTHREAD_NULL) return;
-
-    gThreadArgs.fc = fc;
-    gThreadArgs.startFrame = startFrame;
-    gThreadArgs.consumedComBlocks = consumedComBlocks;
-
-    int err;
-    if ((err = pthread_create(&gPumpThread, NULL, framePumpThread,
-                              &gThreadArgs)) != 0)
-        fatalf(E_SYS, "error creating pthread: %d\n", err);
+    if (pump->cbidx >= curSequence->compressionBlockCount) return FP_ESEQEND;
+    return ComBlock_read(pump->fc, pump->cbidx++, fn);
 }
 
-static FramePump *framePumpPreloadGet(void) {
-    if (gPumpThread == PTHREAD_NULL) return NULL;
+static int FP_read(struct frame_pump_s* pump, struct fd_node_s** fn) {
+    assert(pump != NULL);
+    assert(fn != NULL);
 
-    void *args = NULL;
-
-    int err;
-    if ((err = pthread_join(gPumpThread, &args)) != 0)
-        fatalf(E_SYS, "error joining pthread: %d\n", err);
-
-    gPumpThread = PTHREAD_NULL;
-
-    return args;
+    switch (curSequence->compressionType) {
+        case TF_COMPRESSION_ZSTD:
+            return FP_readZstd(pump, fn);
+        default:
+            return -FP_ENOSUP;
+    }
 }
 
-static bool framePumpSwapPreload(FramePump *const pump) {
-    FramePump *nextPump = framePumpPreloadGet();
+int FP_copy(struct frame_pump_s* pump, uint8_t** fd) {
+    assert(pump != NULL);
+    assert(fd != NULL);
 
-    if (nextPump == NULL) return false;
+    // pump is empty
+    // check if a preloaded frame set is available for instant consumption,
+    // otherwise block the playback and read the next frame set immediately
+    if (pump->curr == NULL) {
+        // immediately read from source if a preload is not available
+        if (pump->next == NULL) {
+            int err;
+            if ((err = FP_read(pump, &pump->next))) {
+                FD_free(pump->next), pump->next = NULL;
+                return err;
+            }
+        }
 
-    // frees old pump's internal allocations, but not `pump` itself
-    framePumpFree(pump);
-
-    *pump = *nextPump;
-
-    free(nextPump);
-
-    return true;
-}
-
-const uint8_t *framePumpGet(struct FC* fc,
-                            FramePump *const pump,
-                            const uint32_t currentFrame,
-                            const bool canHintPreload) {
-    if (canHintPreload) {
-        const uint32_t remaining = framePumpGetRemaining(pump);
-
-        const uint32_t threshold = 1000 / curSequence.frameStepTimeMillis * 3;
-
-        // once we hit the `threshold` frames remaining warning, hint at starting
-        // a job thread for pre-loading the next frame pump chunk
-        if (remaining > 0 && remaining <= threshold) {
-            const uint32_t startFrame = currentFrame + remaining;
-
-            if (startFrame < curSequence.frameCount)
-                framePumpHintPreload(fc, startFrame, pump->consumedComBlocks);
+        // handle the swap to the new frame set
+        if (pump->next != NULL) {
+            FD_free(pump->curr);
+            pump->curr = pump->next, pump->next = NULL;
         }
     }
 
-    if (framePumpGetRemaining(pump) == 0) {
-        // attempt to swap to the preloaded frame pump, if any
-        // otherwise block the playback loop while the next frames are loaded
-        if (!framePumpSwapPreload(pump))
-            framePumpRecharge(fc, pump, currentFrame, false);
-    }
+    // copy the next frame from the current frame set
+    struct fd_node_s* node = FD_shift(&pump->curr);
+    if (node == NULL) return FP_ESEQEND;
+    *fd = node->frame, free(node);
 
-    const uint32_t frameSize = curSequence.channelCount;
-
-    // copy the frame data entry to a central buffer that is exposed
-    // this enables us to internally free the frame allocation without another callback
-    if (pump->buffer == NULL) pump->buffer = mustMalloc(frameSize);
-
-    memcpy(pump->buffer, pump->frames[pump->head], frameSize);
-
-    const uint32_t index = pump->head++;
-
-    // free previous frame data, not needed once copied
-    free(pump->frames[index]);
-
-    pump->frames[index] = NULL;
-
-    return pump->buffer;
+    return FP_EOK;
 }
 
-void framePumpFree(FramePump *const pump) {
-    framePumpFreeFrames(pump);
-
-    free(pump->buffer);
-
-    pump->head = 0;
-    pump->buffer = NULL;
-    pump->consumedComBlocks = 0;
+void FP_free(struct frame_pump_s* pump) {
+    if (pump == NULL) return;
+    FD_free(pump->curr);
+    FD_free(pump->next);
+    free(pump);
 }

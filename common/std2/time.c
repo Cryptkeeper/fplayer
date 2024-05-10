@@ -1,7 +1,5 @@
 #include "time.h"
 
-#include "string.h"
-
 #ifdef _WIN32
     #include <windows.h>
 #endif
@@ -36,11 +34,4 @@ timeInstant timeGetNow(void) {
 int64_t timeElapsedNs(const timeInstant start, const timeInstant end) {
     return (end.tv_sec - start.tv_sec) * 1000000000 +
            (end.tv_nsec - start.tv_nsec);
-}
-
-char* timeElapsedString(const timeInstant start, const timeInstant end) {
-    const int64_t diff = timeElapsedNs(start, end);
-    const float ms = (float) diff / (float) 1e6;
-
-    return dsprintf(ms >= 1 ? "%.1fms" : "%.3fms", ms);
 }

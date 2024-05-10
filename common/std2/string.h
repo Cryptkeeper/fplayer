@@ -10,11 +10,4 @@
 /// @return a dynamically allocated string, or NULL if an error occurred
 char* dsprintf(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
 
-/// @brief Prints a formatted error message to stderr and exits the program with
-/// a non-zero status code. If `errno` is set, the corresponding error message
-/// is printed as well.
-/// @param fmt format string
-/// @param ... arguments to format
-void dfatalf(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
-
 #endif//FPLAYER_STRING_H

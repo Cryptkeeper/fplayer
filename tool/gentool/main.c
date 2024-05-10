@@ -7,31 +7,43 @@
 
 #include <zstd.h>
 
+#include <tinyfseq.h>
+
+#include "fseq/writer.h"
 #include "lorproto/intensity.h"
 #include "std/err.h"
-#include "std/fseq.h"
+#include "std2/fc.h"
 
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
 
-static fseq_var_t *fseqCreateProgramVars(void) {
-    fseq_var_t *vars = NULL;
-
-    const fseq_var_t sequenceProducer = {
-            .idh = 's',
-            .idl = 'p',
-            .string = "fplayer/gentool",
+/// @brief Generates a variable wrapper struct for the given id and string
+/// value. The size of the string is calculated using strlen, which requires a
+/// null terminated string. The string is not copied, so the caller must ensure
+/// the string remains valid for the lifetime of the variable.
+/// @param id two character id for the variable
+/// @param value variable data
+/// @return variable wrapper struct
+static struct fseq_var_s fseqWrapVarString(const char id[2],
+                                           char* const value) {
+    assert(id != NULL);
+    assert(value != NULL);
+    return (struct fseq_var_s){
+            .id = {id[0], id[1]},
+            .size = strlen(value),
+            .value = value,
     };
+}
 
-    arrpush(vars, sequenceProducer);
+static struct fseq_var_s* fseqCreateProgramVars(void) {
+    struct fseq_var_s* vars = NULL;
 
-    const fseq_var_t generationMode = {
-            .idh = 'g',
-            .idl = 'm',
-            .string = "intensity_oscillator_ramp_vendor",
-    };
+    const struct fseq_var_s sp = fseqWrapVarString("sp", "fplayer/gentool");
+    const struct fseq_var_s gm =
+            fseqWrapVarString("gm", "intensity_oscillator_ramp_vendor");
 
-    arrpush(vars, generationMode);
+    arrpush(vars, sp);
+    arrpush(vars, gm);
 
     return vars;
 }
@@ -54,11 +66,11 @@ static uint8_t intensityOscillatorRampVendorNext(void) {
     return LorIntensityCurveVendor(f);
 }
 
-static void *compressZstd(const char *const src,
+static void* compressZstd(const char* const src,
                           const size_t srcSize,
-                          size_t *const dstSize) {
+                          size_t* const dstSize) {
     const size_t dstCapacity = ZSTD_compressBound(srcSize);
-    void *const dst = mustMalloc(dstCapacity);
+    void* const dst = mustMalloc(dstCapacity);
 
     const int compressionLevel = 1;
 
@@ -74,13 +86,13 @@ static void *compressZstd(const char *const src,
     return dst;
 }
 
-static void generateChannelDataUncompressed(FILE *const dst,
+static void generateChannelDataUncompressed(struct FC* fc,
                                             const uint8_t fps,
                                             const uint32_t frameCount,
                                             const uint32_t channelCount) {
     // generate each individual frame
     // all channels are set to the same value for each frame via a memory block
-    uint8_t *const channelData = mustMalloc(channelCount);
+    uint8_t* const channelData = mustMalloc(channelCount);
 
     for (uint32_t frame = 0; frame <= frameCount; frame++) {
         memset(channelData, intensityOscillatorRampVendorNext(), channelCount);
@@ -95,13 +107,13 @@ static void generateChannelDataUncompressed(FILE *const dst,
     free(channelData);
 }
 
-static TFCompressionBlock *
-generateChannelData(FILE *const dst,
+static struct tf_compression_block_t*
+generateChannelData(struct FC* fc,
                     const uint8_t fps,
                     const uint32_t frameCount,
                     const uint32_t channelCount,
                     const uint8_t compressionBlockCount) {
-    TFCompressionBlock *blocks = NULL;
+    struct tf_compression_block_t* blocks = NULL;
 
     if (compressionBlockCount > 0) {
         // divide frames evenly amongst the block count, adding the total reminder
@@ -111,7 +123,7 @@ generateChannelData(FILE *const dst,
 
         // allocate a single block of channel data memory that will be compressed
         const size_t channelDataSize = framesPerBlock * channelCount;
-        uint8_t *const channelData = mustMalloc(channelDataSize);
+        uint8_t* const channelData = mustMalloc(channelDataSize);
 
         // generate each frame, all channels are set to the same value per frame
         uint32_t remainingFrameCount = frameCount;
@@ -130,8 +142,8 @@ generateChannelData(FILE *const dst,
 
             // compress the entire block of channel data
             size_t compressedDataSize;
-            void *const compressedData =
-                    compressZstd((const char *) channelData, channelDataSize,
+            void* const compressedData =
+                    compressZstd((const char*) channelData, channelDataSize,
                                  &compressedDataSize);
 
             // write compressed data to the file
@@ -140,7 +152,7 @@ generateChannelData(FILE *const dst,
             free(compressedData);
 
             // append a new compression block entry to track the offsets
-            const TFCompressionBlock newBlock = {
+            const struct tf_compression_block_t newBlock = {
                     .firstFrameId = firstFrameId,
                     .size = compressedDataSize,
             };
@@ -154,7 +166,7 @@ generateChannelData(FILE *const dst,
         // free the original channel data memory
         free(channelData);
     } else {
-        generateChannelDataUncompressed(dst, fps, frameCount, channelCount);
+        generateChannelDataUncompressed(fc, fps, frameCount, channelCount);
     }
 
     return blocks;
@@ -172,8 +184,8 @@ static void printUsage(void) {
            "\t-b <count>\t\tzstd compression block count (default: 2)\n");
 }
 
-int main(const int argc, char **const argv) {
-    char *outputPath = NULL;
+int main(const int argc, char** const argv) {
+    char* outputPath = NULL;
     uint16_t fps = 25;
     uint32_t channelCount = 16;
     uint32_t frameCount = 250;
@@ -232,9 +244,8 @@ int main(const int argc, char **const argv) {
     // avoid allocating a default value until potential early exit checks are done
     if (outputPath == NULL) outputPath = mustStrdup("generated.fseq");
 
-    FILE *const f = fopen(outputPath, "wb");
-
-    if (f == NULL)
+    struct FC* fc = FC_open(outputPath, "wb");
+    if (fc == NULL)
         fatalf(E_FIO, "error opening output filepath: %s\n", outputPath);
 
     printf("generating test sequence (%d frames @ %d FPS)\n", frameCount, fps);
@@ -253,35 +264,36 @@ int main(const int argc, char **const argv) {
             .compressionBlockCount = compressionBlockCount,
     };
 
-    fseq_var_t *vars = fseqCreateProgramVars();
+    struct fseq_var_s* vars = fseqCreateProgramVars();
 
-    fseqAlignOffsets(&header, vars);
-
-    fseqWriteHeader(f, header);
+    // TODO: validate return bool
+    fseqRealignHeaderOffsets(&header, vars, arrlen(vars));
+    fseqWriteHeader(fc, &header);
 
     // generate channel data
     // if uncompressed, this will return a NULL array pointer
     // if compressed, this will return an array of compression block metadata
     //  that need to be encoded directly past the initial header
-    fseek(f, header.channelDataOffset, SEEK_SET);
-
-    TFCompressionBlock *compressionBlocks = generateChannelData(
-            f, fps, frameCount, channelCount, compressionBlockCount);
+    TFCompressionBlock* compressionBlocks = generateChannelData(
+            fc, fps, frameCount, channelCount, compressionBlockCount);
 
     assert(arrlenu(compressionBlocks) == compressionBlockCount);
 
     if (compressionBlockCount > 0) {
-        fseqWriteCompressionBlocks(f, compressionBlocks);
+        // TODO: validate return bool
+        fseqWriteCompressionBlocks(fc, compressionBlocks,
+                                   arrlen(compressionBlocks));
 
         arrfree(compressionBlocks);
     }
 
-    fseqWriteVars(f, header, vars);
+    // TODO: validate return bool
+    fseqWriteVars(fc, &header, vars, arrlen(vars));
 
     // done writing file
     arrfree(vars);
 
-    fclose(f);
+    FC_close(fc);
 
     free(outputPath);
 

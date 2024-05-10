@@ -2,13 +2,10 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <libserialport.h>
-
-#include "stb_ds.h"
-
-#include "lor/protowriter.h"
-#include "std/err.h"
 
 static void Serial_printError(const enum sp_return err) {
     fprintf(stderr, "libserialport error: %d\n", err);
@@ -104,25 +101,21 @@ void Serial_close(void) {
     gPort = NULL;
 }
 
-char** Serial_getPorts(void) {
+slist_t* Serial_getPorts(void) {
     struct sp_port** pl;
+    if (sp_list_ports(&pl) != SP_OK) return NULL;
 
-    // FIXME: exit if sp query fails
-    const enum sp_return err = sp_list_ports(&pl);
-    if (err) {
-        Serial_printError(err);
-        return NULL;
-    }
-
-    char** ports = NULL;
-
-    // https://github.com/martinling/libserialport/blob/master/examples/list_ports.c#L28
+    slist_t* ports = NULL;
     for (int i = 0; pl[i] != NULL; i++) {
-        char* portName = mustStrdup(sp_get_port_name(pl[i]));
-        arrpush(ports, portName);
+        char* portName = strdup(sp_get_port_name(pl[i]));
+
+        if (portName == NULL || sladd(&ports, portName) < 0) {
+            free(portName);
+            slfree(ports), ports = NULL;
+            break;
+        }
     }
 
     sp_free_port_list(pl);
-
     return ports;
 }

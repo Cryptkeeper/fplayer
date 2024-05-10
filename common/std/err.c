@@ -1,16 +1,13 @@
 #include "err.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static const char *errGetMessage(const enum err_t err) {
+static const char* errGetMessage(const enum err_t err) {
     switch (err) {
-        case E_OK:
-            return "E_OK";
         case E_APP:
             return "E_APP";
         case E_SYS:
@@ -22,7 +19,7 @@ static const char *errGetMessage(const enum err_t err) {
     }
 }
 
-void fatalf(const enum err_t err, const char *const format, ...) {
+void fatalf(const enum err_t err, const char* const format, ...) {
     fprintf(stderr, "fatal error: %s (%d)\n", errGetMessage(err), (int) err);
 
     if (format != NULL) {
@@ -35,7 +32,7 @@ void fatalf(const enum err_t err, const char *const format, ...) {
 
     // `errno` is likely set
     if (err == E_SYS || err == E_FIO) {
-        const char *const msg = strerror(errno);
+        const char* const msg = strerror(errno);
 
         if (msg != NULL) fprintf(stderr, "%s\n", msg);
     }
@@ -53,24 +50,15 @@ void fatalf(const enum err_t err, const char *const format, ...) {
     exit(1);
 }
 
-void *mustMalloc(const size_t size) {
-    void *const ptr = malloc(size);
-
-    assert(ptr != NULL);
-    if (ptr == NULL) fatalf(E_SYS, "error allocating %ull bytes\n", size);
-
-    return ptr;
-}
-
-bool strtolb(const char *const str,
+bool strtolb(const char* const str,
              const long min,
              const long max,
-             void *const p,
+             void* const p,
              const size_t ps) {
 
     errno = 0;
 
-    char *endptr = NULL;
+    char* endptr = NULL;
     long parsed = strtol(str, &endptr, 10);
 
     if (errno != 0 || endptr == str || *endptr != '\0') return false;
@@ -80,13 +68,4 @@ bool strtolb(const char *const str,
     memcpy(p, &parsed, ps);
 
     return true;
-}
-
-char *mustStrdup(const char *str) {
-    char *const ptr = strdup(str);
-
-    assert(ptr != NULL);
-    if (ptr == NULL) fatalf(E_SYS, "error duplicating string\n");
-
-    return ptr;
 }

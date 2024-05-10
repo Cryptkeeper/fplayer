@@ -11,10 +11,21 @@ struct FC {
     pthread_mutex_t mutex; /* mutex for file access */
 };
 
-struct FC* FC_open(const char* const fp) {
+struct FC* FC_open(const char* const fp, const enum fc_mode_t mode) {
+    char* m;
+    switch (mode) {
+        case FC_MODE_READ:
+            m = "rb";
+            break;
+        case FC_MODE_WRITE:
+            m = "wb";
+            break;
+        default:
+            return NULL;
+    }
     struct FC* fc = calloc(1, sizeof(struct FC));
     if (fc == NULL) return NULL;
-    if ((fc->file = fopen(fp, "rb")) == NULL || (fc->fp = strdup(fp)) == NULL ||
+    if ((fc->file = fopen(fp, m)) == NULL || (fc->fp = strdup(fp)) == NULL ||
         pthread_mutex_init(&fc->mutex, NULL) != 0) {
         FC_close(fc);
         fc = NULL;
@@ -54,6 +65,18 @@ uint32_t FC_readto(struct FC* fc,
     return r;
 }
 
+uint32_t FC_write(struct FC* fc,
+                  const uint32_t offset,
+                  const uint32_t size,
+                  const uint8_t* const b) {
+    uint32_t w = 0;
+    pthread_mutex_lock(&fc->mutex);
+    if (fseek(fc->file, offset, SEEK_SET) == 0)
+        w = fwrite(b, 1, size, fc->file);
+    pthread_mutex_unlock(&fc->mutex);
+    return w;
+}
+
 uint32_t FC_filesize(struct FC* fc) {
     uint32_t s = 0;
     pthread_mutex_lock(&fc->mutex);
@@ -61,8 +84,4 @@ uint32_t FC_filesize(struct FC* fc) {
     rewind(fc->file);
     pthread_mutex_unlock(&fc->mutex);
     return s;
-}
-
-const char* FC_filepath(const struct FC* fc) {
-    return fc->fp;
 }

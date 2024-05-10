@@ -1,101 +1,103 @@
 #include "audio.h"
 
-#include <assert.h>
 #include <stdio.h>
 
 #include <AL/alut.h>
 
-static void alCheckError(const char *const msg) {
-    ALenum err;
-    if ((err = alGetError()) == AL_NO_ERROR) return;
+#include "std2/errcode.h"
 
-    fprintf(stderr, "%s: OpenAL error 0x%02x\n", msg, err);
+static void perror_al(const char* const msg) {
+    ALenum err;
+    if ((err = alGetError()) != AL_NO_ERROR)
+        fprintf(stderr, "%s: OpenAL error 0x%02x\n", msg, err);
 }
 
-static void alutCheckError(const char *const msg) {
+static void perror_alut(const char* const msg) {
     ALenum err;
-    if ((err = alutGetError()) == ALUT_ERROR_NO_ERROR) return;
-
-    fprintf(stderr, "%s: ALUT error 0x%02x (%s)\n", msg, err,
-            alutGetErrorString(err));
+    if ((err = alutGetError()) != ALUT_ERROR_NO_ERROR)
+        fprintf(stderr, "%s: ALUT error 0x%02x (%s)\n", msg, err,
+                alutGetErrorString(err));
 }
 
-static ALuint gSource = AL_NONE;
-static ALuint gCurrentBuffer = AL_NONE;
+static struct {
+    bool init;
+    ALuint sid; /* allocated source id */
+    ALuint bid; /* allocated buffer id */
+} gAudio;
 
-static bool gIsInit = false;
-
-static void audioInit(void) {
-    assert(!gIsInit);
-    if (gIsInit) return;
-
-    gIsInit = true;
+static int audioInit(void) {
+    if (gAudio.init) return FP_EOK;
 
     alutInit(0, NULL);
-    alutCheckError("error initializing ALUT");
+    if (alutGetError()) return -FP_EALCTL;
+
+    gAudio.init = true;
+    return FP_EOK;
 }
 
-static void audioStop(void) {
-    if (gSource != AL_NONE) {
-        alSourceStop(gSource);
-        alCheckError("error stopping audio source playback");
+static void audioStopPlayback(void) {
+    if (!gAudio.init) return;
 
-        alSourcei(gSource, AL_BUFFER, AL_NONE);
-        alCheckError("error clearing source buffer assignment");
+    ALuint sid;
+    if ((sid = gAudio.sid), gAudio.sid = AL_NONE, sid != AL_NONE) {
+        alSourceStop(sid);
+        alSourcei(sid, AL_BUFFER, AL_NONE);
+        alDeleteSources(1, &sid);
 
-        alDeleteSources(1, &gSource);
-        alCheckError("error deleting default audio source");
-
-        gSource = AL_NONE;
+        if (alGetError() != AL_NO_ERROR)
+            perror_al("error deleting audio source");
     }
 
-    if (gCurrentBuffer != AL_NONE) {
-        alDeleteBuffers(1, &gCurrentBuffer);
-        alCheckError("error deleting audio buffer");
-
-        gCurrentBuffer = AL_NONE;
+    ALuint bid;
+    if ((bid = gAudio.bid), gAudio.bid = AL_NONE, bid != AL_NONE) {
+        alDeleteBuffers(1, &bid);
+        perror_al("error deleting audio buffer");
     }
 }
 
 void audioExit(void) {
-    if (!gIsInit) return;
-    gIsInit = false;
+    bool init;
+    if ((init = gAudio.init), gAudio.init = false, init) {
+        audioStopPlayback();
 
-    audioStop();
-
-    alutExit();
-    alutCheckError("error while exiting ALUT");
+        alutExit();
+        perror_alut("error while exiting ALUT");
+    }
 }
 
 bool audioCheckPlaying(void) {
-    if (gSource == AL_NONE) return false;
+    if (!gAudio.init || gAudio.sid == AL_NONE) return false;
 
     ALint state;
-    alGetSourcei(gSource, AL_SOURCE_STATE, &state);
-    alCheckError("error checking audio source state");
+    alGetSourcei(gAudio.sid, AL_SOURCE_STATE, &state);
+    perror_al("error checking audio source state");
 
-    if (state != AL_PLAYING) audioStop();
+    // free resources if playback has stopped
+    if (state != AL_PLAYING) audioStopPlayback();
 
     return state == AL_PLAYING;
 }
 
-void audioPlayFile(const char *const filepath) {
+int audioPlayFile(const char* const fp) {
+    if (audioCheckPlaying()) audioStopPlayback();
+
     // lazy initialize until once an audio playback request is made
-    if (!gIsInit) audioInit();
+    int err;
+    if ((err = audioInit())) return err;
 
-    gCurrentBuffer = alutCreateBufferFromFile(filepath);
-    alutCheckError("error decoding file into buffer");
+    if ((gAudio.bid = alutCreateBufferFromFile(fp)) == AL_NONE) {
+        perror_alut("error decoding file into buffer");
+        return -FP_EPLAYAUD;
+    }
 
-    if (gCurrentBuffer == AL_NONE) return;
+    alGenSources(1, &gAudio.sid);
+    alSourcei(gAudio.sid, AL_BUFFER, gAudio.bid);
+    alSourcePlay(gAudio.sid);
 
-    assert(gSource == AL_NONE);
+    if (alGetError() != AL_NO_ERROR) {
+        perror_al("error starting audio playback");
+        return -FP_EPLAYAUD;
+    }
 
-    alGenSources(1, &gSource);
-    alCheckError("error generating default audio source");
-
-    alSourcei(gSource, AL_BUFFER, gCurrentBuffer);
-    alCheckError("error assigning source buffer");
-
-    alSourcePlay(gSource);
-    alCheckError("error starting audio source playback");
+    return FP_EOK;
 }

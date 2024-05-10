@@ -1,5 +1,6 @@
 #include "cmap.h"
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
 
@@ -63,7 +64,8 @@ static bool channelMapParseCSVRow(const int line,
                                   const char* const row,
                                   struct channel_range_t* const range) {
     char* dup;
-    char* ptr = dup = mustStrdup(row);
+    char* ptr = dup = strdup(row);
+    if (ptr == NULL) return false;
 
     bool ok = true;
 
@@ -162,10 +164,12 @@ enum cmap_parse_res_t channelMapParseCSVLine(const int line,
 }
 
 cmap_parse_info_t channelMapParseCSV(const char* const b) {
-    char* const str = mustStrdup(b);
-    char* last;
-
     cmap_parse_info_t info = {0};
+
+    char* const str = strdup(b);
+    if (str == NULL) return info;
+
+    char* last;
 
     int line = 0;
 
@@ -193,12 +197,13 @@ cmap_parse_info_t channelMapParseCSV(const char* const b) {
 }
 
 void channelMapInit(const char* const filepath) {
-    struct FC* fc = FC_open(filepath);
+    struct FC* fc = FC_open(filepath, FC_MODE_READ);
     if (fc == NULL)
         fatalf(E_SYS, "failed to open channel map file `%s`", filepath);
 
     const uint32_t filesize = FC_filesize(fc);
-    uint8_t* b = mustMalloc(filesize + 1);
+    uint8_t* b = malloc(filesize + 1);
+    if (b == NULL) fatalf(E_SYS, "failed to allocate memory for channel map");
 
     FC_read(fc, 0, filesize, b);
     FC_close(fc);
@@ -253,13 +258,21 @@ static bool channelMapContainsUid(const uint8_t* const set,
 }
 
 uint8_t* channelMapGetUids(void) {
-    uint8_t* uids = NULL;
+    uint8_t* uids = malloc(arrlen(gRanges) + 1);
+    if (uids == NULL) return NULL;
+    
+    int next = 0;
 
     for (int i = 0; i < arrlen(gRanges); i++) {
         const struct channel_range_t range = gRanges[i];
 
-        if (!channelMapContainsUid(uids, range.unit)) arrput(uids, range.unit);
+        assert(next < arrlen(gRanges));
+
+        if (!channelMapContainsUid(uids, range.unit)) uids[next++] = range.unit;
     }
+
+    assert(next < arrlen(gRanges));
+    uids[next] = 0;
 
     return uids;
 }

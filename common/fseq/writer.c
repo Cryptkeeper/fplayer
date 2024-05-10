@@ -1,0 +1,162 @@
+#include "writer.h"
+
+#include <assert.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <tinyfseq.h>
+
+#include "../std2/errcode.h"
+#include "../std2/fc.h"
+#include "enc.h"
+
+// FSEQ File Format Header
+// https://github.com/Cryptkeeper/fseq-file-format
+//
+//                             ┌────────────────┬────────────────┬────────────────┬────────────────┐
+//                             │'P'         0x50│'S'         0x53│'E'         0x45│'Q'         0x51│
+//                             ├────────────────┴────────────────┼────────────────┼────────────────┤
+//                             │Channel Data Offset        uint16│Minor Version   │Major Version  2│
+// ┌────────────────────────┐  ├─────────────────────────────────┼────────────────┴────────────────┤
+// │Extended Compression    │  │Variable Data Offset       uint16│Channel Count              uint32
+// │Block Count (v2.1) uint4│  ├─────────────────────────────────┼─────────────────────────────────┤
+// ├────────────────────────┤   Channel Count (contd)      uint32│Frame Count                uint32
+// │Compression Type   uint4│  ├─────────────────────────────────┼────────────────┬────────────────┤
+// └────────────────────────┘   Frame Count (contd)        uint32│Step Time Ms.   │Flags (unused)  │
+//              │              ├────────┬───────┬────────────────┼────────────────┼────────────────┤
+//              └─────────────▶│ECBC    │CT     │Compr. Block Cnt│Sparse Range Cnt│Reserved        │
+//                             ├────────┴───────┴────────────────┴────────────────┴────────────────┤
+//                             │Unique ID/Creation Time Microseconds                         uint64
+//                             ├───────────────────────────────────────────────────────────────────┤
+//                              Unique ID/Creation Time Microseconds (contd)                 uint64│
+//                             └───────────────────────────────────────────────────────────────────┘
+
+int fseqWriteHeader(struct FC* fc, const struct tf_header_t* header) {
+    assert(fc != NULL);
+    assert(header != NULL);
+
+    uint8_t b[32] = {'P', 'S', 'E', 'Q'};
+
+    encode_uint16(&b[4], header->channelDataOffset);
+    encode_uint8(&b[6], header->minorVersion);
+    encode_uint8(&b[7], header->majorVersion);
+    encode_uint16(&b[8], header->variableDataOffset);
+    encode_uint32(&b[10], header->channelCount);
+    encode_uint32(&b[14], header->frameCount);
+    encode_uint16(&b[18], header->frameStepTimeMillis);
+    encode_uint8(&b[20], header->compressionType);
+    encode_uint8(&b[21], header->compressionBlockCount);
+    encode_uint32(&b[22], header->channelRangeCount);
+    encode_uint64(&b[24], header->sequenceUid);
+
+    if (FC_write(fc, 0, sizeof(b), b) != sizeof(b)) return -FP_ESYSCALL;
+
+    return FP_EOK;
+}
+
+int fseqWriteCompressionBlocks(struct FC* fc,
+                               const struct tf_compression_block_t* blocks,
+                               const long count) {
+    assert(fc != NULL);
+    assert(blocks != NULL);
+    assert(count > 0);
+
+    for (long i = 0; i < count; i++) {
+        uint8_t b[8] = {0};
+
+        encode_uint32(b, blocks[i].firstFrameId);
+        encode_uint32(&b[4], blocks[i].size);
+
+        if (FC_write(fc, 32 + i * 8, sizeof(b), b) != sizeof(b))
+            return -FP_ESYSCALL;
+    }
+
+    return FP_EOK;
+}
+
+/// @brief Calculates the size in bytes of the variable section according to the
+/// given variables. The size is stored in the given pointer.
+/// @param vars variables to calculate the size of
+/// @param count number of variables in the array
+/// @param align whether to align the size to the nearest multiple of 4
+/// @param size pointer to store the calculated size
+/// @return 0 on success, a negative error code on failure
+static int fseqGetVarSectionSize(const struct fseq_var_s* vars,
+                                 const long count,
+                                 const bool align,
+                                 uint16_t* size) {
+    assert(vars != NULL);
+    assert(count > 0);
+    assert(size != NULL);
+
+    size_t sect = 0;
+    for (long i = 0; i < count; i++) sect += vars[i].size + 4;
+
+    // optionally round to nearest product of 4 for 32-bit alignment
+    if (align && sect % 4 != 0) sect += 4 - sect % 4;
+
+    if (sect > UINT16_MAX)
+        return -FP_ERANGE;// too many variables for the format
+
+    *size = sect;
+
+    return FP_EOK;
+}
+
+int fseqWriteVars(struct FC* fc,
+                  const struct tf_header_t* header,
+                  const struct fseq_var_s* vars,
+                  const long count) {
+    assert(fc != NULL);
+    assert(header != NULL);
+    assert(vars != NULL);
+
+    if (count == 0) return FP_EOK;// nothing to write
+
+    uint16_t sect;
+    if (!fseqGetVarSectionSize(vars, count, false, &sect)) return false;
+
+    // allocate a single buffer for encoding all variables
+    uint8_t* b = malloc(sect);
+    if (b == NULL) return -FP_ENOMEM;
+
+    uint8_t* head = b;
+    for (long i = 0; i < count; i++) {
+        const struct fseq_var_s* var = &vars[i];
+
+        encode_uint16(head, var->size + 4); /* include space for the id+size */
+        encode_uint8(&head[2], var->id[0]);
+        encode_uint8(&head[3], var->id[1]);
+
+        memcpy(&head[4], var->value, var->size);
+
+        head += var->size + 4;
+    }
+
+    const uint32_t w = FC_write(fc, header->variableDataOffset, sect, b);
+    free(b);
+
+    return w == sect ? FP_EOK : -FP_ESYSCALL;
+}
+
+int fseqRealignHeaderOffsets(struct tf_header_t* header,
+                             const struct fseq_var_s* vars,
+                             const long count) {
+    assert(header != NULL);
+    assert(vars != NULL);
+
+    uint16_t sect;
+
+    int err;
+    if ((err = fseqGetVarSectionSize(vars, count, true, &sect))) return err;
+
+    const uint16_t firstVarOffset = 32 + header->compressionBlockCount * 8 +
+                                    header->channelRangeCount * 6;
+
+    header->variableDataOffset = firstVarOffset;
+    header->channelDataOffset = firstVarOffset + sect;
+
+    return FP_EOK;
+}

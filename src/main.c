@@ -1,18 +1,11 @@
 #include <getopt.h>
 #include <stdio.h>
 
-#include <AL/alut.h>
-#include <zstd.h>
-
-#include <libserialport.h>
-
-#include "lorproto/version.h"
-
 #define STB_DS_IMPLEMENTATION
-#include "stb_ds.h"
+#include <stb_ds.h>
 
 #define TINYFSEQ_IMPLEMENTATION
-#include "tinyfseq.h"
+#include <tinyfseq.h>
 
 #include "audio.h"
 #include "cmap.h"
@@ -51,26 +44,23 @@ static char* gAudioOverrideFilePath;
 
 static char* gChannelMapFilePath;
 
-static PlayerOpts gPlayerOpts;
+static uint8_t gWaitSeconds;
 
 static char* gSerialDevName;
 static int gSerialBaudRate = 19200;
 
 static void printSerialEnumPorts(void) {
-    char** ports = Serial_getPorts();
+    slist_t* ports = Serial_getPorts();
 
-    for (int i = 0; i < arrlen(ports); i++) {
+    for (int i = 0; ports != NULL && ports[i] != NULL; i++)
         printf("%s\n", ports[i]);
 
-        free(ports[i]);
-    }
-
-    arrfree(ports);
+    slfree(ports);
 }
 
 static bool parseOpts(const int argc, char** const argv, int* const ec) {
     int c;
-    while ((c = getopt(argc, argv, ":t:ilhf:c:a:r:w:d:b:")) != -1) {
+    while ((c = getopt(argc, argv, ":t:ilhf:c:a:w:d:b:")) != -1) {
         switch (c) {
             case 't':
                 channelMapInit(optarg);
@@ -83,34 +73,38 @@ static bool parseOpts(const int argc, char** const argv, int* const ec) {
                 printUsage();
                 return true;
             case 'f':
-                gSequenceFilePath = mustStrdup(optarg);
+                if ((gSequenceFilePath = strdup(optarg)) == NULL) {
+                    *ec = EXIT_FAILURE;
+                    return true;
+                }
                 break;
             case 'c':
-                gChannelMapFilePath = mustStrdup(optarg);
+                if ((gChannelMapFilePath = strdup(optarg)) == NULL) {
+                    *ec = EXIT_FAILURE;
+                    return true;
+                }
                 break;
             case 'a':
-                gAudioOverrideFilePath = mustStrdup(optarg);
+                if ((gAudioOverrideFilePath = strdup(optarg)) == NULL) {
+                    *ec = EXIT_FAILURE;
+                    return true;
+                }
                 break;
-            case 'r':
-                if (strtolb(optarg, 1, UINT8_MAX,
-                            &gPlayerOpts.frameStepTimeOverrideMs,
-                            sizeof(gPlayerOpts.frameStepTimeOverrideMs)))
-                    break;
-                fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
-                *ec = EXIT_FAILURE;
-                return true;
             case 'w':
-                if (strtolb(optarg, 0, UINT8_MAX, &gPlayerOpts.connectionWaitS,
-                            sizeof(gPlayerOpts.connectionWaitS)))
+                if (strtolb(optarg, 0, UINT8_MAX, &gWaitSeconds,
+                            sizeof(gWaitSeconds)))
                     break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 *ec = EXIT_FAILURE;
                 return true;
             case 'd':
-                gSerialDevName = mustStrdup(optarg);
+                if ((gSerialDevName = strdup(optarg)) == NULL) {
+                    *ec = EXIT_FAILURE;
+                    return true;
+                }
                 break;
             case 'b':
-                if (strtolb(optarg, 0, INT_MAX, &gSerialBaudRate,
+                if (strtolb(optarg, 0, INT32_MAX, &gSerialBaudRate,
                             sizeof(gSerialBaudRate)))
                     break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
@@ -153,16 +147,25 @@ int main(const int argc, char** const argv) {
     channelMapInit(gChannelMapFilePath);
 
     // open sequence file and init controller handler
-    struct FC* fc = FC_open(gSequenceFilePath);
+    struct FC* fc = FC_open(gSequenceFilePath, FC_MODE_READ);
     if (fc == NULL) {
-        fatalf(E_FIO, "failed to open sequence file `%s`\n", gSequenceFilePath);
+        fprintf(stderr, "failed to open sequence file `%s`\n",
+                gSequenceFilePath);
+        return 1;
     }
 
     // initialize core subsystems
     Serial_init(gSerialDevName, gSerialBaudRate);
 
-    // start the player as configured, this will start playback automatically
-    playerRun(fc, gAudioOverrideFilePath, gPlayerOpts);
+    struct player_s player = {
+            .fc = fc,
+            .audiofp = gAudioOverrideFilePath,
+            .wait_s = gWaitSeconds,
+    };
+
+    int err;
+    if ((err = PL_play(&player)))
+        fprintf(stderr, "failed to play sequence: %d\n", err);
 
     FC_close(fc);
 
