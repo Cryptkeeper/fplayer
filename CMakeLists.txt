@@ -60,8 +60,16 @@ else ()
 endif ()
 
 # zstd
-target_link_libraries(fplayer zstd)
-target_link_libraries(gentool zstd)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(ZSTD REQUIRED libzstd)
+
+target_include_directories(fplayer PRIVATE ${ZSTD_INCLUDE_DIRS})
+target_link_directories(fplayer PRIVATE ${ZSTD_LIBRARY_DIRS})
+target_link_libraries(fplayer ${ZSTD_LIBRARIES})
+
+target_include_directories(gentool PRIVATE ${ZSTD_INCLUDE_DIRS})
+target_link_directories(gentool PRIVATE ${ZSTD_LIBRARY_DIRS})
+target_link_libraries(gentool ${ZSTD_LIBRARIES})
 
 # Testing
 add_executable(test_dsprintf test/dsprintf.c)

@@ -9,7 +9,6 @@
 #include <tinyfseq.h>
 
 #include "audio.h"
-#include "cmap.h"
 #include "lor/protowriter.h"
 #include "pump.h"
 #include "seq.h"
