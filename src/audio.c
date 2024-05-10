@@ -1,5 +1,6 @@
 #include "audio.h"
 
+#include <assert.h>
 #include <stdio.h>
 
 #include <AL/alut.h>
@@ -79,6 +80,8 @@ bool audioCheckPlaying(void) {
 }
 
 int audioPlayFile(const char* const fp) {
+    assert(fp != NULL);
+
     if (audioCheckPlaying()) audioStopPlayback();
 
     // lazy initialize until once an audio playback request is made
