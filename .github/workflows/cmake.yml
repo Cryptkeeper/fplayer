@@ -102,7 +102,7 @@ jobs:
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} --log-level=VERBOSE
 
       - name: Build
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --log-level=VERBOSE
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -v
 
       - name: CTest
         working-directory: ${{github.workspace}}/build
