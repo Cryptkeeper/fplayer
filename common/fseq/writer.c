@@ -12,6 +12,8 @@
 #include "../std2/fc.h"
 #include "enc.h"
 
+#define HEADER_SIZE 32
+
 // FSEQ File Format Header
 // https://github.com/Cryptkeeper/fseq-file-format
 //
@@ -37,7 +39,7 @@ int fseqWriteHeader(struct FC* fc, const struct tf_header_t* header) {
     assert(fc != NULL);
     assert(header != NULL);
 
-    uint8_t b[32] = {'P', 'S', 'E', 'Q'};
+    uint8_t b[HEADER_SIZE] = {'P', 'S', 'E', 'Q'};
 
     enc_uint16_le(&b[4], header->channelDataOffset);
     enc_uint8_le(&b[6], header->minorVersion);
@@ -57,24 +59,26 @@ int fseqWriteHeader(struct FC* fc, const struct tf_header_t* header) {
 }
 
 int fseqWriteCompressionBlocks(struct FC* fc,
-                               const struct tf_compression_block_t* blocks,
-                               const long count) {
+                               const struct tf_header_t* header,
+                               const struct tf_compression_block_t* blocks) {
     assert(fc != NULL);
+    assert(header != NULL);
     assert(blocks != NULL);
-    assert(count > 0);
 
-    for (long i = 0; i < count; i++) {
+    for (int i = 0; i < header->compressionBlockCount; i++) {
         uint8_t b[8] = {0};
 
         enc_uint32_le(b, blocks[i].firstFrameId);
         enc_uint32_le(&b[4], blocks[i].size);
 
-        if (FC_write(fc, 32 + i * 8, sizeof(b), b) != sizeof(b))
+        if (FC_write(fc, HEADER_SIZE + i * 8, sizeof(b), b) != sizeof(b))
             return -FP_ESYSCALL;
     }
 
     return FP_EOK;
 }
+
+#define VAR_HEADER_SIZE 4
 
 /// @brief Calculates the size in bytes of the variable section according to the
 /// given variables. The size is stored in the given pointer.
@@ -84,7 +88,7 @@ int fseqWriteCompressionBlocks(struct FC* fc,
 /// @param size pointer to store the calculated size
 /// @return 0 on success, a negative error code on failure
 static int fseqGetVarSectionSize(const struct fseq_var_s* vars,
-                                 const long count,
+                                 const int count,
                                  const bool align,
                                  uint16_t* size) {
     assert(vars != NULL);
@@ -92,7 +96,7 @@ static int fseqGetVarSectionSize(const struct fseq_var_s* vars,
     assert(size != NULL);
 
     size_t sect = 0;
-    for (long i = 0; i < count; i++) sect += vars[i].size + 4;
+    for (int i = 0; i < count; i++) sect += vars[i].size + VAR_HEADER_SIZE;
 
     // optionally round to nearest product of 4 for 32-bit alignment
     if (align && sect % 4 != 0) sect += 4 - sect % 4;
@@ -108,7 +112,7 @@ static int fseqGetVarSectionSize(const struct fseq_var_s* vars,
 int fseqWriteVars(struct FC* fc,
                   const struct tf_header_t* header,
                   const struct fseq_var_s* vars,
-                  const long count) {
+                  const int count) {
     assert(fc != NULL);
     assert(header != NULL);
     assert(vars != NULL);
@@ -124,16 +128,16 @@ int fseqWriteVars(struct FC* fc,
     if (b == NULL) return -FP_ENOMEM;
 
     uint8_t* head = b;
-    for (long i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
         const struct fseq_var_s* var = &vars[i];
 
-        enc_uint16_le(head, var->size + 4); /* include space for the id+size */
+        enc_uint16_le(head, var->size + VAR_HEADER_SIZE);
         enc_uint8_le(&head[2], var->id[0]);
         enc_uint8_le(&head[3], var->id[1]);
 
-        memcpy(&head[4], var->value, var->size);
+        memcpy(&head[VAR_HEADER_SIZE], var->value, var->size);
 
-        head += var->size + 4;
+        head += var->size + VAR_HEADER_SIZE;
     }
 
     const uint32_t w = FC_write(fc, header->variableDataOffset, sect, b);
@@ -144,7 +148,7 @@ int fseqWriteVars(struct FC* fc,
 
 int fseqRealignHeaderOffsets(struct tf_header_t* header,
                              const struct fseq_var_s* vars,
-                             const long count) {
+                             const int count) {
     assert(header != NULL);
     assert(vars != NULL);
 
@@ -153,7 +157,8 @@ int fseqRealignHeaderOffsets(struct tf_header_t* header,
     int err;
     if ((err = fseqGetVarSectionSize(vars, count, true, &sect))) return err;
 
-    const uint16_t firstVarOffset = 32 + header->compressionBlockCount * 8 +
+    const uint16_t firstVarOffset = HEADER_SIZE +
+                                    header->compressionBlockCount * 8 +
                                     header->channelRangeCount * 6;
 
     header->variableDataOffset = firstVarOffset;

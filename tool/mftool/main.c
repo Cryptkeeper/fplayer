@@ -98,7 +98,7 @@ static int fseqGetHeader(struct FC* fc, struct tf_header_t* header) {
 static int fseqCopySetVars(const char* sfp,
                            const char* dfp,
                            const struct fseq_var_s* vars,
-                           const long count) {
+                           const int count) {
     int err;
 
     struct FC* src = FC_open(sfp, FC_MODE_READ);
@@ -144,7 +144,7 @@ ret:
 /// @param var variable to append
 /// @return 0 on success, a negative error code on failure
 static int fseqVarsAppend(struct fseq_var_s** vars,
-                          long* count,
+                          int* count,
                           const struct fseq_var_s* var) {
     struct fseq_var_s* newVars =
             realloc(*vars, (*count + 1) * sizeof(struct fseq_var_s));
@@ -162,7 +162,7 @@ static int fseqVarsAppend(struct fseq_var_s** vars,
 /// @param vars out pointer to the array of sequence variables
 /// @param count out pointer to the number of variables in the array
 /// @return 0 on success, a negative error code on failure
-static int fseqReadVars(const char* fp, struct fseq_var_s** vars, long* count) {
+static int fseqReadVars(const char* fp, struct fseq_var_s** vars, int* count) {
     assert(fp != NULL);
     assert(vars != NULL);
     assert(count != NULL);
@@ -245,8 +245,8 @@ ret:
 /// @brief Prints the sequence variables to the standard output.
 /// @param vars array of sequence variables
 /// @param count number of variables in the array
-static void printVars(const struct fseq_var_s* vars, const long count) {
-    for (long i = 0; i < count; i++) {
+static void printVars(const struct fseq_var_s* vars, const int count) {
+    for (int i = 0; i < count; i++) {
         const struct fseq_var_s* const var = &vars[i];
         char* value = var->value;
         if (value[var->size - 1] != '\0') value = "(binary data)";
@@ -294,7 +294,7 @@ int main(const int argc, char** const argv) {
     const char* const sfp = argv[1]; /* source file path */
     char* dfp = NULL;                /* formatted dest file path */
     struct fseq_var_s* vars = NULL;  /* sequence variables */
-    long count = 0;                  /* length of variables array */
+    int count = 0;                   /* length of variables array */
 
     if ((dfp = dsprintf("%s.tmp", sfp)) == NULL) {
         err = -FP_ENOMEM;
@@ -326,7 +326,7 @@ int main(const int argc, char** const argv) {
     }
 
     // try to find a matching `mf` var to update
-    for (long i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
         struct fseq_var_s* const var = &vars[i];
 
         if (var->id[0] == 'm' && var->id[1] == 'f') {
@@ -355,7 +355,7 @@ exit:
     free(dfp);
 
     // free any allocated variable string values
-    for (long i = 0; i < count; i++) free(vars[i].value);
+    for (int i = 0; i < count; i++) free(vars[i].value);
     free(vars);
 
     return err ? 1 : 0;
