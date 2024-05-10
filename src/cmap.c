@@ -1,6 +1,5 @@
 #include "cmap.h"
 
-#include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
 
@@ -85,35 +84,35 @@ static bool channelMapParseCSVRow(const int line,
         switch (col) {
             case 0:
                 if (strtolb(token, 0, UINT32_MAX, &range->sid,
-                             sizeof(range->sid))) {
+                            sizeof(range->sid))) {
                     ok = false;
                     goto cleanup;
                 }
                 break;
             case 1:
                 if (strtolb(token, 0, UINT32_MAX, &range->eid,
-                             sizeof(range->eid))) {
+                            sizeof(range->eid))) {
                     ok = false;
                     goto cleanup;
                 }
                 break;
             case 2:
                 if (strtolb(token, 0, UINT8_MAX, &range->unit,
-                             sizeof(range->unit))) {
+                            sizeof(range->unit))) {
                     ok = false;
                     goto cleanup;
                 }
                 break;
             case 3:
                 if (strtolb(token, 0, UINT16_MAX, &range->scircuit,
-                             sizeof(range->scircuit))) {
+                            sizeof(range->scircuit))) {
                     ok = false;
                     goto cleanup;
                 }
                 break;
             case 4:
                 if (strtolb(token, 0, UINT16_MAX, &range->ecircuit,
-                             sizeof(range->ecircuit))) {
+                            sizeof(range->ecircuit))) {
                     ok = false;
                     goto cleanup;
                 }
@@ -242,39 +241,6 @@ bool channelMapFind(const uint32_t id,
     }
 
     return false;
-}
-
-static bool channelMapContainsUid(const uint8_t* const set,
-                                  const uint8_t value) {
-    const int size = arrlen(set);
-
-    if (size == 0) return false;
-
-    for (int i = 0; i < size; i++) {
-        if (set[i] == value) return true;
-    }
-
-    return false;
-}
-
-uint8_t* channelMapGetUids(void) {
-    uint8_t* uids = malloc(arrlen(gRanges) + 1);
-    if (uids == NULL) return NULL;
-    
-    int next = 0;
-
-    for (int i = 0; i < arrlen(gRanges); i++) {
-        const struct channel_range_t range = gRanges[i];
-
-        assert(next < arrlen(gRanges));
-
-        if (!channelMapContainsUid(uids, range.unit)) uids[next++] = range.unit;
-    }
-
-    assert(next < arrlen(gRanges));
-    uids[next] = 0;
-
-    return uids;
 }
 
 void channelMapFree(void) {

@@ -143,26 +143,17 @@ static int playerHandleNextFrame(struct player_rtd_s* rtd) {
 }
 
 static int playerTurnOffAllLights(void) {
-    int err = FP_EOK;
+    LorBuffer* msg;
+    if ((msg = LB_alloc()) == NULL) return -FP_ENOMEM;
 
-    uint8_t* uids = NULL;  /* array of all unit ids */
-    LorBuffer* msg = NULL; /* disable lights message */
-
-    if ((uids = channelMapGetUids()) == NULL || (msg = LB_alloc()) == NULL) {
-        err = -FP_ENOMEM;
-        goto ret;
-    }
-
-    for (size_t i = 0; uids != NULL && uids[i] != 0; i++) {
-        lorAppendUnitEffect(msg, LOR_EFFECT_SET_OFF, NULL, uids[i]);
+    for (uint8_t u = LOR_UNIT_MIN; u <= LOR_UNIT_MAX; u++) {
+        lorAppendUnitEffect(msg, LOR_EFFECT_SET_OFF, NULL, u);
         Serial_write(msg->buffer, msg->offset);
         LB_rewind(msg);
     }
 
-ret:
-    free(uids);
     LB_free(msg);
-    return err;
+    return FP_EOK;
 }
 
 static int FP_playdo(struct player_rtd_s* rtd) {
