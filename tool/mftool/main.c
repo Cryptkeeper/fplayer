@@ -1,6 +1,7 @@
 #undef NDEBUG
 #include <assert.h>
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -126,7 +127,7 @@ static int fseqCopySetVars(const char* sfp,
         goto ret;
     }
 
-    printf("copied %lld bytes of frame data\n", copied);
+    printf("copied %" PRIi64 " bytes of frame data\n", copied);
 
 ret:
     FC_close(src);
