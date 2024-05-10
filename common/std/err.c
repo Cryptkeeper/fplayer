@@ -8,12 +8,8 @@
 
 static const char* errGetMessage(const enum err_t err) {
     switch (err) {
-        case E_APP:
-            return "E_APP";
         case E_SYS:
             return "E_SYS";
-        case E_FIO:
-            return "E_FIO";
         default:
             return "unknown error";
     }
@@ -31,7 +27,7 @@ void fatalf(const enum err_t err, const char* const format, ...) {
     }
 
     // `errno` is likely set
-    if (err == E_SYS || err == E_FIO) {
+    if (err == E_SYS) {
         const char* const msg = strerror(errno);
 
         if (msg != NULL) fprintf(stderr, "%s\n", msg);
@@ -48,24 +44,4 @@ void fatalf(const enum err_t err, const char* const format, ...) {
     // internally, but it avoids the business logic being littered with unclear
     // error handling.
     exit(1);
-}
-
-bool strtolb(const char* const str,
-             const long min,
-             const long max,
-             void* const p,
-             const size_t ps) {
-
-    errno = 0;
-
-    char* endptr = NULL;
-    long parsed = strtol(str, &endptr, 10);
-
-    if (errno != 0 || endptr == str || *endptr != '\0') return false;
-
-    parsed = parsed < min ? min : (parsed > max ? max : parsed);
-
-    memcpy(p, &parsed, ps);
-
-    return true;
 }
