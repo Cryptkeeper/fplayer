@@ -8,8 +8,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -Wextra -Wno-unused-value -ped
 enable_testing()
 
 if (APPLE AND (EXISTS /opt/homebrew))
-    set(CMAKE_C_COMPILER /opt/homebrew/opt/llvm/bin/clang)
-    set(CMAKE_CXX_COMPILER /opt/homebrew/opt/llvm/bin/clang++)
+    include_directories(/opt/homebrew/include)
+    link_directories(/opt/homebrew/lib)
 endif ()
 
 # these search paths don't link by default on macOS or FreeBSD
