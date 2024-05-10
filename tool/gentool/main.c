@@ -366,7 +366,6 @@ int main(const int argc, char** const argv) {
 exit:
     FC_close(fc);
 
-    for (int i = 0; i < varCount && vars != NULL; i++) free(vars[i].value);
     free(vars);
     free(blocks);
     free(outputPath);
