@@ -93,6 +93,8 @@ jobs:
         run: |
           brew update
           brew install libserialport freealut zstd
+          brew --prefix
+          brew --env
 
       - uses: actions/checkout@v4
         with:
