@@ -92,10 +92,7 @@ jobs:
       - name: Install libraries
         run: |
           brew update
-          brew install libserialport freealut zstd pkg-config
-          pkg-config --cflags --libs freealut
-          brew --prefix
-          brew --env
+          brew install libserialport freealut zstd
 
       - uses: actions/checkout@v4
         with:
