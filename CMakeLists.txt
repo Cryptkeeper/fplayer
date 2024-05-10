@@ -7,15 +7,10 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -Wextra -Wno-unused-value -ped
 
 enable_testing()
 
-if (APPLE AND (EXISTS /opt/homebrew))
-    include_directories(/opt/homebrew/include)
-    link_directories(/opt/homebrew/lib)
-endif ()
-
-# these search paths don't link by default on macOS or FreeBSD
-if (APPLE OR (CMAKE_HOST_SYSTEM MATCHES "FreeBSD-*"))
-    include_directories(/usr/local/include)
-    link_directories(/usr/local/lib)
+if (DEFINED CMAKE_PREFIX_PATH)
+    message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+    include_directories(${CMAKE_PREFIX_PATH}/include)
+    link_directories(${CMAKE_PREFIX_PATH}/lib)
 endif ()
 
 if (APPLE)
