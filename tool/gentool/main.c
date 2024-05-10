@@ -45,8 +45,8 @@ static int fseqCreateProgramVars(struct fseq_var_s** vars, int* count) {
     if ((*vars = calloc(2, sizeof(struct fseq_var_s))) == NULL)
         return -FP_ENOMEM;
 
-    *vars[0] = fseqWrapVarString("sp", "fplayer/gentool");
-    *vars[1] = fseqWrapVarString("gm", "intensity_oscillator_ramp_vendor");
+    (*vars)[0] = fseqWrapVarString("sp", "fplayer/gentool");
+    (*vars)[1] = fseqWrapVarString("gm", "intensity_oscillator_ramp_vendor");
     *count = 2;
 
     return FP_EOK;
@@ -277,21 +277,22 @@ int main(const int argc, char** const argv) {
 
             case 'c':
                 if (!strtolb(optarg, 1, UINT32_MAX, &header.channelCount,
-                            sizeof(header.channelCount)))
+                             sizeof(header.channelCount)))
                     break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 return 1;
 
             case 'd':
                 if (!strtolb(optarg, 1, UINT32_MAX, &header.frameCount,
-                            sizeof(header.frameCount)))
+                             sizeof(header.frameCount)))
                     break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 return 1;
 
             case 'b':
-                if (!strtolb(optarg, 0, UINT8_MAX, &header.compressionBlockCount,
-                            sizeof(header.compressionBlockCount)))
+                if (!strtolb(optarg, 0, UINT8_MAX,
+                             &header.compressionBlockCount,
+                             sizeof(header.compressionBlockCount)))
                     break;
                 fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
                 return 1;
