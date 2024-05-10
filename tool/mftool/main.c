@@ -219,7 +219,7 @@ static int fseqReadVars(const char* fp, struct fseq_var_s** vars, long* count) {
 
         // populate new variable and expand array
         const struct fseq_var_s newVar = {
-                .id = {head[0], head[1]},
+                .id = {head[2], head[3]},
                 .size = varLen,
                 .value = varString,
         };
