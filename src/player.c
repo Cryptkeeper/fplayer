@@ -32,18 +32,22 @@ struct player_rtd_s {
     struct sleep_coll_s scoll;
 };
 
-// LOR hardware may require several heartbeat messages are sent
-// before it considers itself connected to the player
-// This artificially waits prior to starting playback to ensure the device is
-// considered connected and ready for frame data
-static void playerWaitForConnection(const unsigned int seconds) {
-    if (seconds == 0) return;
+/// @brief Compensates for the player to connect to the LOR hardware by sending
+/// heartbeat messages for the given number of seconds.
+/// @param seconds number of seconds to wait for connection
+/// @return 0 on success, a negative error code on failure
+static int playerWaitForConnection(const unsigned int seconds) {
+    // LOR hardware may require several heartbeat messages are sent
+    // before it considers itself connected to the player
+    // This artificially waits prior to starting playback to ensure the device is
+    // considered connected and ready for frame data
+    if (seconds == 0) return FP_EOK;
 
     printf("waiting %u seconds for connection...\n", seconds);
 
     // generate a single heartbeat message to repeatedly send
     LorBuffer* msg = LB_alloc();
-    if (msg == NULL) fatalf(E_SYS, NULL);
+    if (msg == NULL) return -FP_ENOMEM;
 
     lorAppendHeartbeat(msg);
 
@@ -58,12 +62,13 @@ static void playerWaitForConnection(const unsigned int seconds) {
                 .tv_sec = 0,
                 .tv_nsec = LOR_HEARTBEAT_DELAY_NS,
         };
-
         nanosleep(&itrSleep, NULL);
 #endif
     }
 
     LB_free(msg);
+
+    return FP_EOK;
 }
 
 static char* playerGetRemaining(struct player_rtd_s* rtd) {
@@ -213,7 +218,7 @@ int PL_play(struct player_s* player) {
         goto ret;
     }
 
-    playerWaitForConnection(player->wait_s);
+    if ((err = playerWaitForConnection(player->wait_s))) goto ret;
 
     // TODO: print err for audio, but ignore
     audioPlayFile(audiofp);

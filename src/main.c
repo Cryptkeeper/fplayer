@@ -11,8 +11,8 @@
 #include "cmap.h"
 #include "player.h"
 #include "serial.h"
-#include "std/err.h"
 #include "std2/fc.h"
+#include "std2/string.h"
 
 static void printUsage(void) {
     printf("Usage: fplayer -f=FILE -c=FILE [options] ...\n\n"
