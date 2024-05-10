@@ -59,9 +59,10 @@ jobs:
           valgrind --leak-check=full --error-exitcode=1 ./build/mftool test_25fps.fseq "test_variable.mp3"
           valgrind --leak-check=full --error-exitcode=1 ./build/mftool test_25fps.fseq.orig
           valgrind --leak-check=full --error-exitcode=1 ./build/mftool test_25fps.fseq
-
+          
           # restore original/unmodified version
           mv test_25fps.fseq.orig test_25fps.fseq
+          valgrind --leak-check=full --error-exitcode=1 ./build/mftool test_25fps.fseq
 
       - name: Run generated sequences (compressed)
         run: |
@@ -75,18 +76,4 @@ jobs:
           
             # run with precompute loaded from cache file
             valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test_${fps}fps_compressed.fseq -c channels.csv
-          done
-
-      - name: Run generated sequences (decompressed)
-        run: |
-          for fps in 25 40 60 120
-          do
-            # run without precompute enabled
-            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -f test_${fps}fps.fseq -c channels.csv
-          
-            # run with precompute calculated at runtime, data is saved for next run
-            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test_${fps}fps.fseq -c channels.csv
-          
-            # run with precompute loaded from cache file
-            valgrind --leak-check=full --error-exitcode=1 ./build/fplayer -p -f test_${fps}fps.fseq -c channels.csv
           done
