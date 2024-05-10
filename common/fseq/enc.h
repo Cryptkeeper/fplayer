@@ -9,7 +9,7 @@
 /// @note This macro is equivalent to `b[0] = v`.
 /// @param b byte array to encode into
 /// @param v value to encode
-#define encode_uint8_le(b, v) ((b)[0] = (v))
+#define enc_uint8_le(b, v) ((b)[0] = (v))
 
 /// @brief Encodes a little-endian 16-bit unsigned integer into a byte array.
 /// @param b byte array to encode into

@@ -40,14 +40,14 @@ int fseqWriteHeader(struct FC* fc, const struct tf_header_t* header) {
     uint8_t b[32] = {'P', 'S', 'E', 'Q'};
 
     enc_uint16_le(&b[4], header->channelDataOffset);
-    encode_uint8_le(&b[6], header->minorVersion);
-    encode_uint8_le(&b[7], header->majorVersion);
+    enc_uint8_le(&b[6], header->minorVersion);
+    enc_uint8_le(&b[7], header->majorVersion);
     enc_uint16_le(&b[8], header->variableDataOffset);
     enc_uint32_le(&b[10], header->channelCount);
     enc_uint32_le(&b[14], header->frameCount);
     enc_uint16_le(&b[18], header->frameStepTimeMillis);
-    encode_uint8_le(&b[20], header->compressionType);
-    encode_uint8_le(&b[21], header->compressionBlockCount);
+    enc_uint8_le(&b[20], header->compressionType);
+    enc_uint8_le(&b[21], header->compressionBlockCount);
     enc_uint32_le(&b[22], header->channelRangeCount);
     enc_uint64_le(&b[24], header->sequenceUid);
 
@@ -128,8 +128,8 @@ int fseqWriteVars(struct FC* fc,
         const struct fseq_var_s* var = &vars[i];
 
         enc_uint16_le(head, var->size + 4); /* include space for the id+size */
-        encode_uint8_le(&head[2], var->id[0]);
-        encode_uint8_le(&head[3], var->id[1]);
+        enc_uint8_le(&head[2], var->id[0]);
+        enc_uint8_le(&head[3], var->id[1]);
 
         memcpy(&head[4], var->value, var->size);
 
