@@ -27,11 +27,11 @@ static struct {
 
 static int audioInit(void) {
     if (gAudio.init) return FP_EOK;
+    gAudio.init = true;
 
     alutInit(0, NULL);
     if (alutGetError()) return -FP_EALCTL;
 
-    gAudio.init = true;
     return FP_EOK;
 }
 
