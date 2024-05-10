@@ -7,6 +7,11 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -Wextra -Wno-unused-value -ped
 
 enable_testing()
 
+if (APPLE AND (EXISTS /opt/homebrew))
+    set(CMAKE_C_COMPILER /opt/homebrew/opt/llvm/bin/clang)
+    set(CMAKE_CXX_COMPILER /opt/homebrew/opt/llvm/bin/clang++)
+endif ()
+
 # these search paths don't link by default on macOS or FreeBSD
 if (APPLE OR (CMAKE_HOST_SYSTEM MATCHES "FreeBSD-*"))
     include_directories(/usr/local/include)
@@ -60,16 +65,8 @@ else ()
 endif ()
 
 # zstd
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(ZSTD REQUIRED libzstd)
-
-target_include_directories(fplayer PRIVATE ${ZSTD_INCLUDE_DIRS})
-target_link_directories(fplayer PRIVATE ${ZSTD_LIBRARY_DIRS})
-target_link_libraries(fplayer ${ZSTD_LIBRARIES})
-
-target_include_directories(gentool PRIVATE ${ZSTD_INCLUDE_DIRS})
-target_link_directories(gentool PRIVATE ${ZSTD_LIBRARY_DIRS})
-target_link_libraries(gentool ${ZSTD_LIBRARIES})
+target_link_libraries(fplayer zstd)
+target_link_libraries(gentool zstd)
 
 # Testing
 add_executable(test_dsprintf test/dsprintf.c)
