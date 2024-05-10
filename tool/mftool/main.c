@@ -241,6 +241,7 @@ ret:
     return err;
 }
 
+/// @brief Prints the usage information for the tool.
 static void printUsage(void) {
     printf("Usage:\n\n"
            "mftool <fseq file>                  Enumerate sequence variables\n"
@@ -248,6 +249,11 @@ static void printUsage(void) {
            "(copies file)\n");
 }
 
+/// @brief Appends the ".orig" suffix to the source file path by renaming the
+/// file and renames the destination file to the initial value source file path.
+/// @param sfp source file path to append ".orig" to
+/// @param dfp destination file path to rename to the source file path
+/// @return 0 on success, a negative error code on failure
 static int renamePair(const char* const sfp, const char* const dfp) {
     // rename files to swap them
     char* const nsfp = dsprintf("%s.orig", sfp);
