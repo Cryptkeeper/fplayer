@@ -1,12 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 project(fplayer C)
 
-# cJSON
-set(CJSON_BUILD_SHARED_LIBS OFF)
-set(CJSON_OVERRIDE_BUILD_SHARED_LIBS ON)
-set(ENABLE_CJSON_TEST OFF)
-add_subdirectory(dep/cJSON)
-
 # use strict C99
 set(CMAKE_C_STANDARD 99)
 set(PEDANTIC_COMPILER_FLAGS "-Wall -Werror -Wextra -Wno-unused-value -pedantic")

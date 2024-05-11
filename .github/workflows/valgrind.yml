@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libopenal-dev libalut-dev libserialport-dev libzstd-dev valgrind
+          sudo apt-get install -y libopenal-dev libalut-dev libserialport-dev libzstd-dev libcjson-dev valgrind
 
       - uses: actions/checkout@v4
         with:

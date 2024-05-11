@@ -20,7 +20,7 @@ jobs:
       - name: Install libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y libopenal-dev libalut-dev libserialport-dev libzstd-dev
+          sudo apt-get install -y libopenal-dev libalut-dev libserialport-dev libzstd-dev libcjson-dev
 
       - uses: actions/checkout@v4
         with:
@@ -63,6 +63,7 @@ jobs:
             freealut:p
             libserialport:p
             winpthreads:p
+            cjson:p
 
       - uses: actions/checkout@v4
         with:
@@ -92,7 +93,7 @@ jobs:
       - name: Install libraries
         run: |
           brew update
-          brew install libserialport freealut zstd
+          brew install libserialport freealut zstd cjson
 
       - uses: actions/checkout@v4
         with:
