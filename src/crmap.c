@@ -62,6 +62,7 @@ int CR_parseOne(const cJSON* item, struct cr_s* cr) {
 
     b.unit = unit->valueint;
 
+    *cr = b;
     return FP_EOK;
 }
 
