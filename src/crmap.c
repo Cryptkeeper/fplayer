@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include <cJSON.h>
+#include <cjson/cJSON.h>
 
 #include "std2/errcode.h"
 #include "std2/fc.h"
