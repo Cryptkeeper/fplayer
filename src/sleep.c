@@ -14,6 +14,7 @@
 /// to provide historical data for better sleep time estimation. Once full, the
 /// collector will overwrite the oldest sleep time.
 /// @param coll target sleep collector
+/// @param ns sleep time in nanoseconds
 static void Sleep_record(struct sleep_coll_s* coll, const int64_t ns) {
     coll->ns[coll->idx] = ns;
     coll->idx = (coll->idx + 1) % SLEEP_COLL_SAMPLE_COUNT;
@@ -90,9 +91,11 @@ void Sleep_do(struct sleep_coll_s* coll, const uint32_t ms) {
     const timeInstant start = timeGetNow();
     Sleep_step(ns);
 
-    const int64_t elapsed = timeElapsedNs(start, timeGetNow());
-    Sleep_record(coll, elapsed);
-
     // consume any remaining time with a spin lock
+    const int64_t elapsed = timeElapsedNs(start, timeGetNow());
     if (ns > elapsed) Sleep_spinLock(ns - elapsed);
+
+    // record a sample of the full time slept
+    const int64_t end = timeElapsedNs(start, timeGetNow());
+    Sleep_record(coll, end);
 }
