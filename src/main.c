@@ -65,7 +65,7 @@ static bool parseOpts(const int argc, char** const argv, int* const ec) {
             case 't': {
                 struct cr_s* cmap = NULL;
                 int err;
-                if ((err = CR_parse(optarg, &cmap))) {
+                if ((err = CR_read(optarg, &cmap))) {
                     fprintf(stderr,
                             "failed to parse channel map file `%s`: %d\n",
                             optarg, err);

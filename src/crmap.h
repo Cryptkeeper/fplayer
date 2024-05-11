@@ -5,23 +5,6 @@
 
 struct cr_s;
 
-/// @brief Parses the given channel range map string into a linked list of
-/// `struct cr_s` nodes. The string is expected to be JSON formatted with the
-/// following structure:
-/// ```json
-/// [
-///  {
-///    "index": { "from": _, "to": _ },
-///    "circuit": { "from": _, "to": _ },
-///    "unit": _
-///  }
-/// ]
-/// ```
-/// @param s channel range map string to parse
-/// @param cr pointer to write the channel range map to
-/// @return 0 on success, or a negative error code on failure
-int CR_parse(const char* s, struct cr_s** cr);
-
 /// @brief Reads a channel range map from the given file path. Parsing is done
 /// via `CR_parse` and the result is dynamically allocated. The caller is
 /// responsible for freeing the result with `CR_free`.
