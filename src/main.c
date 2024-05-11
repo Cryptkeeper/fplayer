@@ -1,5 +1,5 @@
 #include <getopt.h>
-#include <stdint.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,6 +19,7 @@
 #include "std2/sl.h"
 #include "std2/string.h"
 
+/// @brief Prints the program usage message to stdout.
 static void printUsage(void) {
     printf("Usage: fplayer -f=FILE -c=FILE [options] ...\n\n"
 
@@ -44,27 +45,26 @@ static void printUsage(void) {
            "\t-h\t\t\tPrint this message and exit\n");
 }
 
-static char* gSequenceFilePath;
-static char* gAudioOverrideFilePath;
-
-static char* gChannelMapFilePath;
-
-static uint8_t gWaitSeconds;
-
-static char* gSerialDevName;
-static int gSerialBaudRate = 19200;
-
+/// @brief Enumerates available serial ports and prints their reported device
+/// names to stdout.
 static void printSerialEnumPorts(void) {
     slist_t* ports = Serial_getPorts();
-
     for (int i = 0; ports != NULL && ports[i] != NULL; i++)
         printf("%s\n", ports[i]);
-
     slfree(ports);
 }
 
+static struct {
+    char* seqfp;          /* sequence file path        */
+    char* audiofp;        /* audio override file path  */
+    char* cmapfp;         /* channel map file path     */
+    unsigned int waitsec; /* playback start delay      */
+    char* spname;         /* serial port device name   */
+    int spbaud;           /* serial port baud rate     */
+} gOpts;
+
 /// @brief Parse command line options and sets global variables for program
-/// execution.
+/// execution via `gOpts`.
 /// @param argc argument count
 /// @param argv argument vector
 /// @return negative on error to indicate the program should exit (with an error
@@ -93,32 +93,28 @@ static int parseOpts(const int argc, char** const argv) {
                 printUsage();
                 return 1;
             case 'f':
-                if ((gSequenceFilePath = strdup(optarg)) == NULL)
-                    return -FP_ENOMEM;
+                if ((gOpts.seqfp = strdup(optarg)) == NULL) return -FP_ENOMEM;
                 break;
             case 'c':
-                if ((gChannelMapFilePath = strdup(optarg)) == NULL)
-                    return -FP_ENOMEM;
+                if ((gOpts.cmapfp = strdup(optarg)) == NULL) return -FP_ENOMEM;
                 break;
             case 'a':
-                if ((gAudioOverrideFilePath = strdup(optarg)) == NULL)
-                    return -FP_ENOMEM;
+                if ((gOpts.audiofp = strdup(optarg)) == NULL) return -FP_ENOMEM;
                 break;
             case 'w':
-                if (strtolb(optarg, 0, UINT8_MAX, &gWaitSeconds,
-                            sizeof(gWaitSeconds))) {
+                if (strtolb(optarg, 0, UINT_MAX, &gOpts.waitsec,
+                            sizeof(gOpts.waitsec))) {
                     fprintf(stderr, "error parsing `%s` as an integer\n",
                             optarg);
                     return -FP_EINVAL;
                 }
                 break;
             case 'd':
-                if ((gSerialDevName = strdup(optarg)) == NULL)
-                    return -FP_ENOMEM;
+                if ((gOpts.spname = strdup(optarg)) == NULL) return -FP_ENOMEM;
                 break;
             case 'b':
-                if (strtolb(optarg, 0, INT32_MAX, &gSerialBaudRate,
-                            sizeof(gSerialBaudRate))) {
+                if (strtolb(optarg, 0, UINT_MAX, &gOpts.spbaud,
+                            sizeof(gOpts.spbaud))) {
                     fprintf(stderr, "error parsing `%s` as an integer\n",
                             optarg);
                     return -FP_EINVAL;
@@ -134,7 +130,7 @@ static int parseOpts(const int argc, char** const argv) {
         }
     }
 
-    if (gSequenceFilePath == NULL || gChannelMapFilePath == NULL) {
+    if (gOpts.seqfp == NULL || gOpts.cmapfp == NULL) {
         printUsage();
         return -FP_EINVAL;
     }
@@ -142,60 +138,62 @@ static int parseOpts(const int argc, char** const argv) {
     return FP_EOK;
 }
 
-static void freeArgs(void) {
-    free(gSequenceFilePath);
-    free(gAudioOverrideFilePath);
-    free(gChannelMapFilePath);
-    free(gSerialDevName);
+static void freeOpts(void) {
+    free(gOpts.seqfp);
+    free(gOpts.audiofp);
+    free(gOpts.cmapfp);
+    free(gOpts.spname);
 }
 
 int main(const int argc, char** const argv) {
+    struct player_s player = {
+            .audiofp = gOpts.audiofp,
+            .waitsec = gOpts.waitsec,
+    };
+
     int err;
     if ((err = parseOpts(argc, argv))) {
-        if (err < 0) fprintf(stderr, "failed to parse options: %d\n", err);
-
         // demote positive values (which indicate an early return request) to 0
-        return err < 0 ? 1 : 0;
+        // to avoid activating the error handling routine at exit
+        if (err > 0) err = FP_EOK;
+        goto ret;
     }
 
     // load required app context configs
-    struct cr_s* cmap = NULL;
-    if ((err = CR_read(gChannelMapFilePath, &cmap))) {
+    if ((err = CR_read(gOpts.cmapfp, &player.cmap))) {
         fprintf(stderr, "failed to read/parse channel map file `%s`: %d\n",
-                gChannelMapFilePath, err);
-        return 1;
+                gOpts.cmapfp, err);
+        goto ret;
     }
 
-    // open sequence file and init controller handler
-    struct FC* fc = FC_open(gSequenceFilePath, FC_MODE_READ);
-    if (fc == NULL) {
-        fprintf(stderr, "failed to open sequence file `%s`\n",
-                gSequenceFilePath);
-        return 1;
+    // open sequence file
+    if ((player.fc = FC_open(gOpts.seqfp, FC_MODE_READ)) == NULL) {
+        fprintf(stderr, "failed to open sequence file `%s`\n", gOpts.seqfp);
+        goto ret;
     }
 
-    // initialize core subsystems
-    Serial_init(gSerialDevName, gSerialBaudRate);
-
-    struct player_s player = {
-            .fc = fc,
-            .audiofp = gAudioOverrideFilePath,
-            .wait_s = gWaitSeconds,
-            .cmap = cmap,
-    };
+    // initialize serial port
+    const int br = gOpts.spbaud ? gOpts.spbaud : 19200;
+    if ((err = Serial_init(gOpts.spname, br))) {
+        fprintf(stderr, "failed to initialize serial port `%s` at %d baud\n",
+                gOpts.spname, br);
+        goto ret;
+    }
 
     if ((err = PL_play(&player)))
         fprintf(stderr, "failed to play sequence: %d\n", err);
 
-    FC_close(fc);
-
-    // teardown in reverse order
-    Serial_close();
+ret:
+    // attempt shutdown of controlled systems
     audioExit();
+    Serial_close();
 
-    CR_free(cmap);
+    // free immediately owned resources
+    FC_close(player.fc);
+    CR_free(player.cmap);
+    freeOpts();
 
-    freeArgs();
+    if (err) fprintf(stderr, "exiting with internal error code %d\n", err);
 
-    return 0;
+    return err ? 1 : 0;
 }

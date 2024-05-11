@@ -215,7 +215,7 @@ int PL_play(struct player_s* player) {
         goto ret;
     }
 
-    if ((err = playerWaitForConnection(player->wait_s))) goto ret;
+    if ((err = playerWaitForConnection(player->waitsec))) goto ret;
 
     // TODO: print err for audio, but ignore
     if (audiofp != NULL) audioPlayFile(audiofp);
