@@ -27,6 +27,7 @@ struct FC* FC_open(const char* const fp, const enum fc_mode_t mode) {
     if (fc == NULL) return NULL;
     if ((fc->file = fopen(fp, m)) == NULL || (fc->fp = strdup(fp)) == NULL ||
         pthread_mutex_init(&fc->mutex, NULL) != 0) {
+        perror("FC_open");
         FC_close(fc);
         fc = NULL;
     }
