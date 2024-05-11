@@ -41,7 +41,7 @@ struct player_rtd_s {
 /// heartbeat messages for the given number of seconds.
 /// @param seconds number of seconds to wait for connection
 /// @return 0 on success, a negative error code on failure
-static int playerWaitForConnection(const unsigned int seconds) {
+static int Player_wait(const unsigned int seconds) {
     // LOR hardware may require several heartbeat messages are sent
     // before it considers itself connected to the player
     // This artificially waits prior to starting playback to ensure the device is
@@ -76,7 +76,7 @@ static int playerWaitForConnection(const unsigned int seconds) {
     return FP_EOK;
 }
 
-static char* playerGetRemaining(struct player_rtd_s* rtd) {
+static char* Player_timeRemaining(struct player_rtd_s* rtd) {
     const uint32_t framesRemaining = curSequence->frameCount - rtd->nextFrame;
     const long seconds =
             framesRemaining / (1000 / curSequence->frameStepTimeMillis);
@@ -84,7 +84,7 @@ static char* playerGetRemaining(struct player_rtd_s* rtd) {
     return dsprintf("%02ldm %02lds", seconds / 60, seconds % 60);
 }
 
-static void playerLogStatus(struct player_rtd_s* rtd) {
+static void Player_log(struct player_rtd_s* rtd) {
     static timeInstant gLastLog;
 
     const timeInstant now = timeGetNow();
@@ -96,7 +96,7 @@ static void playerLogStatus(struct player_rtd_s* rtd) {
     const double fps = ms > 0 ? 1000 / ms : 0;
     char* const sleep = dsprintf("%.4fms (%.2f fps)", ms, fps);
 
-    char* const remaining = playerGetRemaining(rtd);
+    char* const remaining = Player_timeRemaining(rtd);
 
     printf("remaining: %s\tdt: %s\tpump: %4d\n", remaining, sleep, 0);
 
@@ -104,7 +104,7 @@ static void playerLogStatus(struct player_rtd_s* rtd) {
     free(sleep);
 }
 
-static int playerHandleNextFrame(struct player_rtd_s* rtd) {
+static int Player_nextFrame(struct player_rtd_s* rtd) {
     assert(rtd != NULL);
     assert(rtd->nextFrame < curSequence->frameCount);
 
@@ -131,7 +131,7 @@ static int playerHandleNextFrame(struct player_rtd_s* rtd) {
     uint8_t* frameData = NULL;
 
     int err;
-    if ((err = FP_copy(rtd->pump, &frameData))) return err;
+    if ((err = Pump_copyNext(rtd->pump, &frameData))) return err;
 
     minifyStream(rtd->cmap, frameData, rtd->lastFrameData, frameSize);
 
@@ -147,7 +147,7 @@ static int playerHandleNextFrame(struct player_rtd_s* rtd) {
     return FP_EOK;
 }
 
-static int playerTurnOffAllLights(void) {
+static int Player_lightsOff(void) {
     LorBuffer* msg;
     if ((msg = LB_alloc()) == NULL) return -FP_ENOMEM;
 
@@ -161,24 +161,24 @@ static int playerTurnOffAllLights(void) {
     return FP_EOK;
 }
 
-static int FP_playdo(struct player_rtd_s* rtd) {
+static int Player_loop(struct player_rtd_s* rtd) {
     int err;
 
     while (rtd->nextFrame < curSequence->frameCount) {
         Sleep_do(&rtd->scoll, curSequence->frameStepTimeMillis);
 
-        if ((err = playerHandleNextFrame(rtd))) return err;
+        if ((err = Player_nextFrame(rtd))) return err;
 
-        playerLogStatus(rtd);
+        Player_log(rtd);
     }
 
     printf("turning off lights, waiting for end of audio...\n");
 
-    if ((err = playerTurnOffAllLights())) return err;
+    if ((err = Player_lightsOff())) return err;
 
     // continue blocking until audio is finished
     // playback will continue until sequence and audio are both complete
-    while (audioCheckPlaying())
+    while (Audio_isPlaying())
         ;
 
     printf("end of sequence!\n");
@@ -186,14 +186,14 @@ static int FP_playdo(struct player_rtd_s* rtd) {
     return FP_EOK;
 }
 
-static void PL_freertd(struct player_rtd_s* rtd) {
+static void Player_freeRTD(struct player_rtd_s* rtd) {
     if (rtd == NULL) return;
-    FP_free(rtd->pump);
+    Pump_free(rtd->pump);
     free(rtd->lastFrameData);
     free(rtd);
 }
 
-int PL_play(struct player_s* player) {
+int Player_exec(struct player_s* player) {
     assert(player != NULL);
 
     int err = FP_EOK;
@@ -210,21 +210,21 @@ int PL_play(struct player_s* player) {
     if (audiofp == NULL)// attempt to load audio file from sequence
         if ((err = Seq_getMediaFile(player->fc, &audiofp))) goto ret;
 
-    if ((rtd->pump = FP_init(player->fc)) == NULL) {
+    if ((rtd->pump = Pump_init(player->fc)) == NULL) {
         err = -FP_ENOMEM;
         goto ret;
     }
 
-    if ((err = playerWaitForConnection(player->waitsec))) goto ret;
+    if ((err = Player_wait(player->waitsec))) goto ret;
 
     // TODO: print err for audio, but ignore
-    if (audiofp != NULL) audioPlayFile(audiofp);
+    if (audiofp != NULL) Audio_play(audiofp);
 
-    if ((err = FP_playdo(rtd))) goto ret;
+    if ((err = Player_loop(rtd))) goto ret;
 
 ret:
     free(audiofp);
-    PL_freertd(rtd);
+    Player_freeRTD(rtd);
     Seq_close();
 
     return err;

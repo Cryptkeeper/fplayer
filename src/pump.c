@@ -17,7 +17,7 @@ struct frame_pump_s {
     int cbidx;              /* current compression block index */
 };
 
-struct frame_pump_s* FP_init(struct FC* fc) {
+struct frame_pump_s* Pump_init(struct FC* fc) {
     assert(fc != NULL);
 
     struct frame_pump_s* pump = calloc(1, sizeof(*pump));
@@ -46,7 +46,7 @@ static int FP_read(struct frame_pump_s* pump, struct fd_node_s** fn) {
     }
 }
 
-int FP_copy(struct frame_pump_s* pump, uint8_t** fd) {
+int Pump_copyNext(struct frame_pump_s* pump, uint8_t** fd) {
     assert(pump != NULL);
     assert(fd != NULL);
 
@@ -78,7 +78,7 @@ int FP_copy(struct frame_pump_s* pump, uint8_t** fd) {
     return FP_EOK;
 }
 
-void FP_free(struct frame_pump_s* pump) {
+void Pump_free(struct frame_pump_s* pump) {
     if (pump == NULL) return;
     FD_free(pump->curr);
     FD_free(pump->next);

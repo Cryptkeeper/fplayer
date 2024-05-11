@@ -7,12 +7,12 @@
 /// be called before the program exits, or when the audio system is no longer
 /// needed. This function is safe to call even if the audio system has not been
 /// initialized.
-void audioExit(void);
+void Audio_exit(void);
 
 /// @brief Checks the playback status of the audio system.
 /// @return true if the audio system is playing audio, false otherwise (e.g. the
 /// audio system has completed playback or failed to start playback)
-bool audioCheckPlaying(void);
+bool Audio_isPlaying(void);
 
 /// @brief Attempts to play the audio file at the given file path. This function
 /// initializes the audio system if it has not been initialized yet. If the audio
@@ -20,6 +20,6 @@ bool audioCheckPlaying(void);
 /// the new audio file is played.
 /// @param fp the file path of the audio file to play
 /// @return 0 on success, a negative error code on failure
-int audioPlayFile(const char* fp);
+int Audio_play(const char* fp);
 
 #endif//FPLAYER_AUDIO_H

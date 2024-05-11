@@ -8,6 +8,6 @@ struct player_s {
     struct cr_s* cmap;    /* channel map for hardware output addressing */
 };
 
-int PL_play(struct player_s* player);
+int Player_exec(struct player_s* player);
 
 #endif//FPLAYER_PLAYER_H

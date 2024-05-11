@@ -76,8 +76,8 @@ static int parseOpts(const int argc, char** const argv) {
         switch (c) {
             case 't': {
                 struct cr_s* cmap = NULL;
-                const int err = CR_read(optarg, &cmap);
-                CR_free(cmap);
+                const int err = CMap_read(optarg, &cmap);
+                CMap_free(cmap);
                 if (err) {
                     fprintf(stderr,
                             "failed to parse channel map file `%s`: %d\n",
@@ -160,7 +160,7 @@ int main(const int argc, char** const argv) {
     }
 
     // load required app context configs
-    if ((err = CR_read(gOpts.cmapfp, &player.cmap))) {
+    if ((err = CMap_read(gOpts.cmapfp, &player.cmap))) {
         fprintf(stderr, "failed to read/parse channel map file `%s`: %d\n",
                 gOpts.cmapfp, err);
         goto ret;
@@ -180,17 +180,17 @@ int main(const int argc, char** const argv) {
         goto ret;
     }
 
-    if ((err = PL_play(&player)))
+    if ((err = Player_exec(&player)))
         fprintf(stderr, "failed to play sequence: %d\n", err);
 
 ret:
     // attempt shutdown of controlled systems
-    audioExit();
+    Audio_exit();
     Serial_close();
 
     // free immediately owned resources
     FC_close(player.fc);
-    CR_free(player.cmap);
+    CMap_free(player.cmap);
     freeOpts();
 
     if (err) fprintf(stderr, "exiting with internal error code %d\n", err);

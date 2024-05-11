@@ -10,7 +10,7 @@ struct frame_pump_s;
 /// @brief Initializes a frame pump with the provided file controller.
 /// @param fc file controller to read frames from
 /// @return initialized frame pump, NULL on failure
-struct frame_pump_s* FP_init(struct FC* fc);
+struct frame_pump_s* Pump_init(struct FC* fc);
 
 /// @brief Copies the next frame of data from the pump to the provided frame
 /// data buffer. If the pump's internal buffer is empty, the pump will attempt
@@ -19,10 +19,10 @@ struct frame_pump_s* FP_init(struct FC* fc);
 /// @param fd frame data pointer to return the next frame in
 /// @return 0 on success, a negative error code on failure, or `FP_ESEQEND`
 /// if the pump has reached the end of the sequence
-int FP_copy(struct frame_pump_s* pump, uint8_t** fd);
+int Pump_copyNext(struct frame_pump_s* pump, uint8_t** fd);
 
 /// @brief Frees the resources associated with the provided frame pump.
 /// @param pump pump to free
-void FP_free(struct frame_pump_s* pump);
+void Pump_free(struct frame_pump_s* pump);
 
 #endif//FPLAYER_PUMP_H

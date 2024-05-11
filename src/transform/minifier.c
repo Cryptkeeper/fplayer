@@ -131,7 +131,7 @@ void minifyStream(const struct cr_s* cr,
         uint8_t unit;
         uint16_t circuit;
 
-        if (!CR_remap(cr, id, &unit, &circuit)) continue;
+        if (!CMap_remap(cr, id, &unit, &circuit)) continue;
 
         const bool unitIdChanged = arrlen(stack) > 0 && prevUnit != unit;
 

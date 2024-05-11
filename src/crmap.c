@@ -115,12 +115,12 @@ static int CR_parse(const char* s, struct cr_s** cr) {
 
 ret:
     cJSON_Delete(obj);
-    if (err) CR_free(*cr), *cr = NULL;
+    if (err) CMap_free(*cr), *cr = NULL;
 
     return err;
 }
 
-int CR_read(const char* fp, struct cr_s** cr) {
+int CMap_read(const char* fp, struct cr_s** cr) {
     assert(fp != NULL);
     assert(cr != NULL);
 
@@ -155,14 +155,14 @@ ret:
     return err;
 }
 
-void CR_free(struct cr_s* cr) {
+void CMap_free(struct cr_s* cr) {
     while (cr != NULL) {
         struct cr_s* n = cr->next;
         free(cr), cr = n;
     }
 }
 
-int CR_remap(const struct cr_s* cr,
+int CMap_remap(const struct cr_s* cr,
              uint32_t id,
              uint8_t* unit,
              uint16_t* circuit) {

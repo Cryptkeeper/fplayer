@@ -56,7 +56,7 @@ static void audioStopPlayback(void) {
     }
 }
 
-void audioExit(void) {
+void Audio_exit(void) {
     bool init;
     if ((init = gAudio.init), gAudio.init = false, init) {
         audioStopPlayback();
@@ -66,7 +66,7 @@ void audioExit(void) {
     }
 }
 
-bool audioCheckPlaying(void) {
+bool Audio_isPlaying(void) {
     if (!gAudio.init || gAudio.sid == AL_NONE) return false;
 
     ALint state;
@@ -79,10 +79,10 @@ bool audioCheckPlaying(void) {
     return state == AL_PLAYING;
 }
 
-int audioPlayFile(const char* const fp) {
+int Audio_play(const char* const fp) {
     assert(fp != NULL);
 
-    if (audioCheckPlaying()) audioStopPlayback();
+    if (Audio_isPlaying()) audioStopPlayback();
 
     // lazy initialize until once an audio playback request is made
     int err;
