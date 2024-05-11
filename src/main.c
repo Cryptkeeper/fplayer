@@ -1,5 +1,8 @@
 #include <getopt.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define STB_DS_IMPLEMENTATION
 #include <stb_ds.h>
@@ -11,7 +14,9 @@
 #include "crmap.h"
 #include "player.h"
 #include "serial.h"
+#include "std2/errcode.h"
 #include "std2/fc.h"
+#include "std2/sl.h"
 #include "std2/string.h"
 
 static void printUsage(void) {
@@ -58,86 +63,83 @@ static void printSerialEnumPorts(void) {
     slfree(ports);
 }
 
-static bool parseOpts(const int argc, char** const argv, int* const ec) {
+/// @brief Parse command line options and sets global variables for program
+/// execution.
+/// @param argc argument count
+/// @param argv argument vector
+/// @return negative on error to indicate the program should exit (with an error
+/// code of 1), positive to indicate the program should exit without an error
+/// code, and zero to indicate the program should continue execution
+static int parseOpts(const int argc, char** const argv) {
     int c;
     while ((c = getopt(argc, argv, ":t:ilhf:c:a:w:d:b:")) != -1) {
         switch (c) {
             case 't': {
                 struct cr_s* cmap = NULL;
-                int err;
-                if ((err = CR_read(optarg, &cmap))) {
+                const int err = CR_read(optarg, &cmap);
+                CR_free(cmap);
+                if (err) {
                     fprintf(stderr,
                             "failed to parse channel map file `%s`: %d\n",
                             optarg, err);
-                    *ec = EXIT_FAILURE;
+                    return err;
                 }
-                CR_free(cmap);
-                return true;
+                return 1;
             }
             case 'l':
                 printSerialEnumPorts();
-                return true;
+                return 1;
             case 'h':
                 printUsage();
-                return true;
+                return 1;
             case 'f':
-                if ((gSequenceFilePath = strdup(optarg)) == NULL) {
-                    *ec = EXIT_FAILURE;
-                    return true;
-                }
+                if ((gSequenceFilePath = strdup(optarg)) == NULL)
+                    return -FP_ENOMEM;
                 break;
             case 'c':
-                if ((gChannelMapFilePath = strdup(optarg)) == NULL) {
-                    *ec = EXIT_FAILURE;
-                    return true;
-                }
+                if ((gChannelMapFilePath = strdup(optarg)) == NULL)
+                    return -FP_ENOMEM;
                 break;
             case 'a':
-                if ((gAudioOverrideFilePath = strdup(optarg)) == NULL) {
-                    *ec = EXIT_FAILURE;
-                    return true;
-                }
+                if ((gAudioOverrideFilePath = strdup(optarg)) == NULL)
+                    return -FP_ENOMEM;
                 break;
             case 'w':
-                if (!strtolb(optarg, 0, UINT8_MAX, &gWaitSeconds,
-                             sizeof(gWaitSeconds)))
-                    break;
-                fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
-                *ec = EXIT_FAILURE;
-                return true;
-            case 'd':
-                if ((gSerialDevName = strdup(optarg)) == NULL) {
-                    *ec = EXIT_FAILURE;
-                    return true;
+                if (strtolb(optarg, 0, UINT8_MAX, &gWaitSeconds,
+                            sizeof(gWaitSeconds))) {
+                    fprintf(stderr, "error parsing `%s` as an integer\n",
+                            optarg);
+                    return -FP_EINVAL;
                 }
                 break;
+            case 'd':
+                if ((gSerialDevName = strdup(optarg)) == NULL)
+                    return -FP_ENOMEM;
+                break;
             case 'b':
-                if (!strtolb(optarg, 0, INT32_MAX, &gSerialBaudRate,
-                             sizeof(gSerialBaudRate)))
-                    break;
-                fprintf(stderr, "error parsing `%s` as an integer\n", optarg);
-                *ec = EXIT_FAILURE;
-                return true;
+                if (strtolb(optarg, 0, INT32_MAX, &gSerialBaudRate,
+                            sizeof(gSerialBaudRate))) {
+                    fprintf(stderr, "error parsing `%s` as an integer\n",
+                            optarg);
+                    return -FP_EINVAL;
+                }
+                break;
             case ':':
                 fprintf(stderr, "option is missing argument: %c\n", optopt);
-                *ec = EXIT_FAILURE;
-                return true;
+                return -FP_EINVAL;
             case '?':
             default:
                 fprintf(stderr, "unknown option: %c\n", optopt);
-                *ec = EXIT_FAILURE;
-                return true;
+                return -FP_EINVAL;
         }
     }
 
     if (gSequenceFilePath == NULL || gChannelMapFilePath == NULL) {
         printUsage();
-
-        *ec = EXIT_FAILURE;
-        return true;
+        return -FP_EINVAL;
     }
 
-    return false;
+    return FP_EOK;
 }
 
 static void freeArgs(void) {
@@ -148,10 +150,13 @@ static void freeArgs(void) {
 }
 
 int main(const int argc, char** const argv) {
-    int ec = EXIT_SUCCESS;
-    if (parseOpts(argc, argv, &ec)) return ec;
-
     int err;
+    if ((err = parseOpts(argc, argv))) {
+        if (err < 0) fprintf(stderr, "failed to parse options: %d\n", err);
+
+        // demote positive values (which indicate an early return request) to 0
+        return err < 0 ? 1 : 0;
+    }
 
     // load required app context configs
     struct cr_s* cmap = NULL;

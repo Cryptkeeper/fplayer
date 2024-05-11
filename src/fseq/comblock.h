@@ -1,8 +1,6 @@
 #ifndef FPLAYER_COMBLOCK_H
 #define FPLAYER_COMBLOCK_H
 
-#include <stdint.h>
-
 struct FC;
 
 struct fd_node_s;

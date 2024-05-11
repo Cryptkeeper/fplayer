@@ -1,15 +1,18 @@
 #include "player.h"
 
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <lorproto/coretypes.h>
 #include <lorproto/easy.h>
+#include <lorproto/effect.h>
 #include <lorproto/heartbeat.h>
+#include <lorproto/uid.h>
 #include <tinyfseq.h>
 
 #include "audio.h"
-#include "crmap.h"
 #include "lor/protowriter.h"
 #include "pump.h"
 #include "seq.h"
@@ -22,6 +25,8 @@
 
 #ifdef _WIN32
     #include <windows.h>
+#else
+    #include <time.h>
 #endif
 
 struct player_rtd_s {

@@ -14,5 +14,6 @@
 #define FP_ENODEV   10 /* no device available */
 #define FP_EDEVCONF 11 /* device configuration error */
 #define FP_EBADJSON 12 /* JSON parsing error */
+#define FP_EINVAL   13 /* invalid argument */
 
 #endif//FPLAYER_ERRCODE_H

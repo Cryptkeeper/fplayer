@@ -2,8 +2,10 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
+#include <lorproto/coretypes.h>
 #include <lorproto/easy.h>
 #include <lorproto/intensity.h>
 #include <stb_ds.h>

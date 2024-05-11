@@ -1,10 +1,6 @@
 #ifndef FPLAYER_PLAYER_H
 #define FPLAYER_PLAYER_H
 
-struct FC;
-
-struct cr_s;
-
 struct player_s {
     struct FC* fc;       /* file controller instance */
     char* audiofp;       /* audio file, if NULL attempts to load from fc */

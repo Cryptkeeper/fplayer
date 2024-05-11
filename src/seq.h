@@ -3,8 +3,6 @@
 
 struct FC;
 
-struct tf_header_t;
-
 extern struct tf_header_t* curSequence; /* opened sequence for playback */
 
 /// @brief Reads a FSEQ header and initializes the `curSequence` global. This
