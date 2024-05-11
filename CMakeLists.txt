@@ -51,7 +51,7 @@ if (CMAKE_HOST_SYSTEM MATCHES "FreeBSD-*")
 endif ()
 
 target_include_directories(fplayer PRIVATE common "dep/cJSON")
-target_link_libraries(fplayer pthread common serialport cjson zstd)
+target_link_libraries(fplayer m pthread common serialport cjson zstd)
 
 # OpenAL
 if (APPLE)
