@@ -3,7 +3,7 @@ project(fplayer C)
 
 # use strict C99
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -Wextra -Wno-unused-value -pedantic")
+set(PEDANTIC_COMPILER_FLAGS "-Wall -Werror -Wextra -Wno-unused-value -pedantic")
 
 enable_testing()
 
@@ -21,6 +21,7 @@ endif ()
 add_subdirectory(dep/liblorproto)
 
 file(GLOB_RECURSE COMMON_FILES "common/*.[ch]")
+set_source_files_properties(${COMMON_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COMPILER_FLAGS})
 add_library(common STATIC ${COMMON_FILES})
 target_include_directories(common PUBLIC "dep/libtinyfseq" "dep/stb")
 target_link_libraries(common PUBLIC lorproto)
@@ -28,6 +29,7 @@ target_link_libraries(common PUBLIC lorproto)
 option(BUILD_MFTOOL "enable building mftool executable" true)
 if (BUILD_MFTOOL)
     file(GLOB_RECURSE MFTOOL_FILES "tool/mftool/*.c")
+    set_source_files_properties(${MFTOOL_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COMPILER_FLAGS})
     add_executable(mftool ${MFTOOL_FILES})
     target_include_directories(mftool PRIVATE common)
     target_link_libraries(mftool common)
@@ -36,12 +38,14 @@ endif ()
 option(BUILD_GENTOOL "enable building gentool executable" true)
 if (BUILD_GENTOOL)
     file(GLOB_RECURSE GENTOOL_FILES "tool/gentool/*.c")
+    set_source_files_properties(${GENTOOL_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COMPILER_FLAGS})
     add_executable(gentool ${GENTOOL_FILES})
     target_include_directories(gentool PRIVATE common)
     target_link_libraries(gentool common)
 endif ()
 
 file(GLOB_RECURSE SRC_FILES "src/*.[ch]")
+set_source_files_properties(${SRC_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COMPILER_FLAGS})
 add_executable(fplayer ${SRC_FILES})
 
 # compiling on FreeBSD without explicitly linking libusb (used by libserialport) results in a build error
@@ -50,7 +54,7 @@ if (CMAKE_HOST_SYSTEM MATCHES "FreeBSD-*")
 endif ()
 
 target_include_directories(fplayer PRIVATE common)
-target_link_libraries(fplayer m pthread common serialport)
+target_link_libraries(fplayer pthread common serialport)
 
 # cJSON
 set(CJSON_BUILD_SHARED_LIBS OFF)
