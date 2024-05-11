@@ -13,5 +13,6 @@
 #define FP_ESEQEND  9  /* end of sequence */
 #define FP_ENODEV   10 /* no device available */
 #define FP_EDEVCONF 11 /* device configuration error */
+#define FP_EBADJSON 12 /* JSON parsing error */
 
 #endif//FPLAYER_ERRCODE_H

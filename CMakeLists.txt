@@ -52,6 +52,15 @@ endif ()
 target_include_directories(fplayer PRIVATE common)
 target_link_libraries(fplayer m pthread common serialport)
 
+# cJSON
+set(CJSON_BUILD_SHARED_LIBS OFF)
+set(CJSON_OVERRIDE_BUILD_SHARED_LIBS ON)
+set(ENABLE_CJSON_TEST OFF)
+add_subdirectory(dep/cJSON)
+
+target_include_directories(fplayer PRIVATE "dep/cJSON")
+target_link_libraries(fplayer cjson)
+
 # OpenAL
 if (APPLE)
     target_link_libraries(fplayer "-framework OpenAL" alut)
@@ -68,16 +77,3 @@ add_executable(test_dsprintf test/dsprintf.c)
 target_include_directories(test_dsprintf PRIVATE common)
 target_link_libraries(test_dsprintf common)
 add_test(NAME dsprintf COMMAND test_dsprintf)
-
-# Fuzzing (libFuzzer)
-if (ENABLE_FUZZING)
-    add_executable(fuzz_cmap_parse_csv_line fuzz/cmap_parse_csv_line.c src/cmap.c)
-    target_include_directories(fuzz_cmap_parse_csv_line PRIVATE common "src")
-    target_link_libraries(fuzz_cmap_parse_csv_line common "-fsanitize=fuzzer")
-    target_compile_options(fuzz_cmap_parse_csv_line PRIVATE -fsanitize=fuzzer)
-
-    add_executable(fuzz_cmap_parse_csv fuzz/cmap_parse_csv.c src/cmap.c)
-    target_include_directories(fuzz_cmap_parse_csv PRIVATE common "src")
-    target_link_libraries(fuzz_cmap_parse_csv common "-fsanitize=fuzzer")
-    target_compile_options(fuzz_cmap_parse_csv PRIVATE -fsanitize=fuzzer)
-endif ()

@@ -1,18 +1,17 @@
 #include "minifier.h"
 
 #include <assert.h>
+#include <stdbool.h>
 #include <string.h>
 
-#include "lorproto/easy.h"
-#include "lorproto/intensity.h"
-#include "stb_ds.h"
+#include <lorproto/easy.h>
+#include <lorproto/intensity.h>
+#include <stb_ds.h>
 
-#include "../cmap.h"
-#include "../seq.h"
+#include "../crmap.h"
 #include "../serial.h"
 #include "encode.h"
 #include "lor/protowriter.h"
-#include "std/err.h"
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
 
@@ -116,7 +115,8 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange* const stack) {
     } while (arrlen(stack) > 0);
 }
 
-void minifyStream(const uint8_t* const frameData,
+void minifyStream(const struct cr_s* cr,
+                  const uint8_t* const frameData,
                   const uint8_t* const lastFrameData,
                   const uint32_t size) {
     uint8_t prevUnit = 0;
@@ -129,7 +129,7 @@ void minifyStream(const uint8_t* const frameData,
         uint8_t unit;
         uint16_t circuit;
 
-        if (!channelMapFind(id, &unit, &circuit)) continue;
+        if (!CR_remap(cr, id, &unit, &circuit)) continue;
 
         const bool unitIdChanged = arrlen(stack) > 0 && prevUnit != unit;
 

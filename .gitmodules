@@ -7,3 +7,6 @@
 [submodule "dep/libtinyfseq"]
 	path = dep/libtinyfseq
 	url = https://github.com/Cryptkeeper/libtinyfseq
+[submodule "dep/cJSON"]
+	path = dep/cJSON
+	url = https://github.com/DaveGamble/cJSON.git

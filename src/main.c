@@ -8,7 +8,7 @@
 #include <tinyfseq.h>
 
 #include "audio.h"
-#include "cmap.h"
+#include "crmap.h"
 #include "player.h"
 #include "serial.h"
 #include "std2/fc.h"
@@ -62,10 +62,18 @@ static bool parseOpts(const int argc, char** const argv, int* const ec) {
     int c;
     while ((c = getopt(argc, argv, ":t:ilhf:c:a:w:d:b:")) != -1) {
         switch (c) {
-            case 't':
-                channelMapInit(optarg);
-                channelMapFree();
+            case 't': {
+                struct cr_s* cmap = NULL;
+                int err;
+                if ((err = CR_parse(optarg, &cmap))) {
+                    fprintf(stderr,
+                            "failed to parse channel map file `%s`: %d\n",
+                            optarg, err);
+                    *ec = EXIT_FAILURE;
+                }
+                CR_free(cmap);
                 return true;
+            }
             case 'l':
                 printSerialEnumPorts();
                 return true;
@@ -143,8 +151,15 @@ int main(const int argc, char** const argv) {
     int ec = EXIT_SUCCESS;
     if (parseOpts(argc, argv, &ec)) return ec;
 
+    int err;
+
     // load required app context configs
-    channelMapInit(gChannelMapFilePath);
+    struct cr_s* cmap = NULL;
+    if ((err = CR_read(gChannelMapFilePath, &cmap))) {
+        fprintf(stderr, "failed to read/parse channel map file `%s`: %d\n",
+                gChannelMapFilePath, err);
+        return 1;
+    }
 
     // open sequence file and init controller handler
     struct FC* fc = FC_open(gSequenceFilePath, FC_MODE_READ);
@@ -161,9 +176,9 @@ int main(const int argc, char** const argv) {
             .fc = fc,
             .audiofp = gAudioOverrideFilePath,
             .wait_s = gWaitSeconds,
+            .cmap = cmap,
     };
 
-    int err;
     if ((err = PL_play(&player)))
         fprintf(stderr, "failed to play sequence: %d\n", err);
 
@@ -173,7 +188,7 @@ int main(const int argc, char** const argv) {
     Serial_close();
     audioExit();
 
-    channelMapFree();
+    CR_free(cmap);
 
     freeArgs();
 

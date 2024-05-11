@@ -3,7 +3,10 @@
 
 #include <stdint.h>
 
-void minifyStream(const uint8_t* frameData,
+struct cr_s;
+
+void minifyStream(const struct cr_s* cr,
+                  const uint8_t* frameData,
                   const uint8_t* lastFrameData,
                   uint32_t size);
 

@@ -9,12 +9,12 @@
 #include <tinyfseq.h>
 
 #include "audio.h"
+#include "crmap.h"
 #include "lor/protowriter.h"
 #include "pump.h"
 #include "seq.h"
 #include "serial.h"
 #include "sleep.h"
-#include "std/err.h"
 #include "std2/errcode.h"
 #include "std2/string.h"
 #include "std2/time.h"
@@ -25,10 +25,11 @@
 #endif
 
 struct player_rtd_s {
-    struct frame_pump_s* pump;
-    uint32_t nextFrame;
-    uint8_t* lastFrameData;
-    struct sleep_coll_s scoll;
+    struct frame_pump_s* pump; /* frame pump for reading/queueing frame data */
+    uint32_t nextFrame;        /* index of the next frame to be played */
+    uint8_t* lastFrameData;    /* previous frame data for diffing states */
+    struct sleep_coll_s scoll; /* sleep collector for frame rate control */
+    const struct cr_s* cmap;   /* channel map for network address rewriting */
 };
 
 /// @brief Compensates for the player to connect to the LOR hardware by sending
@@ -127,7 +128,7 @@ static int playerHandleNextFrame(struct player_rtd_s* rtd) {
     int err;
     if ((err = FP_copy(rtd->pump, &frameData))) return err;
 
-    minifyStream(frameData, rtd->lastFrameData, frameSize);
+    minifyStream(rtd->cmap, frameData, rtd->lastFrameData, frameSize);
 
     // wait for serial to drain outbound
     // this creates back pressure that results in fps loss if the serial can't keep up
@@ -195,6 +196,7 @@ int PL_play(struct player_s* player) {
     // allocate a runtime data instance
     struct player_rtd_s* rtd = calloc(1, sizeof(*rtd));
     if (rtd == NULL) return -FP_ENOMEM;
+    rtd->cmap = player->cmap;
 
     char* audiofp = player->audiofp;
 
