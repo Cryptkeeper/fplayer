@@ -99,8 +99,7 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
     if (pump->curr == NULL) {
         // attempt to pull from a potentially pre-existing preload thread
         if (pump->preloadWaiting) {
-            if (pthread_join(pump->preload, (void**) &pump->next) ||
-                pthread_detach(pump->preload))
+            if (pthread_join(pump->preload, (void**) &pump->next))
                 return -FP_EPTHREAD;
 
             pump->preloadWaiting = false;
