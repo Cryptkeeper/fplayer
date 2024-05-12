@@ -1,6 +1,9 @@
 #include "pump.h"
 
 #include <assert.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <tinyfseq.h>
@@ -15,9 +18,10 @@ struct frame_pump_s {
     struct fd_node_s* curr; /* current frame set to read from */
     struct fd_node_s* next; /* preloaded frame set to read from next */
     int cbidx;              /* current compression block index */
+    pthread_t preload;      /* preloading thread */
 };
 
-struct frame_pump_s* Pump_init(struct FC* fc) {
+struct frame_pump_s* FP_init(struct FC* fc) {
     assert(fc != NULL);
 
     struct frame_pump_s* pump = calloc(1, sizeof(*pump));
@@ -26,36 +30,77 @@ struct frame_pump_s* Pump_init(struct FC* fc) {
     return pump;
 }
 
-static int FP_readZstd(struct frame_pump_s* pump, struct fd_node_s** fn) {
-    assert(pump != NULL);
-    assert(fn != NULL);
-
-    if (pump->cbidx >= curSequence->compressionBlockCount) return FP_ESEQEND;
-    return ComBlock_read(pump->fc, pump->cbidx++, fn);
-}
-
+/// @brief Reads the next frame set from the file controller and stores it in the
+/// provided frame data node pointer
+/// @param pump frame pump to read from
+/// @param fn frame data node pointer to store the next frame set in
+/// @return 0 on success, a negative error code on failure
 static int FP_read(struct frame_pump_s* pump, struct fd_node_s** fn) {
     assert(pump != NULL);
     assert(fn != NULL);
 
     switch (curSequence->compressionType) {
         case TF_COMPRESSION_ZSTD:
-            return FP_readZstd(pump, fn);
+            if (pump->cbidx >= curSequence->compressionBlockCount)
+                return FP_ESEQEND;
+            return ComBlock_read(pump->fc, pump->cbidx++, fn);
         default:
             return -FP_ENOSUP;
     }
 }
 
-int Pump_copyNext(struct frame_pump_s* pump, uint8_t** fd) {
+static void* FP_thread(void* pargs) {
+    assert(pargs != NULL);
+
+    struct frame_pump_s* pump = pargs;
+
+    int err;
+    if ((err = FP_read(pump, &pump->next))) {
+        FD_free(pump->next), pump->next = NULL;
+        if (err < 0)
+            fprintf(stderr, "failed to preload next frame set: %d\n", err);
+    }
+
+    return NULL;
+}
+
+/// @brief Checks if the current frame set is running low and triggers a preload
+/// of the next frame set if necessary. An empty frame pump is NOT considered
+/// low, as it will immediately read the next frame set from the file controller.
+/// @param pump frame pump to check
+/// @return true if the current frame set is running low, false otherwise
+static bool FP_testPreload(struct frame_pump_s* pump) {
+    assert(pump != NULL);
+
+    if (pump->curr == NULL) return false; /* empty, will block read */
+    if (pump->preload != NULL || pump->next != NULL)
+        return false; /* already preloaded or actively loading */
+
+    // require at least N seconds of frames to be available for playback
+    const int reqd = (1000 / curSequence->frameStepTimeMillis) * 3;
+    return FD_scanDepth(pump->curr, reqd) < reqd;
+}
+
+int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
     assert(pump != NULL);
     assert(fd != NULL);
+
+    if (FP_testPreload(pump))
+        if (pthread_create(&pump->preload, NULL, FP_thread, pump))
+            return -FP_EPTHREAD;
 
     // pump is empty
     // check if a preloaded frame set is available for instant consumption,
     // otherwise block the playback and read the next frame set immediately
     if (pump->curr == NULL) {
-        // immediately read from source if a preload is not available
+        // attempt to pull from a potentially pre-existing preload thread
+        if (pump->preload != NULL) {
+            if (pthread_join(pump->preload, NULL)) return -FP_EPTHREAD;
+            pump->preload = NULL;
+        }
+
         if (pump->next == NULL) {
+            // immediately read from source if a preload is not available
             int err;
             if ((err = FP_read(pump, &pump->next))) {
                 FD_free(pump->next), pump->next = NULL;
@@ -78,8 +123,14 @@ int Pump_copyNext(struct frame_pump_s* pump, uint8_t** fd) {
     return FP_EOK;
 }
 
-void Pump_free(struct frame_pump_s* pump) {
+int FP_framesRemaining(struct frame_pump_s* pump) {
+    assert(pump != NULL);
+    return FD_scanDepth(pump->curr, 0);
+}
+
+void FP_free(struct frame_pump_s* pump) {
     if (pump == NULL) return;
+
     FD_free(pump->curr);
     FD_free(pump->next);
     free(pump);

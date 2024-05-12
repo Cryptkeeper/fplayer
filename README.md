@@ -32,7 +32,6 @@ Options:
 
 - Precise frame timing with automatic frame loss recovery
 - Protocol minifier for reduced bandwidth usage
-- Optional fade reconstruction and interpolation for a super smooth playback experience
 - "Frame pump" mechanism for pre-buffering upcoming frames
 - Support for zstd compressed sequences
 - Options for modifying playback speed and audio
@@ -45,15 +44,15 @@ fplayer offloads deserialization and encoding work to my other libraries,
 [libtinyfseq](https://github.com/Cryptkeeper/libtinyfseq) and
 [liblorproto](https://github.com/Cryptkeeper/liblorproto). Both are provided as git submodules and are built locally via the CMake build configuration. You do not need to install these.
 
-You must provide: libserialport, OpenAL, an ALUT-compatible library, and zstd.
+You must provide: cJSON, libserialport, OpenAL, an ALUT-compatible library, and zstd.
 
 I have included a few package manager commands below to install the dependencies. You can definitely build it on other platforms, but you'll be responsible for ensuring the dependencies are found and linked.
 
 ### macOS (Homebrew)
-```brew install libserialport freealut zstd```
+```brew install cjson libserialport freealut zstd```
 
 ### Ubuntu
-```apt-get install -y libopenal-dev libalut-dev libserialport-dev libzstd-dev```
+```apt-get install -y libcjson-dev libopenal-dev libalut-dev libserialport-dev libzstd-dev```
 
 ## Setup
 

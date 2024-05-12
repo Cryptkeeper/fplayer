@@ -98,7 +98,9 @@ static void Player_log(struct player_rtd_s* rtd) {
 
     char* const remaining = Player_timeRemaining(rtd);
 
-    printf("remaining: %s\tdt: %s\tpump: %4d\n", remaining, sleep, 0);
+    const int frames = FP_framesRemaining(rtd->pump);
+
+    printf("remaining: %s\tdt: %s\tpump: %4d\n", remaining, sleep, frames);
 
     free(remaining);
     free(sleep);
@@ -131,7 +133,7 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
     uint8_t* frameData = NULL;
 
     int err;
-    if ((err = Pump_copyNext(rtd->pump, &frameData))) return err;
+    if ((err = FP_nextFrame(rtd->pump, &frameData))) return err;
 
     minifyStream(rtd->cmap, frameData, rtd->lastFrameData, frameSize);
 
@@ -188,7 +190,7 @@ static int Player_loop(struct player_rtd_s* rtd) {
 
 static void Player_freeRTD(struct player_rtd_s* rtd) {
     if (rtd == NULL) return;
-    Pump_free(rtd->pump);
+    FP_free(rtd->pump);
     free(rtd->lastFrameData);
     free(rtd);
 }
@@ -210,7 +212,7 @@ int Player_exec(struct player_s* player) {
     if (audiofp == NULL)// attempt to load audio file from sequence
         if ((err = Seq_getMediaFile(player->fc, &audiofp))) goto ret;
 
-    if ((rtd->pump = Pump_init(player->fc)) == NULL) {
+    if ((rtd->pump = FP_init(player->fc)) == NULL) {
         err = -FP_ENOMEM;
         goto ret;
     }

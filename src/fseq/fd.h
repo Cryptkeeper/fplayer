@@ -19,6 +19,14 @@ void FD_free(struct fd_node_s* node);
 /// @return the first node in the list, or NULL if the list is empty
 struct fd_node_s* FD_shift(struct fd_node_s** head);
 
+/// @brief Returns the number of nodes in the linked list, up to the specified
+/// maximum depth. If the maximum depth is less than or equal to zero, the entire
+/// list is counted.
+/// @param head pointer to the head of the list
+/// @param max maximum depth to count to (incl.) or zero to disable the limit
+/// @return the number of nodes in the list, up to the specified maximum depth
+int FD_scanDepth(struct fd_node_s* head, int max);
+
 /// @brief Appends a new frame data block to the end of the linked list. If the
 /// head pointer is NULL, a new list is created with the new frame data block as
 /// the head. The frame data provided is not copied, so the caller is responsible

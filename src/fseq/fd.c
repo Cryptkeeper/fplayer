@@ -22,6 +22,14 @@ struct fd_node_s* FD_shift(struct fd_node_s** head) {
     return node;
 }
 
+int FD_scanDepth(struct fd_node_s* head, int max) {
+    if (head == NULL) return 0;
+    int depth = 0;
+    while (head != NULL && (max <= 0 || depth < max))
+        head = head->next, depth++;
+    return depth;
+}
+
 int FD_append(struct fd_node_s** head, uint8_t* frame) {
     assert(head != NULL);
     assert(frame != NULL);
