@@ -34,8 +34,6 @@ static void printUsage(void) {
 
            "[Controls]\n"
            "\t-a <file>\t\tOverride audio with specified filepath\n"
-           "\t-r <frame ms>\t\tOverride playback frame rate interval (in "
-           "milliseconds)\n"
            "\t-w <seconds>\t\tPlayback start delay to allow connection "
            "setup\n\n"
 
