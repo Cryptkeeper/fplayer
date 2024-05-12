@@ -54,15 +54,16 @@ static void* FP_thread(void* pargs) {
     assert(pargs != NULL);
 
     struct frame_pump_s* pump = pargs;
+    struct fd_node_s* fn = NULL;
 
     int err;
-    if ((err = FP_read(pump, &pump->next))) {
-        FD_free(pump->next), pump->next = NULL;
+    if ((err = FP_read(pump, &fn))) {
+        FD_free(fn), fn = NULL;
         if (err < 0)
             fprintf(stderr, "failed to preload next frame set: %d\n", err);
     }
 
-    return pump;
+    return fn;
 }
 
 /// @brief Checks if the current frame set is running low and triggers a preload
@@ -98,7 +99,10 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
     if (pump->curr == NULL) {
         // attempt to pull from a potentially pre-existing preload thread
         if (pump->preloadWaiting) {
-            if (pthread_join(pump->preload, NULL)) return -FP_EPTHREAD;
+            if (pthread_join(pump->preload, (void**) &pump->next) ||
+                pthread_detach(pump->preload))
+                return -FP_EPTHREAD;
+
             pump->preloadWaiting = false;
         }
 
