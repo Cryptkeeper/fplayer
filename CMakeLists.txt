@@ -70,3 +70,8 @@ add_executable(test_strtolb test/strtolb.c)
 target_include_directories(test_strtolb PRIVATE common)
 target_link_libraries(test_strtolb common)
 add_test(NAME strtolb COMMAND test_strtolb)
+
+add_executable(test_sl test/sl.c)
+target_include_directories(test_sl PRIVATE common)
+target_link_libraries(test_sl common)
+add_test(NAME sl COMMAND test_sl)
