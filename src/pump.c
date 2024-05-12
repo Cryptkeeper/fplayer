@@ -18,8 +18,8 @@ struct frame_pump_s {
     struct fd_node_s* curr; /* current frame set to read from */
     struct fd_node_s* next; /* preloaded frame set to read from next */
     int cbidx;              /* current compression block index */
-    bool preloadWaiting;    /* preloading status flag for controlling thread */
-    pthread_t preload;      /* preloading thread */
+    bool preloading;        /* preload ready/running flag */
+    pthread_t plthread;     /* preloading thread */
 };
 
 struct frame_pump_s* FP_init(struct FC* fc) {
@@ -74,9 +74,8 @@ static void* FP_thread(void* pargs) {
 static bool FP_testPreload(struct frame_pump_s* pump) {
     assert(pump != NULL);
 
-    if (pump->curr == NULL) return false; /* empty, will block read */
-    if (pump->preloadWaiting || pump->next != NULL)
-        return false; /* already preloaded or actively loading */
+    if (pump->curr == NULL) return false; /* empty, will sync read */
+    if (pump->preloading) return false;   /* already busy */
 
     // require at least N seconds of frames to be available for playback
     const int reqd = (1000 / curSequence->frameStepTimeMillis) * 3;
@@ -88,9 +87,10 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
     assert(fd != NULL);
 
     if (FP_testPreload(pump)) {
-        if (pthread_create(&pump->preload, NULL, FP_thread, pump))
+        pump->preloading = true;
+
+        if (pthread_create(&pump->plthread, NULL, FP_thread, pump))
             return -FP_EPTHREAD;
-        pump->preloadWaiting = true;
     }
 
     // pump is empty
@@ -98,11 +98,11 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
     // otherwise block the playback and read the next frame set immediately
     if (pump->curr == NULL) {
         // attempt to pull from a potentially pre-existing preload thread
-        if (pump->preloadWaiting) {
-            if (pthread_join(pump->preload, (void**) &pump->next))
+        if (pump->preloading) {
+            if (pthread_join(pump->plthread, (void**) &pump->next))
                 return -FP_EPTHREAD;
 
-            pump->preloadWaiting = false;
+            pump->preloading = false;
         }
 
         if (pump->next == NULL) {
