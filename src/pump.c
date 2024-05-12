@@ -53,8 +53,6 @@ static int FP_read(struct frame_pump_s* pump, struct fd_node_s** fn) {
 static void* FP_thread(void* pargs) {
     assert(pargs != NULL);
 
-    printf("preload thread started\n");
-
     struct frame_pump_s* pump = pargs;
     struct fd_node_s* fn = NULL;
 
@@ -64,8 +62,6 @@ static void* FP_thread(void* pargs) {
         if (err < 0)
             fprintf(stderr, "failed to preload next frame set: %d\n", err);
     }
-
-    printf("preload thread finished\n");
 
     return fn;
 }
@@ -91,7 +87,6 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
     assert(fd != NULL);
 
     if (FP_testPreload(pump)) {
-        printf("triggering preload");
         pump->preloading = true;
 
         if (pthread_create(&pump->plthread, NULL, FP_thread, pump))
@@ -104,7 +99,6 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
     if (pump->curr == NULL) {
         // attempt to pull from a potentially pre-existing preload thread
         if (pump->preloading) {
-            printf("joining preload thread");
             if (pthread_join(pump->plthread, (void**) &pump->next))
                 return -FP_EPTHREAD;
 
@@ -112,7 +106,6 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
         }
 
         if (pump->next == NULL) {
-            printf("performing blocking frame data read.");
             // immediately read from source if a preload is not available
             int err;
             if ((err = FP_read(pump, &pump->next))) {
@@ -123,7 +116,6 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
 
         // handle the swap to the new frame set
         if (pump->next != NULL) {
-            printf("swapping frame sets");
             FD_free(pump->curr);
             pump->curr = pump->next, pump->next = NULL;
         }
@@ -144,6 +136,10 @@ int FP_framesRemaining(struct frame_pump_s* pump) {
 
 void FP_free(struct frame_pump_s* pump) {
     if (pump == NULL) return;
+
+    // destroy any lingering preload thread that may have been triggered,
+    // loaded no data, and was therefore not joined via swapping frame sets
+    if (pump->preloading) pthread_cancel(pump->plthread);
 
     FD_free(pump->curr);
     FD_free(pump->next);
