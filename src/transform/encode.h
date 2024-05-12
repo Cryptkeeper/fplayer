@@ -9,6 +9,8 @@ typedef struct encode_change_t {
     uint8_t newIntensity;
 } EncodeChange;
 
-uint16_t encodeStackGetMatches(const EncodeChange* stack, EncodeChange compare);
+uint16_t encodeStackGetMatches(const EncodeChange* stack,
+                               int size,
+                               EncodeChange compare);
 
 #endif//FPLAYER_ENCODE_H

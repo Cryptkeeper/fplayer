@@ -88,7 +88,7 @@ static void minifyEncodeStack(const uint8_t unit, EncodeChange* const stack) {
             // filter matches to only matches that have not yet been consumed
             // bonus: minifier can compress the 16-bit channel set if either 8-bit block
             //  is unused, so we benefit more later from minimizing the active bits
-            const uint16_t bits = encodeStackGetMatches(stack, change);
+            const uint16_t bits = encodeStackGetMatches(stack, count, change);
             const uint16_t matches = ~consumed & bits;
 
             if (matches == 0) continue;

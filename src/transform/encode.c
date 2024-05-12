@@ -2,21 +2,19 @@
 
 #include <assert.h>
 #include <stdbool.h>
-
-#include "stb_ds.h"
+#include <stddef.h>
 
 #define CIRCUIT_BIT(i) ((uint16_t) (1 << (i)))
 
 uint16_t encodeStackGetMatches(const EncodeChange* const stack,
+                               const int size,
                                const EncodeChange compare) {
+    assert(stack != NULL);
+    assert(size > 0);
+
     uint16_t matches = 0;
 
-    const int len = arrlen(stack);
-    assert(len > 0);
-
-    const int max = len < 16 ? len : 16;
-
-    for (int i = 0; i < max; i++) {
+    for (int i = 0; i < size; i++) {
         const EncodeChange change = stack[i];
 
         // the intensity did not change, do not attempt to create a bulk update
