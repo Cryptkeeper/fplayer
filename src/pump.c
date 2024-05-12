@@ -139,7 +139,7 @@ void FP_free(struct frame_pump_s* pump) {
 
     // destroy any lingering preload thread that may have been triggered,
     // loaded no data, and was therefore not joined via swapping frame sets
-    if (pump->preloading) pthread_cancel(pump->plthread);
+    if (pump->preloading) pthread_detach(pump->plthread);
 
     FD_free(pump->curr);
     FD_free(pump->next);

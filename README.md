@@ -4,7 +4,7 @@ A cross-platform C99 [fseq file](http://github.com/Cryptkeeper/fseq-file-format)
 
 Use `fplayer -h` to show program usage and get started.
 
-You'll need an fseq file of your choosing, and its audio file (if any). You may attach a Light-O-Rama device (note its serial port device name or list available serial ports with `fplayer -l`), but it is not required for the program to playback a sequence. A default channel map is included (`channels.csv`) for use with `-c` (`-c=channels.csv`), but you will likely want to modify it in the future.
+You'll need an fseq file of your choosing, and its audio file (if any). You may attach a Light-O-Rama device (note its serial port device name or list available serial ports with `fplayer -l`), but it is not required for the program to playback a sequence. A default channel map is included (`channels.json`) for use with `-c` (`-c=channels.json`), but you will likely want to modify it in the future.
 
 ```
 Usage: fplayer -f=FILE -c=FILE [options] ...
@@ -61,7 +61,7 @@ I have included a few package manager commands below to install the dependencies
 
 1. Clone the repository and its submodules: `git clone --recursive git@github.com:Cryptkeeper/fplayer.git`
 2. Configure the CMake project with `cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebugInfo`
-    - macOS users with the dependencies provided via Homebrew should append `-DCMAKE_PREFIX_PATH=$(brew --prefix`
+    - macOS users with the dependencies provided via Homebrew should append `-DCMAKE_PREFIX_PATH=$(brew --prefix)`
     - FreeBSD users may need to append `-DCMAKE_PREFIX_PATH=/usr/local` to correctly link with system libraries
 3. Compile the project with `cmake --build build`
 
