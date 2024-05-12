@@ -62,7 +62,7 @@ static void* FP_thread(void* pargs) {
             fprintf(stderr, "failed to preload next frame set: %d\n", err);
     }
 
-    return NULL;
+    return pump;
 }
 
 /// @brief Checks if the current frame set is running low and triggers a preload
