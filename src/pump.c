@@ -18,6 +18,7 @@ struct frame_pump_s {
     struct fd_node_s* curr; /* current frame set to read from */
     struct fd_node_s* next; /* preloaded frame set to read from next */
     int cbidx;              /* current compression block index */
+    bool preloadWaiting;    /* preloading status flag for controlling thread */
     pthread_t preload;      /* preloading thread */
 };
 
@@ -73,7 +74,7 @@ static bool FP_testPreload(struct frame_pump_s* pump) {
     assert(pump != NULL);
 
     if (pump->curr == NULL) return false; /* empty, will block read */
-    if (pump->preload != NULL || pump->next != NULL)
+    if (pump->preloadWaiting || pump->next != NULL)
         return false; /* already preloaded or actively loading */
 
     // require at least N seconds of frames to be available for playback
@@ -85,18 +86,20 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
     assert(pump != NULL);
     assert(fd != NULL);
 
-    if (FP_testPreload(pump))
+    if (FP_testPreload(pump)) {
         if (pthread_create(&pump->preload, NULL, FP_thread, pump))
             return -FP_EPTHREAD;
+        pump->preloadWaiting = true;
+    }
 
     // pump is empty
     // check if a preloaded frame set is available for instant consumption,
     // otherwise block the playback and read the next frame set immediately
     if (pump->curr == NULL) {
         // attempt to pull from a potentially pre-existing preload thread
-        if (pump->preload != NULL) {
+        if (pump->preloadWaiting) {
             if (pthread_join(pump->preload, NULL)) return -FP_EPTHREAD;
-            pump->preload = NULL;
+            pump->preloadWaiting = false;
         }
 
         if (pump->next == NULL) {
