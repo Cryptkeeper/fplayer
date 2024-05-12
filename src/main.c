@@ -30,7 +30,7 @@ static void printUsage(void) {
            "\t-c <file>\t\tNetwork channel map file path (required)\n"
            "\t-d <device name|stdout>\tDevice name for serial port "
            "connection\n"
-           "\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n"
+           "\t-b <baud rate>\t\tSerial port baud rate (defaults to 19200)\n\n"
 
            "[Controls]\n"
            "\t-a <file>\t\tOverride audio with specified filepath\n"

@@ -1,6 +1,6 @@
 # fplayer
 
-A work-in-progress C99 [fseq file](http://github.com/Cryptkeeper/fseq-file-format) player (like [xLights](http://github.com/smeighan/xLights) and [Falcon Player/fpp](https://github.com/FalconChristmas/fpp)) for [Light-O-Rama](https://lightorama.com) hardware. This project is a way for me to explore solutions to a better version of my previous project, [libreorama](https://github.com/Cryptkeeper/libreorama).
+A cross-platform C99 [fseq file](http://github.com/Cryptkeeper/fseq-file-format) player (like [xLights](http://github.com/smeighan/xLights) and [Falcon Player/fpp](https://github.com/FalconChristmas/fpp)) for [Light-O-Rama](https://lightorama.com) hardware. This project is a way for me to explore solutions to a better version of my previous project, [libreorama](https://github.com/Cryptkeeper/libreorama).
 
 Use `fplayer -h` to show program usage and get started.
 
@@ -54,16 +54,21 @@ I have included a few package manager commands below to install the dependencies
 ### Ubuntu
 ```apt-get install -y libcjson-dev libopenal-dev libalut-dev libserialport-dev libzstd-dev```
 
+### FreeBSD
+```pkg install -y libcjson openal-soft freealut libserialport zstd```
+
 ## Setup
 
 1. Clone the repository and its submodules: `git clone --recursive git@github.com:Cryptkeeper/fplayer.git`
-2. Build the CMake project with `cmake .`
-3. Compile the project with `make`
-
-`fplayer -v` will print the dependency versions used, and if any are disabled in the CMake configuration, they will be marked with a "disabled" tag.
+2. Configure the CMake project with `cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebugInfo`
+    - macOS users with the dependencies provided via Homebrew should append `-DCMAKE_PREFIX_PATH=$(brew --prefix`
+    - FreeBSD users may need to append `-DCMAKE_PREFIX_PATH=/usr/local` to correctly link with system libraries
+3. Compile the project with `cmake --build build`
 
 ## Artifacts
 macOS, Ubuntu and Windows build downloads are available as artifacts via [Actions](https://github.com/Cryptkeeper/fplayer/actions).
+
+FreeBSD is generally supported, although the build is not automated due to GitHub Actions' lack of support in its Action Runner.
 
 ## Channel Maps
 Somewhat unique to fplayer as a requirement is a "channel map". FSEQ files provide a 0-indexed array of frame data, each key a "channel", and the interpreting program is responsible for passing off its value ("brightness") to the corresponding device I/O driver. The main consumers of the fseq file format (e.g. xLights and Falcon Player) accomplish this via a lookup operation using additional context provided by your "show directory" files. 
