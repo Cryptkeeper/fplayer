@@ -182,6 +182,8 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
         // TODO
     }
 
+    LB_free(msg);
+
     // wait for serial to drain outbound
     // this creates back pressure that results in fps loss if the serial can't keep up
     Serial_drain();
