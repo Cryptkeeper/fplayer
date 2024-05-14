@@ -123,7 +123,7 @@ int CT_groupof(struct ctable_s* table, uint32_t at, struct ctgroup_s* group) {
     if (!c->valid || !c->changehash) return 0;
 
     struct cell_s* matches[MAX_MATCHES] = {NULL};
-    const int mc = CT_findMatches(table, at, CT_hash(c), matches);
+    const int mc = CT_findMatches(table, at, c->changehash, matches);
 
     assert(mc > 0);// should always find at least one match (the initial input)
     assert(mc <= MAX_MATCHES);
