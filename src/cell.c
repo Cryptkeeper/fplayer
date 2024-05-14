@@ -9,19 +9,13 @@
 #include "crmap.h"
 
 struct cell_s {
-    _Bool valid : 1;     /* cell is configured and valid */
-    uint8_t unit;        /* hardware unit id for routing */
-    uint8_t section;     /* circuit id / 16 for 16-bit proto alignment */
-    uint8_t offset;      /* circuit id % 16 for 16-bit proto alignment */
-    uint8_t intensity;   /* current output intensity */
-    uint32_t changehash; /* requested effect change for quick matching */
+    _Bool valid : 1;    /* cell is configured and valid */
+    _Bool modified : 1; /* cell has been modified since last groupof */
+    uint8_t unit;       /* hardware unit id for routing */
+    uint8_t section;    /* circuit id / 16 for 16-bit proto alignment */
+    uint8_t offset;     /* circuit id % 16 for 16-bit proto alignment */
+    uint8_t intensity;  /* current output intensity */
 };
-
-static inline uint32_t CT_hash(const struct cell_s* c) {
-    assert(c != NULL);
-    assert(c->valid);
-    return (c->unit << 16) | (c->section << 8) | c->intensity;
-}
 
 struct ctable_s {
     struct cell_s* cells;
@@ -61,9 +55,9 @@ int CT_init(const struct cr_s* cmap,
         assert(channel > 0);
 
         c->valid = 1;
+        c->modified = 1;
         c->section = (channel - 1) / 16;
         c->offset = (channel - 1) % 16;
-        c->changehash = CT_hash(c);
 
         confd++;
     }
@@ -82,30 +76,38 @@ void CT_set(struct ctable_s* table,
 
     struct cell_s* c = &table->cells[index];
     if (!c->valid || (diff && c->intensity == output)) return;
+    c->modified = 1;
     c->intensity = output;
-    c->changehash = CT_hash(c);
 }
 
 #define MAX_MATCHES 16
 
+static inline bool CT_matches(const struct cell_s* a, const struct cell_s* b) {
+    assert(a != NULL);
+    assert(b != NULL);
+    return a->unit == b->unit && a->section == b->section &&
+           a->intensity == b->intensity;
+}
+
 /// @brief Finds all cells in the table that match the given hash value.
 /// @param table table to search
 /// @param start index to start searching from
-/// @param hash hash value to match
 /// @param matches array to store matching cells
 /// @return the number of matching cells found
 static int CT_findMatches(struct ctable_s* table,
                           const uint32_t start,
-                          const uint32_t hash,
+                          const struct cell_s* cmp,
                           struct cell_s* matches[MAX_MATCHES]) {
     assert(table != NULL);
-    assert(hash > 0);
+    assert(cmp != NULL);
+    assert(cmp->valid);
+    assert(cmp->modified);
     assert(matches != NULL);
 
     int pos = 0;
     for (uint32_t i = start; i < table->size; i++) {
         struct cell_s* c = &table->cells[i];
-        if (c->valid && c->changehash == hash) matches[pos++] = c;
+        if (c->valid && c->modified && CT_matches(c, cmp)) matches[pos++] = c;
         if (pos >= MAX_MATCHES) break;
     }
     return pos;
@@ -119,11 +121,11 @@ int CT_groupof(struct ctable_s* table, uint32_t at, struct ctgroup_s* group) {
 
     *group = (struct ctgroup_s){0};
 
-    struct cell_s* c = &table->cells[at];
-    if (!c->valid || !c->changehash) return 0;
+    struct cell_s* cmp = &table->cells[at];
+    if (!cmp->valid || !cmp->modified) return 0;
 
     struct cell_s* matches[MAX_MATCHES] = {NULL};
-    const int mc = CT_findMatches(table, at, c->changehash, matches);
+    const int mc = CT_findMatches(table, at, cmp, matches);
 
     assert(mc > 0);// should always find at least one match (the initial input)
     assert(mc <= MAX_MATCHES);
@@ -132,7 +134,7 @@ int CT_groupof(struct ctable_s* table, uint32_t at, struct ctgroup_s* group) {
     for (int i = 0; i < mc; i++) {
         struct cell_s* m = matches[i];
         assert(m->valid);
-        assert(m->changehash);
+        assert(m->modified);
 
         group->cs |= CHANNEL_BIT(m->offset);
 
@@ -144,7 +146,7 @@ int CT_groupof(struct ctable_s* table, uint32_t at, struct ctgroup_s* group) {
             group->intensity = m->intensity;
         }
 
-        m->changehash = 0;// consume the hash value to prevent re-matching
+        m->modified = 0;// consume the hash value to prevent re-matching
     }
 
     return 1;
