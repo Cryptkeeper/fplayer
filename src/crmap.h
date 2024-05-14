@@ -27,9 +27,9 @@ void CMap_free(struct cr_s* cr);
 /// @param unit pointer to write the unit number to
 /// @param circuit pointer to write the circuit number to
 /// @return non-zero on success, zero on failure
-int CMap_remap(const struct cr_s* cr,
-               uint32_t id,
-               uint8_t* unit,
-               uint16_t* circuit);
+int CMap_lookup(const struct cr_s* cr,
+                uint32_t id,
+                uint8_t* unit,
+                uint16_t* circuit);
 
 #endif//FPLAYER_CRMAP_H

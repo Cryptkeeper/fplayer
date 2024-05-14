@@ -75,3 +75,8 @@ add_executable(test_sl test/sl.c)
 target_include_directories(test_sl PRIVATE common)
 target_link_libraries(test_sl common)
 add_test(NAME sl COMMAND test_sl)
+
+add_executable(test_cell test/cell.c src/crmap.c src/transform/cell.c)
+target_include_directories(test_cell PRIVATE common src)
+target_link_libraries(test_cell common cjson)
+add_test(NAME cell COMMAND test_cell)

@@ -9,7 +9,7 @@
 #include "std2/fc.h"
 
 struct cr_s {
-    uint8_t indexr[2];    /* start index (incl.), end index (incl.) */
+    uint32_t indexr[2];   /* start index (incl.), end index (incl.) */
     uint16_t circuitr[2]; /* start circuit (incl.), end circuit (incl.) */
     uint8_t unit;         /* unit id */
     struct cr_s* next;    /* next cr_s in the list, NULL if last */
@@ -162,10 +162,10 @@ void CMap_free(struct cr_s* cr) {
     }
 }
 
-int CMap_remap(const struct cr_s* cr,
-             uint32_t id,
-             uint8_t* unit,
-             uint16_t* circuit) {
+int CMap_lookup(const struct cr_s* cr,
+                const uint32_t id,
+                uint8_t* unit,
+                uint16_t* circuit) {
     assert(cr != NULL);
     assert(unit != NULL);
     assert(circuit != NULL);

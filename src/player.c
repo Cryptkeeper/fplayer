@@ -21,7 +21,7 @@
 #include "std2/errcode.h"
 #include "std2/string.h"
 #include "std2/time.h"
-#include "transform/minifier.h"
+#include "transform/cell.h"
 
 #ifdef _WIN32
     #include <windows.h>
@@ -32,10 +32,43 @@
 struct player_rtd_s {
     struct frame_pump_s* pump; /* frame pump for reading/queueing frame data */
     uint32_t nextFrame;        /* index of the next frame to be played */
-    uint8_t* lastFrameData;    /* previous frame data for diffing states */
     struct sleep_coll_s scoll; /* sleep collector for frame rate control */
-    const struct cr_s* cmap;   /* channel map for network address rewriting */
+    struct ctable_s* ctable;   /* computed+cached channel map lookup table */
 };
+
+static void Player_freeRTD(struct player_rtd_s* rtd) {
+    if (rtd == NULL) return;
+    FP_free(rtd->pump);
+    CT_free(rtd->ctable);
+    free(rtd);
+}
+
+int Player_newRTD(const struct player_s* player, struct player_rtd_s** rtdp) {
+    assert(player != NULL);
+    assert(rtdp != NULL);
+    assert(curSequence != NULL);
+
+    struct player_rtd_s* rtd = calloc(1, sizeof(*rtd));
+    if (rtd == NULL) return -FP_ENOMEM;
+
+    int err;
+
+    // initialize the channel map lookup table
+    if ((err = CT_init(player->cmap, curSequence->channelCount, &rtd->ctable)))
+        goto ret;
+
+    // initialize the frame pump for reading/queueing frame data
+    if ((rtd->pump = FP_init(player->fc)) == NULL) {
+        err = -FP_ENOMEM;
+        goto ret;
+    }
+
+ret:
+    if (err) Player_freeRTD(rtd), rtd = NULL;
+    *rtdp = rtd;
+
+    return err;
+}
 
 /// @brief Compensates for the player to connect to the LOR hardware by sending
 /// heartbeat messages for the given number of seconds.
@@ -135,16 +168,25 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
     int err;
     if ((err = FP_nextFrame(rtd->pump, &frameData))) return err;
 
-    minifyStream(rtd->cmap, frameData, rtd->lastFrameData, frameSize);
+    for (uint32_t i = 0; i < frameSize; i++)
+        CT_set(rtd->ctable, i, frameData[i]);
+    CT_linkall(rtd->ctable);
+
+    uint32_t pos = 0;
+    struct ctgroup_s group;
+
+    LorBuffer* msg = LB_alloc();
+    if (msg == NULL) return -FP_ENOMEM;// FIXME: may leak frameData
+
+    while (CT_nextgroup(rtd->ctable, &pos, &group)) {
+        // TODO
+    }
 
     // wait for serial to drain outbound
     // this creates back pressure that results in fps loss if the serial can't keep up
     Serial_drain();
 
-    // copy previous frame to the secondary frame buffer
-    // this enables the serial system to diff between the two frames and only
-    // write outgoing state changes
-    free(rtd->lastFrameData), rtd->lastFrameData = frameData;
+    free(frameData);
 
     return FP_EOK;
 }
@@ -188,44 +230,41 @@ static int Player_loop(struct player_rtd_s* rtd) {
     return FP_EOK;
 }
 
-static void Player_freeRTD(struct player_rtd_s* rtd) {
-    if (rtd == NULL) return;
-    FP_free(rtd->pump);
-    free(rtd->lastFrameData);
-    free(rtd);
-}
-
 int Player_exec(struct player_s* player) {
     assert(player != NULL);
 
     int err = FP_EOK;
 
-    // allocate a runtime data instance
-    struct player_rtd_s* rtd = calloc(1, sizeof(*rtd));
-    if (rtd == NULL) return -FP_ENOMEM;
-    rtd->cmap = player->cmap;
+    struct player_rtd_s* rtd = NULL;   /* player runtime data */
+    char* playAudio = player->audiofp; /* audio to play */
+    char* readAudio = NULL;            /* audio fp read from sequence */
 
-    char* audiofp = player->audiofp;
-
+    // open, read and configure environment for the sequence provided
     if ((err = Seq_open(player->fc))) goto ret;
 
-    if (audiofp == NULL)// attempt to load audio file from sequence
-        if ((err = Seq_getMediaFile(player->fc, &audiofp))) goto ret;
-
-    if ((rtd->pump = FP_init(player->fc)) == NULL) {
-        err = -FP_ENOMEM;
-        goto ret;
+    if (playAudio == NULL) {// audio fp not provided, read from sequence
+        if (!(err = Seq_getMediaFile(player->fc, &readAudio))) {
+            playAudio = readAudio;
+        } else {
+            goto ret;
+        }
     }
 
+    // initialize runtime data for the player
+    if ((err = Player_newRTD(player, &rtd))) goto ret;
+
+    // sleep/wait for connection if requested
     if ((err = Player_wait(player->waitsec))) goto ret;
 
+    // play audio if available
     // TODO: print err for audio, but ignore
-    if (audiofp != NULL) Audio_play(audiofp);
+    if (playAudio != NULL) Audio_play(playAudio);
 
+    // begin the main loop of the player
     if ((err = Player_loop(rtd))) goto ret;
 
 ret:
-    free(audiofp);
+    free(readAudio);
     Player_freeRTD(rtd);
     Seq_close();
 
