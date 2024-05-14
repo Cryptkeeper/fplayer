@@ -2,8 +2,8 @@
 #include <assert.h>
 #include <string.h>
 
+#include "cell.h"
 #include "crmap.h"
-#include "transform/cell.h"
 
 #define ISIZE 16
 

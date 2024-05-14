@@ -13,6 +13,7 @@
 #include <tinyfseq.h>
 
 #include "audio.h"
+#include "cell.h"
 #include "lor/protowriter.h"
 #include "pump.h"
 #include "seq.h"
@@ -21,7 +22,6 @@
 #include "std2/errcode.h"
 #include "std2/string.h"
 #include "std2/time.h"
-#include "transform/cell.h"
 
 #ifdef _WIN32
     #include <windows.h>

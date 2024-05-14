@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <std2/errcode.h>
+#include "std2/errcode.h"
 
-#include "../crmap.h"
+#include "crmap.h"
 
 struct cell_s {
     _Bool valid : 1;     /* cell is configured and valid */
