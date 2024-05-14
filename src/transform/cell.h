@@ -1,9 +1,8 @@
 #ifndef FPLAYER_CELL_H
 #define FPLAYER_CELL_H
 
+#include <stdbool.h>
 #include <stdint.h>
-
-#include <lorproto/coretypes.h>
 
 struct ctable_s;
 
@@ -23,36 +22,29 @@ int CT_init(const struct cr_s* cmap, uint32_t size, struct ctable_s** table);
 /// @param table table to set the output on
 /// @param index index of the cell to set
 /// @param output intensity to set
-void CT_set(struct ctable_s* table, uint32_t index, LorIntensity output);
-
-/// @brief Iterates the full table and links matching neighboring cells together.
-/// This de-duplicates non-unique cells, enabling the table to be used as a
-/// compressed, pre-grouped linked list by the network serializer.
-/// This should be called after all relevant cells have had their output state
-/// initially configured, or recently updated via `CT_set`.
-/// @param table table to link
-void CT_linkall(struct ctable_s* table);
+/// @param diff if true, the cell is only marked as modified if the output
+/// intensity is different from the current value, if false, the cell is always
+/// marked as modified
+void CT_set(struct ctable_s* table, uint32_t index, uint8_t output, bool diff);
 
 struct ctgroup_s {
-    LorUnit unit;           /* unit number shared by all channels */
-    LorChannelSet cs;       /* channel selection bitmask + offset */
-    LorIntensity intensity; /* intensity output value for all channels */
-    int size;               /* the number of active channels */
+    uint8_t unit;      /* unit number shared by all channels */
+    uint8_t offset;    /* channel selection offset */
+    uint16_t cs;       /* channel selection bitmask */
+    uint8_t intensity; /* intensity output value for all channels */
+    int size;          /* the number of active channels */
 };
 
-/// @brief Gets the next group of linked cells that share the same output
-/// intensity. This should be used after `CT_linkall` as been invoked, otherwise
-/// the results will not be de-duplicated. The `from` pointer should be
-/// initialized to 0 before the first call to this function. The value is updated
-/// during the function call to enable a caller to continue iterating groups
-/// as long as the return value is successful.
-/// @param table table to get the next group from
-/// @param from pointer to the current group's starting index
-/// @param group pointer to store the group's data, always zeroed before use
-/// @return 1 if a group was found, 0 if no more groups are available
-int CT_nextgroup(struct ctable_s* table,
-                 uint32_t* from,
-                 struct ctgroup_s* group);
+/// @brief Returns a group of linked cells starting at the given index. The group
+/// is identified by the unit number, channel section, and output intensity
+/// value. Any cells that have not been modified, or do not match, are excluded
+/// from the grouping. Assuming the cell at `at` is valid and modified, `group`
+/// should always contain at least one cell.
+/// @param table table to search
+/// @param at index to start the group search
+/// @param group pointer to store the group
+/// @param 1 if a group was found, 0 if no group was found
+int CT_groupof(struct ctable_s* table, uint32_t at, struct ctgroup_s* group);
 
 /// @brief Frees the table and any held resources.
 /// @param table table to free

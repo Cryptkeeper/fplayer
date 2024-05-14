@@ -14,7 +14,7 @@
 /// @param table table to set
 /// @param intensity intensity value to set
 static void Pop_setAll(struct ctable_s* table, const uint8_t intensity) {
-    for (int i = 0; i < ISIZE; i++) CT_set(table, i, intensity);
+    for (int i = 0; i < ISIZE; i++) CT_set(table, i, intensity, false);
 }
 
 static void Test_setAll(struct ctable_s* table, const uint8_t target) {
@@ -23,20 +23,21 @@ static void Test_setAll(struct ctable_s* table, const uint8_t target) {
     /// the entire table, with the matching intensity value, expected number of
     /// results, and correctly encoded network protocol data. No further groups
     /// should be available after the first.
-    {
-        Pop_setAll(table, target);
-        CT_linkall(table);
+    Pop_setAll(table, target);
 
-        uint32_t from = 0;
-        struct ctgroup_s group;
-        assert(CT_nextgroup(table, &from, &group) == 1);
-        assert(group.size == ISIZE);
-        assert(group.unit == UNITID);
-        assert(group.cs.offset == 0);
-        assert(group.cs.channelBits == 0xFFFF);
-        assert(group.intensity == target);
+    struct ctgroup_s group;
 
-        assert(CT_nextgroup(table, &from, &group) == 0);
+    for (uint32_t at = 0; at < ISIZE; at++) {
+        if (at == 0) {
+            assert(CT_groupof(table, at, &group) == 1);
+            assert(group.size == ISIZE);
+            assert(group.unit == UNITID);
+            assert(group.offset == 0);
+            assert(group.cs == 0xFFFF);
+            assert(group.intensity == target);
+        } else {
+            assert(CT_groupof(table, at, &group) == 0);
+        }
     }
 }
 
@@ -50,7 +51,7 @@ static void
 Pop_halfAndHalf(struct ctable_s* table, const uint8_t low, const uint8_t high) {
     for (int i = 0; i < ISIZE; i++) {
         const uint8_t intensity = i < (ISIZE / 2) ? low : high;
-        CT_set(table, i, intensity);
+        CT_set(table, i, intensity, false);
     }
 }
 
@@ -63,27 +64,28 @@ static void Test_halfAndHalf(struct ctable_s* table,
     /// matching intensity value, expected number of results, and correctly
     /// encoded network protocol data. This is repeated for the second half of the
     /// table. No further groups should be available after the two.
-    {
-        Pop_halfAndHalf(table, low, high);
-        CT_linkall(table);
+    Pop_halfAndHalf(table, low, high);
 
-        uint32_t from = 0;
-        struct ctgroup_s group;
-        assert(CT_nextgroup(table, &from, &group) == 1);
-        assert(group.size == ISIZE / 2);
-        assert(group.unit == UNITID);
-        assert(group.cs.offset == 0);
-        assert(group.cs.channelBits == 0x00FF);
-        assert(group.intensity == low);
+    struct ctgroup_s group;
 
-        assert(CT_nextgroup(table, &from, &group) == 1);
-        assert(group.size == ISIZE / 2);
-        assert(group.unit == UNITID);
-        assert(group.cs.offset == 0);
-        assert(group.cs.channelBits == 0xFF00);
-        assert(group.intensity == high);
-
-        assert(CT_nextgroup(table, &from, &group) == 0);
+    for (uint32_t at = 0; at < ISIZE; at++) {
+        if (at == 0) {
+            assert(CT_groupof(table, at, &group) == 1);
+            assert(group.size == ISIZE / 2);
+            assert(group.unit == UNITID);
+            assert(group.offset == 0);
+            assert(group.cs == 0x00FF);
+            assert(group.intensity == low);
+        } else if (at == ISIZE / 2) {
+            assert(CT_groupof(table, at, &group) == 1);
+            assert(group.size == ISIZE / 2);
+            assert(group.unit == UNITID);
+            assert(group.offset == 0);
+            assert(group.cs == 0xFF00);
+            assert(group.intensity == high);
+        } else {
+            assert(CT_groupof(table, at, &group) == 0);
+        }
     }
 }
 

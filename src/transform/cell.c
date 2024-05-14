@@ -4,21 +4,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <lorproto/intensity.h>
-
 #include <std2/errcode.h>
 
 #include "../crmap.h"
 
 struct cell_s {
-    _Bool valid : 1;        /* cell is configured and valid */
-    _Bool linked : 1;       /* cell is linked to the neighboring cell */
-    _Bool outdated : 1;     /* output has changed since last frame */
-    uint8_t unit;           /* hardware unit id for routing */
-    uint8_t section;        /* circuit id / 16 for 16-bit proto alignment */
-    uint8_t offset;         /* circuit id % 16 for 16-bit proto alignment */
-    LorIntensity intensity; /* current output intensity */
+    _Bool valid : 1;     /* cell is configured and valid */
+    uint8_t unit;        /* hardware unit id for routing */
+    uint8_t section;     /* circuit id / 16 for 16-bit proto alignment */
+    uint8_t offset;      /* circuit id % 16 for 16-bit proto alignment */
+    uint8_t intensity;   /* current output intensity */
+    uint32_t changehash; /* requested effect change for quick matching */
 };
+
+static inline uint32_t CT_hash(const struct cell_s* c) {
+    assert(c != NULL);
+    assert(c->valid);
+    return (c->unit << 16) | (c->section << 8) | c->intensity;
+}
 
 struct ctable_s {
     struct cell_s* cells;
@@ -60,7 +63,8 @@ int CT_init(const struct cr_s* cmap,
         c->valid = 1;
         c->section = (channel - 1) / 16;
         c->offset = (channel - 1) % 16;
-        c->intensity = LOR_INTENSITY_MIN;
+        c->changehash = CT_hash(c);
+
         confd++;
     }
 
@@ -71,84 +75,77 @@ int CT_init(const struct cr_s* cmap,
 
 void CT_set(struct ctable_s* table,
             const uint32_t index,
-            const uint8_t output) {
+            const uint8_t output,
+            const bool diff) {
     assert(table != NULL);
     assert(index < table->size);
 
     struct cell_s* c = &table->cells[index];
-    if (c->intensity == output) return;
+    if (!c->valid || (diff && c->intensity == output)) return;
     c->intensity = output;
-    c->outdated = 1;
+    c->changehash = CT_hash(c);
 }
 
-/// @brief Determines if the two cells could be merged. This checks compatibility
-/// between the two cells, ensuring they are valid, on the same unit, within
-/// the same 16-bit aligned channel bank definition, and set to the same output.
-/// @param a first cell to compare
-/// @param b second cell to compare
-/// @return true if the cells are mergeable, false otherwise
-static _Bool CT_linkable(const struct cell_s* a, const struct cell_s* b) {
-    return a->valid && b->valid && a->unit == b->unit &&
-           a->section == b->section && a->intensity == b->intensity;
-}
+#define MAX_MATCHES 16
 
-void CT_linkall(struct ctable_s* table) {
-    assert(table != NULL);
-
-    for (uint32_t i = 0; i < table->size; i++) {
-        struct cell_s* c = &table->cells[i];
-
-        c->linked = c->valid && i < table->size - 1 &&
-                    CT_linkable(c, &table->cells[i + 1]);
-    }
-}
-
-/// @brief Finds the next valid cell in the table starting from the given index.
+/// @brief Finds all cells in the table that match the given hash value.
 /// @param table table to search
-/// @param from pointer to the current index to start searching from, returns the
-/// next valid index if successful, otherwise the value is undefined
-/// @return non-zero if a valid cell was found, zero otherwise
-static int CT_findnext(const struct ctable_s* table, uint32_t* from) {
+/// @param start index to start searching from
+/// @param hash hash value to match
+/// @param matches array to store matching cells
+/// @return the number of matching cells found
+static int CT_findMatches(struct ctable_s* table,
+                          const uint32_t start,
+                          const uint32_t hash,
+                          struct cell_s* matches[MAX_MATCHES]) {
     assert(table != NULL);
-    assert(from != NULL);
+    assert(hash > 0);
+    assert(matches != NULL);
 
-    for (; *from < table->size && !table->cells[*from].valid; (*from)++)
-        ;
-    return *from < table->size;
+    int pos = 0;
+    for (uint32_t i = start; i < table->size; i++) {
+        struct cell_s* c = &table->cells[i];
+        if (c->valid && c->changehash == hash) matches[pos++] = c;
+        if (pos >= MAX_MATCHES) break;
+    }
+    return pos;
 }
 
 #define CHANNEL_BIT(i) (1 << (i))
 
-int CT_nextgroup(struct ctable_s* table,
-                 uint32_t* from,
-                 struct ctgroup_s* group) {
+int CT_groupof(struct ctable_s* table, uint32_t at, struct ctgroup_s* group) {
     assert(table != NULL);
-    assert(from != NULL);
     assert(group != NULL);
 
     *group = (struct ctgroup_s){0};
 
-    // find the first/next valid cell within the table to handle
-    if (!CT_findnext(table, from)) return 0;
+    struct cell_s* c = &table->cells[at];
+    if (!c->valid || !c->changehash) return 0;
 
-    do {
-        const struct cell_s* c = &table->cells[*from];
-        assert(c->valid);// should not be possible to reach an invalid cell
+    struct cell_s* matches[MAX_MATCHES] = {NULL};
+    const int mc = CT_findMatches(table, at, CT_hash(c), matches);
 
-        group->cs.channelBits |= CHANNEL_BIT(c->offset);
+    assert(mc > 0);// should always find at least one match (the initial input)
+    assert(mc <= MAX_MATCHES);
 
-        // first cell in the group, copy the data that is shared across the
-        // linked cells into the group
+    // group the cells together
+    for (int i = 0; i < mc; i++) {
+        struct cell_s* m = matches[i];
+        assert(m->valid);
+        assert(m->changehash);
+
+        group->cs |= CHANNEL_BIT(m->offset);
+
+        // first cell in the group, use its data as the group's shared data
+        // (this is already known to match via the hash checking previously)
         if (group->size++ == 0) {
-            group->cs.offset = c->section;
-            group->unit = c->unit;
-            group->intensity = c->intensity;
+            group->offset = m->section;
+            group->unit = m->unit;
+            group->intensity = m->intensity;
         }
 
-        (*from)++;
-
-        // TODO: use outdated bit to determine write importance for more compression
-    } while (*from < table->size && table->cells[*from - 1].linked);
+        m->changehash = 0;// consume the hash value to prevent re-matching
+    }
 
     return 1;
 }

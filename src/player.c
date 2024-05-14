@@ -169,17 +169,16 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
     if ((err = FP_nextFrame(rtd->pump, &frameData))) return err;
 
     for (uint32_t i = 0; i < frameSize; i++)
-        CT_set(rtd->ctable, i, frameData[i]);
-    CT_linkall(rtd->ctable);
-
-    uint32_t pos = 0;
-    struct ctgroup_s group;
+        CT_set(rtd->ctable, i, frameData[i], true);
 
     LorBuffer* msg = LB_alloc();
     if (msg == NULL) return -FP_ENOMEM;// FIXME: may leak frameData
 
-    while (CT_nextgroup(rtd->ctable, &pos, &group)) {
-        // TODO
+    struct ctgroup_s group;
+    for (uint32_t i = 0; i < curSequence->channelCount; i++) {
+        if (CT_groupof(rtd->ctable, i, &group)) {
+            // TODO
+        }
     }
 
     LB_free(msg);
