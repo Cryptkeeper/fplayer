@@ -80,18 +80,27 @@ void CT_set(struct ctable_s* table,
     c->intensity = output;
 }
 
-#define MAX_MATCHES 16
-
+/// @brief Checks if two cells match, which indicates they are addressed to the
+/// same hardware controller (unit+section), and have a matching output intensity.
+/// @param a first cell to compare
+/// @param b second cell to compare
+/// @return true if the cells match, false otherwise
 static inline bool CT_matches(const struct cell_s* a, const struct cell_s* b) {
     assert(a != NULL);
     assert(b != NULL);
+
     return a->unit == b->unit && a->section == b->section &&
            a->intensity == b->intensity;
 }
 
-/// @brief Finds all cells in the table that match the given hash value.
+#define MAX_MATCHES 16
+
+/// @brief Finds all cells in the table that match the provided reference cell.
+/// The reference cell must be valid and modified. The matching cells are stored
+/// in the provided array, up to a maximum of `MAX_MATCHES`.
 /// @param table table to search
 /// @param start index to start searching from
+/// @param cmp reference cell to match against
 /// @param matches array to store matching cells
 /// @return the number of matching cells found
 static int CT_findMatches(struct ctable_s* table,
