@@ -23,7 +23,7 @@ add_subdirectory(dep/liblorproto)
 file(GLOB_RECURSE COMMON_FILES "common/*.[ch]")
 set_source_files_properties(${COMMON_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COMPILER_FLAGS})
 add_library(common STATIC ${COMMON_FILES})
-target_include_directories(common PUBLIC "dep/libtinyfseq" "dep/stb")
+target_include_directories(common PUBLIC "dep/libtinyfseq")
 target_link_libraries(common PUBLIC lorproto)
 
 # mftool executable
