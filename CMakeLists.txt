@@ -80,3 +80,8 @@ add_executable(test_cell test/cell.c src/crmap.c src/cell.c)
 target_include_directories(test_cell PRIVATE common src)
 target_link_libraries(test_cell common cjson)
 add_test(NAME cell COMMAND test_cell)
+
+add_executable(test_fd test/fd.c)
+target_include_directories(test_fd PRIVATE common)
+target_link_libraries(test_fd common)
+add_test(NAME fd COMMAND test_fd)
