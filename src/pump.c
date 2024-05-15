@@ -12,14 +12,18 @@
 #include "fseq/fd.h"
 #include "seq.h"
 #include "std2/errcode.h"
+#include "std2/fc.h"
 
 struct frame_pump_s {
     struct FC* fc;          /* file controller to read frames from */
     struct fd_node_s* curr; /* current frame set to read from */
     struct fd_node_s* next; /* preloaded frame set to read from next */
-    int cbidx;              /* current compression block index */
-    bool preloading;        /* preload ready/running flag */
-    pthread_t plthread;     /* preloading thread */
+    bool preloading;        /* preloading/preloaded state flag */
+    pthread_t thread;       /* preload thread */
+    union {
+        uint32_t frame; /* current frame index */
+        int cb;         /* current compression block index */
+    } pos;              /* current position data */
 };
 
 struct frame_pump_s* FP_init(struct FC* fc) {
@@ -32,19 +36,70 @@ struct frame_pump_s* FP_init(struct FC* fc) {
 }
 
 /// @brief Reads the next frame set from the file controller and stores it in the
+/// provided frame data node pointer. This function is used when the sequence is
+/// not compressed and read sequentially from the file controller.
+/// @param pump frame pump to read from
+/// @param frame frame index to read
+/// @param fn frame data node pointer to store the next frame set in
+/// @return 0 on success, a negative error code on failure, or `FP_ESEQEND` if
+/// the pump has reached the end of the sequence
+static int FP_readSeq(struct frame_pump_s* pump,
+                      const uint32_t frame,
+                      struct fd_node_s** fn) {
+    assert(pump != NULL);
+    assert(fn != NULL);
+
+    // attempt to read 10 seconds of frame data at a time
+    const int frames = 10000 / curSequence->frameStepTimeMillis;
+    const uint32_t pos = curSequence->channelDataOffset +
+                         (frame * curSequence->channelCount);
+
+    // allocate a single block for the full frame set
+    uint8_t* b = calloc(frames, curSequence->channelCount);
+    if (b == NULL) return -FP_ENOMEM;
+
+    const uint32_t read =
+            FC_readto(pump->fc, pos, curSequence->channelCount, frames, b);
+
+    if (read == 0) {// EOF
+        free(b);
+        return FP_ESEQEND;
+    }
+
+    // copy into frame data linked list
+    // TODO: this is a slow operation given the memory is *already* structured
+    int err = FP_EOK;
+    for (uint32_t i = 0; i < read; i++) {
+        if ((err = FD_append(fn, &b[i * curSequence->channelCount])) < 0) {
+            FD_free(*fn), *fn = NULL;
+            free(b);
+            return err;
+        }
+    }
+
+    return err;
+}
+
+/// @brief Reads the next frame set from the file controller and stores it in the
 /// provided frame data node pointer
 /// @param pump frame pump to read from
+/// @param frame frame index to read
 /// @param fn frame data node pointer to store the next frame set in
-/// @return 0 on success, a negative error code on failure
-static int FP_read(struct frame_pump_s* pump, struct fd_node_s** fn) {
+/// @return 0 on success, a negative error code on failure, or `FP_ESEQEND` if
+/// the pump has reached the end of the sequence
+static int FP_read(struct frame_pump_s* pump,
+                   const uint32_t frame,
+                   struct fd_node_s** fn) {
     assert(pump != NULL);
     assert(fn != NULL);
 
     switch (curSequence->compressionType) {
         case TF_COMPRESSION_ZSTD:
-            if (pump->cbidx >= curSequence->compressionBlockCount)
+            if (pump->pos.cb >= curSequence->compressionBlockCount)
                 return FP_ESEQEND;
-            return ComBlock_read(pump->fc, pump->cbidx++, fn);
+            return ComBlock_read(pump->fc, pump->pos.cb++, fn);
+        case TF_COMPRESSION_NONE:
+            return FP_readSeq(pump, frame, fn);
         default:
             return -FP_ENOSUP;
     }
@@ -57,7 +112,7 @@ static void* FP_thread(void* pargs) {
     struct fd_node_s* fn = NULL;
 
     int err;
-    if ((err = FP_read(pump, &fn))) {
+    if ((err = FP_read(pump, pump->pos.frame, &fn))) {
         FD_free(fn), fn = NULL;
         if (err < 0)
             fprintf(stderr, "failed to preload next frame set: %d\n", err);
@@ -70,8 +125,9 @@ static void* FP_thread(void* pargs) {
 /// of the next frame set if necessary. An empty frame pump is NOT considered
 /// low, as it will immediately read the next frame set from the file controller.
 /// @param pump frame pump to check
-/// @return true if the current frame set is running low, false otherwise
-static bool FP_testPreload(struct frame_pump_s* pump) {
+/// @param frame current frame index
+/// @return 0 on success, a negative error code on failure
+static int FP_testPreload(struct frame_pump_s* pump, const uint32_t frame) {
     assert(pump != NULL);
 
     if (pump->curr == NULL) return false; /* empty, will sync read */
@@ -79,19 +135,23 @@ static bool FP_testPreload(struct frame_pump_s* pump) {
 
     // require at least N seconds of frames to be available for playback
     const int reqd = (1000 / curSequence->frameStepTimeMillis) * 3;
-    return FD_scanDepth(pump->curr, reqd) < reqd;
+    if (FD_scanDepth(pump->curr, 0) >= reqd) return FP_EOK;
+
+    pump->preloading = true;
+    pump->pos.frame = frame + reqd;// preload starting relative to curr position
+
+    if (pthread_create(&pump->thread, NULL, FP_thread, pump))
+        return -FP_EPTHREAD;
+
+    return FP_EOK;
 }
 
-int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
+int FP_nextFrame(struct frame_pump_s* pump, uint32_t frame, uint8_t** fd) {
     assert(pump != NULL);
     assert(fd != NULL);
 
-    if (FP_testPreload(pump)) {
-        pump->preloading = true;
-
-        if (pthread_create(&pump->plthread, NULL, FP_thread, pump))
-            return -FP_EPTHREAD;
-    }
+    int err;
+    if ((err = FP_testPreload(pump, frame))) return err;
 
     // pump is empty
     // check if a preloaded frame set is available for instant consumption,
@@ -99,16 +159,14 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
     if (pump->curr == NULL) {
         // attempt to pull from a potentially pre-existing preload thread
         if (pump->preloading) {
-            if (pthread_join(pump->plthread, (void**) &pump->next))
+            if (pthread_join(pump->thread, (void**) &pump->next))
                 return -FP_EPTHREAD;
-
             pump->preloading = false;
         }
 
         if (pump->next == NULL) {
             // immediately read from source if a preload is not available
-            int err;
-            if ((err = FP_read(pump, &pump->next))) {
+            if ((err = FP_read(pump, frame, &pump->next))) {
                 FD_free(pump->next), pump->next = NULL;
                 return err;
             }
@@ -139,7 +197,7 @@ void FP_free(struct frame_pump_s* pump) {
 
     // destroy any lingering preload thread that may have been triggered,
     // loaded no data, and was therefore not joined via swapping frame sets
-    if (pump->preloading) pthread_detach(pump->plthread);
+    if (pump->preloading) pthread_detach(pump->thread);
 
     FD_free(pump->curr);
     FD_free(pump->next);

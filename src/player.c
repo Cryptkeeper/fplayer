@@ -144,8 +144,7 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
     assert(rtd->nextFrame < curSequence->frameCount);
 
     const uint32_t frameSize = curSequence->channelCount;
-
-    rtd->nextFrame++;
+    const uint32_t frameId = rtd->nextFrame++;
 
     // send a heartbeat if it has been >500ms
     static timeInstant lastHeartbeat;
@@ -166,7 +165,7 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
     uint8_t* frameData = NULL;
 
     int err;
-    if ((err = FP_nextFrame(rtd->pump, &frameData))) return err;
+    if ((err = FP_nextFrame(rtd->pump, frameId, &frameData))) return err;
 
     for (uint32_t i = 0; i < frameSize; i++)
         CT_set(rtd->ctable, i, frameData[i], true);
