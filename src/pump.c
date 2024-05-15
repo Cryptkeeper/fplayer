@@ -125,7 +125,7 @@ static void* FP_thread(void* pargs) {
 /// @param pump frame pump to check
 /// @param frame current frame index
 /// @return 0 on success, a negative error code on failure
-static int FP_testPreload(struct frame_pump_s* pump, const uint32_t frame) {
+int FP_checkPreload(struct frame_pump_s* pump, const uint32_t frame) {
     assert(pump != NULL);
 
     if (pump->curr == NULL) return false; /* empty, will sync read */
@@ -159,12 +159,9 @@ static int FP_testPreload(struct frame_pump_s* pump, const uint32_t frame) {
     return FP_EOK;
 }
 
-int FP_nextFrame(struct frame_pump_s* pump, uint32_t frame, uint8_t** fd) {
+int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
     assert(pump != NULL);
     assert(fd != NULL);
-
-    int err;
-    if ((err = FP_testPreload(pump, frame))) return err;
 
     // pump is empty
     // check if a preloaded frame set is available for instant consumption,
@@ -179,6 +176,7 @@ int FP_nextFrame(struct frame_pump_s* pump, uint32_t frame, uint8_t** fd) {
 
         if (pump->next == NULL) {
             // immediately read from source if a preload is not available
+            int err;
             if ((err = FP_read(pump, &pump->next))) {
                 FD_free(pump->next), pump->next = NULL;
                 return err;

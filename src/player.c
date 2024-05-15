@@ -165,7 +165,8 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
     uint8_t* frameData = NULL;
 
     int err;
-    if ((err = FP_nextFrame(rtd->pump, frameId, &frameData))) return err;
+    if ((err = FP_checkPreload(rtd->pump, frameId))) return err;
+    if ((err = FP_nextFrame(rtd->pump, &frameData))) return err;
 
     for (uint32_t i = 0; i < frameSize; i++)
         CT_set(rtd->ctable, i, frameData[i], true);

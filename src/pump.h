@@ -12,15 +12,23 @@ struct frame_pump_s;
 /// @return initialized frame pump, NULL on failure
 struct frame_pump_s* FP_init(struct FC* fc);
 
+/// @brief Checks if the pump's internal buffer is low, and if so, preloads the
+/// next frame set from the file controller asynchronously in a separate thread.
+/// The preloaded data is stored within the pump, allowing it to be read once
+/// the pre-existing primary buffer is empty.
+/// @param pump pump to check
+/// @param frame current frame index for aligning read position
+/// @return 0 on success, a negative error code on failure
+int FP_checkPreload(struct frame_pump_s* pump, uint32_t frame);
+
 /// @brief Copies the next frame of data from the pump to the provided frame
 /// data buffer. If the pump's internal buffer is empty, the pump will attempt
 /// to read more frames from the file controller provided during initialization.
 /// @param pump pump to copy from
-/// @param frame current frame index for aligning read position
 /// @param fd frame data pointer to return the next frame in
 /// @return 0 on success, a negative error code on failure, or `FP_ESEQEND` if
 /// the pump has reached the end of the sequence
-int FP_nextFrame(struct frame_pump_s* pump, uint32_t frame, uint8_t** fd);
+int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd);
 
 /// @brief Returns the number of frames remaining in the pump's internal buffer.
 /// @param pump pump to check
