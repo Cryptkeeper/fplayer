@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <tinyfseq.h>
 
@@ -65,16 +66,26 @@ FP_readSeq(struct FC* fc, const uint32_t frame, struct fd_node_s** fn) {
         return FP_ESEQEND;
     }
 
+    int err = FP_EOK;
+
     // copy into frame data linked list
     // TODO: this is a slow operation given the memory is *already* structured
-    int err = FP_EOK;
     for (uint32_t i = 0; i < read; i++) {
-        if ((err = FD_append(fn, &b[i * curSequence->channelCount])) < 0) {
-            FD_free(*fn), *fn = NULL;
-            free(b);
-            return err;
+        uint8_t* fd;
+        if ((fd = malloc(curSequence->channelCount)) == NULL) {
+            err = -FP_ENOMEM;
+            goto ret;
         }
+
+        memcpy(fd, &b[i * curSequence->channelCount],
+               curSequence->channelCount);
+
+        if ((err = FD_append(fn, fd)) < 0) goto ret;
     }
+
+ret:
+    if (err) FD_free(*fn), *fn = NULL;
+    free(b);
 
     return err;
 }
