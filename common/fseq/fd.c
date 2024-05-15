@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "../std2/errcode.h"
+#include "std2/errcode.h"
 
 void FD_free(struct fd_node_s* node) {
     if (node == NULL) return;

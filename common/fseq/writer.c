@@ -8,9 +8,9 @@
 
 #include <tinyfseq.h>
 
-#include "../std2/errcode.h"
-#include "../std2/fc.h"
-#include "enc.h"
+#include "fseq/enc.h"
+#include "std2/errcode.h"
+#include "std2/fc.h"
 
 #define HEADER_SIZE 32
 
