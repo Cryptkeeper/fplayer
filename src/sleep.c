@@ -2,12 +2,13 @@
 
 #include <assert.h>
 #include <math.h>
+#include <time.h>
 
 #ifdef _WIN32
     #include <windows.h>
 #endif
 
-#include "std2/time.h"
+#include <std2/time.h>
 
 /// @brief Appends the given sleep time to the sleep collector, updating the
 /// collector's internal state. This should be called after each sleep operation

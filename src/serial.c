@@ -6,7 +6,7 @@
 
 #include <libserialport.h>
 
-#include "std2/errcode.h"
+#include <std2/errcode.h>
 
 /// @brief Prints an error message to stderr for the given error code, including
 /// the libserialport error message if available.

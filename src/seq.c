@@ -6,9 +6,9 @@
 
 #include <tinyfseq.h>
 
-#include "fseq/writer.h"
-#include "std2/errcode.h"
-#include "std2/fc.h"
+#include <fseq/writer.h>
+#include <std2/errcode.h>
+#include <std2/fc.h>
 
 struct tf_header_t* curSequence;
 

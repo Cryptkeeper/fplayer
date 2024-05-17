@@ -5,8 +5,8 @@
 
 #include <cjson/cJSON.h>
 
-#include "std2/errcode.h"
-#include "std2/fc.h"
+#include <std2/errcode.h>
+#include <std2/fc.h>
 
 struct cr_s {
     uint32_t indexr[2];   /* start index (incl.), end index (incl.) */
