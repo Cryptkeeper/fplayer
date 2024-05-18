@@ -25,7 +25,6 @@ Options:
 	-t <file>		Test load channel map and exit
 	-l			Print available serial port list and exit
 	-h			Print this message and exit
-	-v			Print library versions and exit
 ```
 
 ## What's Included
@@ -76,7 +75,7 @@ In order to map the channel data from an fseq file to your real-life hardware ne
 The main consumers of the fseq file format (e.g. xLights and Falcon Player) accomplish this via a lookup operation using additional context provided by your "show directory" files. fplayer could try to parse that data and re-use it, but I don't want the complexity or the hard dependency. Instead, you provide your own lookup map by writing a basic JSON structure and providing the path as an argument to fplayer. As a bonus feature, this also means the value of a given FSEQ "channel" can be changed at program start to any value of your choice. This means you can rearrange existing sequences without modifying anything but the channel map.
 
 ### Example
-A channel map is saved in a `.json` file. For example, the following channel map maps 32-channels from the fseq file to two banks of 16 channels on two different LOR hardware units attached to the network. 
+A channel map is saved in a `.json` file. For example, the following channel map defines 32 channels from the fseq file, mapping the output to two banks of 16 channels on two different LOR hardware units attached to the network. 
 
 ```json
 [
@@ -108,7 +107,5 @@ A channel map is saved in a `.json` file. For example, the following channel map
 The `index` and `circuit` objects define the range of channels to map from the FSEQ file to the LOR hardware. The `unit` value is the LOR hardware unit number to send the data to. The `from` and `to` values are inclusive, so the first row maps FSEQ channels 0-15 to LOR channels 1-16 on unit 1. The second row maps FSEQ channels 16-31 to LOR channels 17-32 on unit 2.
 
 The length of each range must match, and fplayer will print an error at start if they do not. There is no requirement for mappings to be sequential, contiguous or cover the full fseq channel space. You can also map multiple fseq channels to the same LOR hardware channel. Any channels that are not mapped will not have any data written to them at runtime, so you don't have to worry about deleting/blank the unused channels. fplayer will print a status message when starting to notify you of any missing channel mappings.
-
-You are free to add as many mapping rows as you need to fully map the fseq's channel space. You can also "merge" channels by pointing multiple fseq channels to a single hardware channel, or vice versa. Any channels that are not mapped will not have any data written to them at runtime, so you don't have to worry about deleting/blank the unused channels.
 
 The included `channels.json` default simply maps the first 16 FSEQ channels to the first 16 channels of any connected LOR unit. This is likely what most people with AC LOR units are looking for.
