@@ -89,6 +89,52 @@ static void Test_halfAndHalf(struct ctable_s* table,
     }
 }
 
+/// @brief Generates an alternating intensity table, where the intensity value
+/// alternates between the low and high values for each channel.
+/// @param table table to set
+/// @param low low intensity value
+/// @param high high intensity value
+static void
+Pop_alternating(struct ctable_s* table, const uint8_t low, const uint8_t high) {
+    for (int i = 0; i < ISIZE; i++) {
+        const uint8_t intensity = i % 2 == 0 ? low : high;
+        CT_set(table, i, intensity, false);
+    }
+}
+
+static void Test_alternating(struct ctable_s* table,
+                             const uint8_t low,
+                             const uint8_t high) {
+    // This configures the table with an alternating intensity value. The table is
+    // then linked, and the first group is extracted. The group should contain the
+    // half the table corresponding to the low intensity value, with the matching
+    // channel bitmask layout. This is repeated for the high intensity value. No
+    // further groups should be available after the two.
+    Pop_alternating(table, low, high);
+
+    struct ctgroup_s group;
+
+    for (uint32_t at = 0; at < ISIZE; at++) {
+        if (at == 0) {
+            assert(CT_groupof(table, at, &group) == 1);
+            assert(group.size == ISIZE / 2);
+            assert(group.unit == UNITID);
+            assert(group.offset == 0);
+            assert(group.cs == 0x5555);
+            assert(group.intensity == low);
+        } else if (at == 1) {
+            assert(CT_groupof(table, at, &group) == 1);
+            assert(group.size == ISIZE / 2);
+            assert(group.unit == UNITID);
+            assert(group.offset == 0);
+            assert(group.cs == 0xAAAA);
+            assert(group.intensity == high);
+        } else {
+            assert(CT_groupof(table, at, &group) == 0);
+        }
+    }
+}
+
 int main(int argc, char** argv) {
     (void) argc;
     (void) argv;
@@ -104,6 +150,9 @@ int main(int argc, char** argv) {
 
     Test_halfAndHalf(table, 0, 0xFF);
     Test_halfAndHalf(table, 0xFF, 0x00);
+
+    Test_alternating(table, 0, 0xFF);
+    Test_alternating(table, 0xFF, 0x00);
 
     CT_free(table);
     CMap_free(cr);
