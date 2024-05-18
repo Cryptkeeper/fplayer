@@ -1,128 +1,94 @@
 #include "player.h"
 
+#include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-#include "lorproto/easy.h"
-#include "lorproto/heartbeat.h"
-#include "stb_ds.h"
+#include <lorproto/coretypes.h>
+#include <lorproto/heartbeat.h>
+#include <tinyfseq.h>
 
 #include "audio.h"
-#include "cmap.h"
-#include "comblock.h"
-#include "protowriter.h"
+#include "cell.h"
 #include "pump.h"
+#include "putil.h"
 #include "seq.h"
 #include "serial.h"
-#include "std/err.h"
-#include "std/sleep.h"
-#include "std/string.h"
-#include "std/time.h"
-#include "transform/minifier.h"
-#include "transform/netstats.h"
-#include "transform/precompute.h"
+#include "sleep.h"
+#include <lor/protowriter.h>
+#include <std2/errcode.h>
+#include <std2/string.h>
+#include <std2/time.h>
 
-#ifdef _WIN32
-    #include <windows.h>
-#endif
+struct player_rtd_s {
+    struct frame_pump_s* pump; /* frame pump for reading/queueing frame data */
+    uint32_t nextFrame;        /* index of the next frame to be played */
+    struct sleep_coll_s scoll; /* sleep collector for frame rate control */
+    struct ctable_s* ctable;   /* computed+cached channel map lookup table */
+};
 
-static FramePump gFramePump;
+static void Player_freeRTD(struct player_rtd_s* rtd) {
+    if (rtd == NULL) return;
+    FP_free(rtd->pump);
+    CT_free(rtd->ctable);
+    free(rtd);
+}
 
-static uint32_t gNextFrame;
+int Player_newRTD(const struct player_s* player, struct player_rtd_s** rtdp) {
+    assert(player != NULL);
+    assert(rtdp != NULL);
+    assert(curSequence != NULL);
 
-static uint8_t *gLastFrameData;
+    struct player_rtd_s* rtd = calloc(1, sizeof(*rtd));
+    if (rtd == NULL) return -FP_ENOMEM;
 
-// LOR hardware may require several heartbeat messages are sent
-// before it considers itself connected to the player
-// This artificially waits prior to starting playback to ensure the device is
-// considered connected and ready for frame data
-static void playerWaitForConnection(const unsigned int seconds) {
-    if (seconds == 0) return;
+    int err;
 
-    printf("waiting %u seconds for connection...\n", seconds);
+    // initialize the channel map lookup table
+    if ((err = CT_init(player->cmap, curSequence->channelCount, &rtd->ctable)))
+        goto ret;
 
-    // generate a single heartbeat message to repeatedly send
-    LorBuffer *msg = protowriter.checkout_msg();
-    lorAppendHeartbeat(msg);
-
-    // assumes 2 heartbeat messages per second (500ms delay)
-    for (unsigned int toSend = seconds * 2; toSend > 0; toSend--) {
-        protowriter.return_msg(msg);
-
-#ifdef _WIN32
-        Sleep(LOR_HEARTBEAT_DELAY_MS);
-#else
-        const struct timespec itrSleep = {
-                .tv_sec = 0,
-                .tv_nsec = LOR_HEARTBEAT_DELAY_NS,
-        };
-
-        nanosleep(&itrSleep, NULL);
-#endif
+    // initialize the frame pump for reading/queueing frame data
+    if ((rtd->pump = FP_init(player->fc)) == NULL) {
+        err = -FP_ENOMEM;
+        goto ret;
     }
+
+ret:
+    if (err) Player_freeRTD(rtd), rtd = NULL;
+    *rtdp = rtd;
+
+    return err;
 }
 
-static void playerPlayFirstAudioFile(const char *const override,
-                                     const char *const sequence) {
-    // select the override, if set, otherwise fallback to the sequence's hint
-    const char *const priority = override != NULL ? override : sequence;
-
-    if (priority != NULL) {
-        printf("preparing to play %s\n", priority);
-
-        audioPlayFile(priority);
-    } else {
-        printf("no audio file detected using override or via sequence\n");
-    }
-}
-
-static char *playerGetRemaining(void) {
-    const uint32_t framesRemaining = curSequence.frameCount - gNextFrame;
-    const long seconds =
-            framesRemaining / (1000 / curSequence.frameStepTimeMillis);
-
-    return dsprintf("%02ldm %02lds", seconds / 60, seconds % 60);
-}
-
-static void playerLogStatus(void) {
+static void Player_log(struct player_rtd_s* rtd) {
     static timeInstant gLastLog;
 
     const timeInstant now = timeGetNow();
-
     if (timeElapsedNs(gLastLog, now) < 1000000000) return;
 
     gLastLog = now;
 
-    char *const remaining = playerGetRemaining();
-    char *const sleep = Sleep_status();
-    char *const netstats = nsGetStatus();
+    const double ms = (double) Sleep_average(&rtd->scoll) / 1e6;
+    const double fps = ms > 0 ? 1000 / ms : 0;
+    char* const sleep = dsprintf("%.4fms (%.2f fps)", ms, fps);
 
-    printf("remaining: %s\tdt: %s\tpump: %4d\t%s\n", remaining, sleep,
-           framePumpGetRemaining(&gFramePump), netstats);
+    char* const remaining = PU_timeRemaining(rtd->nextFrame);
+    const int frames = FP_framesRemaining(rtd->pump);
+
+    printf("remaining: %s\tdt: %s\tpump: %4d\n", remaining, sleep, frames);
 
     free(remaining);
     free(sleep);
-    free(netstats);
 }
 
-static void playerHandleNextFrame(struct sleep_loop_t *const loop,
-                                  void *const args) {
-    if (gNextFrame >= curSequence.frameCount) {
-        Sleep_halt(loop, "out of frames");
-        return;
-    }
+static int Player_nextFrame(struct player_rtd_s* rtd) {
+    assert(rtd != NULL);
+    assert(rtd->nextFrame < curSequence->frameCount);
 
-    const uint32_t frameSize = curSequence.channelCount;
-
-    if (gLastFrameData == NULL) {
-        gLastFrameData = mustMalloc(frameSize);
-
-        // zero out the array to represent all existing intensity values as off
-        memset(gLastFrameData, 0, frameSize);
-    }
-
-    const uint32_t frame = gNextFrame++;
+    const uint32_t frameSize = curSequence->channelCount;
+    const uint32_t frameId = rtd->nextFrame++;
 
     // send a heartbeat if it has been >500ms
     static timeInstant lastHeartbeat;
@@ -130,107 +96,105 @@ static void playerHandleNextFrame(struct sleep_loop_t *const loop,
     if (timeElapsedNs(lastHeartbeat, timeGetNow()) > LOR_HEARTBEAT_DELAY_NS) {
         lastHeartbeat = timeGetNow();
 
-        LorBuffer *msg = protowriter.checkout_msg();
+        LorBuffer* msg = LB_alloc();
+        if (msg == NULL) return -FP_ENOMEM;
+
         lorAppendHeartbeat(msg);
-        protowriter.return_msg(msg);
+        Serial_write(msg->buffer, msg->offset);
+
+        LB_free(msg);
     }
 
     // fetch the current frame data
-    const uint8_t *const frameData =
-            framePumpGet(args, &gFramePump, frame, true);
+    uint8_t* frameData = NULL;
 
-    minifyStream(frameData, gLastFrameData, frameSize, frame);
+    int err;
+    if ((err = FP_checkPreload(rtd->pump, frameId))) return err;
+    if ((err = FP_nextFrame(rtd->pump, &frameData))) return err;
+
+    for (uint32_t i = 0; i < frameSize; i++)
+        CT_change(rtd->ctable, i, frameData[i]);
+
+    LorBuffer* msg = LB_alloc();
+    if (msg == NULL) return -FP_ENOMEM;// FIXME: may leak frameData
+
+    struct ctgroup_s group;
+    for (uint32_t i = 0; i < curSequence->channelCount; i++) {
+        if (CT_groupof(rtd->ctable, i, &group)) {
+            // TODO
+        }
+    }
+
+    LB_free(msg);
 
     // wait for serial to drain outbound
     // this creates back pressure that results in fps loss if the serial can't keep up
     Serial_drain();
 
-    // copy previous frame to the secondary frame buffer
-    // this enables the serial system to diff between the two frames and only
-    // write outgoing state changes
-    memcpy(gLastFrameData, frameData, frameSize);
+    free(frameData);
 
-    playerLogStatus();
+    return FP_EOK;
 }
 
-static void playerTurnOffAllLights(void) {
-    uint8_t *uids = channelMapGetUids();
+static int Player_loop(struct player_rtd_s* rtd) {
+    int err;
+    while (rtd->nextFrame < curSequence->frameCount) {
+        Sleep_do(&rtd->scoll, curSequence->frameStepTimeMillis);
 
-    for (size_t i = 0; i < arrlenu(uids); i++) {
-        LorBuffer *msg = protowriter.checkout_msg();
-        lorAppendUnitEffect(msg, LOR_EFFECT_SET_OFF, NULL, uids[i]);
-        protowriter.return_msg(msg);
+        if ((err = Player_nextFrame(rtd))) return err;
+        Player_log(rtd);
     }
 
-    arrfree(uids);
-}
-
-static void playerStartPlayback(FCHandle fc) {
-    struct sleep_loop_t loop = {
-            .intervalMs = curSequence.frameStepTimeMillis,
-            .fn = playerHandleNextFrame,
-    };
-
-    // start sequence timer loop
-    // this call blocks until playback is completed
-    Sleep_loop(&loop, fc);
-
-    printf("sequence stopped: %s\n", loop.msg);
     printf("turning off lights, waiting for end of audio...\n");
-
-    playerTurnOffAllLights();
+    if ((err = PU_lightsOff())) return err;
 
     // continue blocking until audio is finished
     // playback will continue until sequence and audio are both complete
-    while (audioCheckPlaying())
+    while (Audio_isPlaying())
         ;
 
     printf("end of sequence!\n");
 
-    // print closing remarks
-    char *const netstats = nsGetSummary();
-
-    printf("%s\n", netstats);
-    free(netstats);
+    return FP_EOK;
 }
 
-static void playerFree(void) {
-    free(gLastFrameData);
+int Player_exec(struct player_s* player) {
+    assert(player != NULL);
 
-    gLastFrameData = NULL;
-    gNextFrame = 0;
-}
+    int err = FP_EOK;
 
-void playerRun(FCHandle fc,
-               const char *const audioOverrideFilePath,
-               const PlayerOpts opts) {
-    Seq_initHeader(fc);
+    struct player_rtd_s* rtd = NULL;   /* player runtime data */
+    char* playAudio = player->audiofp; /* audio to play */
+    char* readAudio = NULL;            /* audio fp read from sequence */
 
-    if (opts.precomputeFades) {
-        char *const cacheFilePath = dsprintf("%s.pcf", FC_filepath(fc));
+    // open, read and configure environment for the sequence provided
+    if ((err = Seq_open(player->fc))) goto ret;
 
-        // load existing data or precompute and save new data
-        precomputeRun(cacheFilePath, fc);
-
-        free(cacheFilePath);
+    if (playAudio == NULL) {// audio fp not provided, read from sequence
+        if (!(err = Seq_getMediaFile(player->fc, &readAudio))) {
+            playAudio = readAudio;
+        } else {
+            goto ret;
+        }
     }
 
-    playerWaitForConnection(opts.connectionWaitS);
+    // initialize runtime data for the player
+    if ((err = Player_newRTD(player, &rtd))) goto ret;
 
-    char *audioFilePath = Seq_getMediaFile(fc);
-    playerPlayFirstAudioFile(audioOverrideFilePath, audioFilePath);
-    free(audioFilePath);// only needed to init playback
+    // sleep/wait for connection if requested
+    if ((err = PU_wait(player->waitsec))) goto ret;
 
-    // optionally override the sequence's playback rate with the CLI's value
-    if (opts.frameStepTimeOverrideMs > 0)
-        curSequence.frameStepTimeMillis = opts.frameStepTimeOverrideMs;
+    // play audio if available
+    // TODO: print err for audio, but ignore
+    if (playAudio != NULL) Audio_play(playAudio);
 
-    playerStartPlayback(fc);
+    // begin the main loop of the player
+    if ((err = Player_loop(rtd))) goto ret;
 
-    // playback finished, free resources and exit cleanly
-    precomputeFree();
+ret:
+    free(readAudio);
+    Player_freeRTD(rtd);
+    Seq_close();
 
-    framePumpFree(&gFramePump);
-
-    playerFree();
+    return err;
 }

@@ -20,7 +20,7 @@ jobs:
       - name: Install libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y libopenal-dev libalut-dev libserialport-dev libzstd-dev
+          sudo apt-get install -y libopenal-dev libalut-dev libserialport-dev libzstd-dev libcjson-dev
 
       - uses: actions/checkout@v4
         with:
@@ -30,7 +30,7 @@ jobs:
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_C_COMPILER=${{matrix.compiler}}
 
       - name: Build
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        run: cmake --build ${{github.workspace}}/build
 
       - name: CTest
         working-directory: ${{github.workspace}}/build
@@ -63,6 +63,7 @@ jobs:
             freealut:p
             libserialport:p
             winpthreads:p
+            cjson:p
 
       - uses: actions/checkout@v4
         with:
@@ -72,7 +73,7 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G Ninja
 
       - name: Build
-        run: cmake --build build --config ${{env.BUILD_TYPE}}
+        run: cmake --build build
 
       - name: CTest
         working-directory: ${{github.workspace}}\build
@@ -92,17 +93,17 @@ jobs:
       - name: Install libraries
         run: |
           brew update
-          brew install libserialport freealut zstd
+          brew install libserialport freealut zstd cjson
 
       - uses: actions/checkout@v4
         with:
           submodules: true
 
       - name: Configure CMake
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_PREFIX_PATH=$(brew --prefix)
 
       - name: Build
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+        run: cmake --build ${{github.workspace}}/build
 
       - name: CTest
         working-directory: ${{github.workspace}}/build

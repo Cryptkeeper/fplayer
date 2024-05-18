@@ -1,104 +1,116 @@
 #include "seq.h"
 
-#include <stdio.h>
+#include <assert.h>
+#include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 
-#include "tinyfseq.h"
+#include <tinyfseq.h>
 
-#include "std/err.h"
+#include <fseq/writer.h>
+#include <std2/errcode.h>
+#include <std2/fc.h>
 
-TFHeader curSequence;
+struct tf_header_t* curSequence;
 
-void Seq_initHeader(FCHandle fc) {
-    uint8_t b[32];
-    FC_read(fc, 0, sizeof(b), b);
+int Seq_open(struct FC* fc) {
+    assert(fc != NULL);
 
-    TFError err;
-    if ((err = TFHeader_read(b, sizeof(b), &curSequence, NULL)))
-        fatalf(E_APP, "error parsing fseq: %s\n", TFError_string(err));
-}
+    uint8_t b[32] = {0};
+    if (!FC_read(fc, 0, sizeof(b), b)) return -FP_ESYSCALL;
 
-static char *Seq_readVar(uint8_t **readIdx,
-                         const int remaining,
-                         TFVarHeader *varHeader,
-                         void *varData,
-                         const uint16_t varDataSize) {
-    TFError err;
-    if ((err = TFVarHeader_read(*readIdx, remaining, varHeader, varData,
-                                varDataSize, readIdx)))
-        fatalf(E_APP, "error parsing fseq var: %s\n", TFError_string(err));
+    if ((curSequence = calloc(1, sizeof(*curSequence))) == NULL)
+        return -FP_ENOMEM;
 
-    const int varHeaderSize = 4; /* size of binary var header */
-
-    const size_t varLen = varHeader->size - varHeaderSize;
-    char *const varString = mustMalloc(varLen);
-
-    // never copy final character since it will be NULL terminated, this may
-    // accidentally truncate a non-NULL terminated string
-    memcpy(varString, varData, varLen - 1);
-
-    // ensures string is NULL terminated
-    varString[varLen - 1] = '\0';
-
-    return varString;
-}
-
-char *Seq_getMediaFile(FCHandle fc) {
-    const uint16_t varTableSize =
-            curSequence.channelDataOffset - curSequence.variableDataOffset;
-
-    if (varTableSize == 0) return NULL;
-
-    uint8_t *const varTable = mustMalloc(varTableSize);
-
-    FC_read(fc, curSequence.variableDataOffset, varTableSize, varTable);
-
-    // re-use varTableSize since the size of any individual variable cannot
-    // exceed the total size of the variable data table
-    char *varData = mustMalloc(varTableSize);
-
-    char *mf = NULL; /* matched media file path variable value */
-
-    TFVarHeader hdr;
-    uint8_t *head = &varTable[0];
-
-    for (int remaining = varTableSize; remaining > 4 /* var header size */;
-         remaining -= hdr.size) {
-        char *str = Seq_readVar(&head, remaining, &hdr, varData, varTableSize);
-
-        printf("var '%c%c': %s\n", hdr.id[0], hdr.id[1], str);
-
-        // mf = Media File variable, contains audio filepath
-        // caller is responsible for freeing `audioFilePath` copy return
-        if (hdr.id[0] == 'm' && hdr.id[1] == 'f' && mf == NULL) {
-            mf = str;
-            continue;
-        }
-
-        free(str);
+    if (TFHeader_read(b, sizeof(b), curSequence, NULL)) {
+        free(curSequence), curSequence = NULL;
+        return -FP_EDECODE;
     }
 
-    free(varData);
-    free(varTable);
-
-    return mf;
+    return FP_EOK;
 }
 
-uint32_t Seq_readFrames(FCHandle fc,
-                        const struct seq_read_args_t args,
-                        uint8_t *const b) {
-    uint32_t frameCount = args.frameCount;
+void Seq_close(void) {
+    free(curSequence), curSequence = NULL;
+}
 
-    // ensure the requested frame count does not exceed the total frame count
-    if (args.startFrame + args.frameCount > curSequence.frameCount)
-        frameCount = curSequence.frameCount - args.startFrame;
+#define VARHEADER_SIZE 4
 
-    const uint32_t pos =
-            curSequence.channelDataOffset + args.startFrame * args.frameSize;
+/// @brief Reads a variable from the variable table and populates the provided
+/// `var` struct with the variable id, size, and value. The variable value is
+/// allocated and must be freed by the caller.
+/// @param head pointer to the current variable table position, updated to the
+/// next variable position on return
+/// @param remaining the number of bytes remaining in the variable table
+/// @param var the variable struct to populate with the read variable
+/// @return 0 on success, a negative error code on failure
+static int
+Seq_readVar(uint8_t** head, const int remaining, struct fseq_var_s* var) {
+    assert(head != NULL);
+    assert(var != NULL);
 
-    const uint32_t framesRead =
-            FC_readto(fc, pos, args.frameSize, frameCount, b);
+    // fetch the variable header for sizing information
+    struct tf_var_header_t h = {0};
+    if (TFVarHeader_read(*head, remaining, &h, NULL, 0, NULL))
+        return -FP_EDECODE;
 
-    return framesRead;
+    // allocate a buffer for the decoded variable data
+    // remove extra bytes that store id+size
+    if ((var->value = malloc(h.size - VARHEADER_SIZE)) == NULL)
+        return -FP_ENOMEM;
+
+    // read the variable data into the buffer
+    if (TFVarHeader_read(*head, remaining, &h, (uint8_t*) var->value,
+                         h.size - VARHEADER_SIZE, head)) {
+        free(var->value);
+        var->value = NULL;
+        return -FP_EDECODE;
+    }
+
+    var->size = h.size - VARHEADER_SIZE;
+
+    return FP_EOK;
+}
+
+int Seq_getMediaFile(struct FC* fc, char** value) {
+    assert(fc != NULL);
+    assert(value != NULL);
+
+    const uint16_t varTableSize =
+            curSequence->channelDataOffset - curSequence->variableDataOffset;
+    if (varTableSize == 0) return FP_EOK;
+
+    uint8_t* varTable = NULL; /* table of all variable data */
+    if ((varTable = malloc(varTableSize)) == NULL) return -FP_ENOMEM;
+
+    if (FC_read(fc, curSequence->variableDataOffset, varTableSize, varTable) <
+        varTableSize) {
+        free(varTable);
+        return -FP_ESYSCALL;
+    }
+
+    struct fseq_var_s var = {0};
+
+    uint8_t* head = &varTable[0];
+    for (int remaining = varTableSize; remaining > VARHEADER_SIZE;) {
+        // read the next available variable
+        int err;
+        if ((err = Seq_readVar(&head, remaining, &var))) {
+            free(varTable);
+            return err;
+        }
+
+        if (var.id[0] == 'm' && var.id[1] == 'f') {
+            *value = var.value;
+            goto ret;
+        }
+
+        free(var.value);// throw away the read value, it's not the media file
+        remaining -= var.size + VARHEADER_SIZE;// update remaining bytes
+    }
+
+    *value = NULL;// no match
+
+ret:
+    free(varTable);
+    return FP_EOK;
 }
