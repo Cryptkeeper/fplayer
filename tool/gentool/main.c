@@ -10,10 +10,10 @@
 #include <tinyfseq.h>
 #include <zstd.h>
 
-#include "fseq/writer.h"
-#include "std2/errcode.h"
-#include "std2/fc.h"
-#include "std2/string.h"
+#include <fseq/writer.h>
+#include <std2/errcode.h>
+#include <std2/fc.h>
+#include <std2/string.h>
 
 /// @brief Generates a variable wrapper struct for the given id and string
 /// value. The size of the string is calculated using strlen, which requires a

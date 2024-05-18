@@ -71,37 +71,44 @@ macOS, Ubuntu and Windows build downloads are available as artifacts via [Action
 FreeBSD is generally supported, although the build is not automated due to GitHub Actions' lack of support in its Action Runner.
 
 ## Channel Maps
-Somewhat unique to fplayer as a requirement is a "channel map". FSEQ files provide a 0-indexed array of frame data, each key a "channel", and the interpreting program is responsible for passing off its value ("brightness") to the corresponding device I/O driver. The main consumers of the fseq file format (e.g. xLights and Falcon Player) accomplish this via a lookup operation using additional context provided by your "show directory" files. 
+In order to map the channel data from an fseq file to your real-life hardware network, fplayer requires you to configure a channel map: fseq files provide a 0-indexed array of frame data, each key a "channel", and the interpreting program is responsible for passing off its value ("brightness") to the corresponding device I/O driver. 
 
-fplayer could try to parse that data and re-use it, but I don't want the complexity or the hard dependency. Instead, you provide your own lookup map using basic annotations in a `.csv` file. As a bonus feature, this also means the value of a given FSEQ "channel" can be changed at program start to any value of your choice. This means you can rearrange existing sequences without modifying anything but the channel map.
+The main consumers of the fseq file format (e.g. xLights and Falcon Player) accomplish this via a lookup operation using additional context provided by your "show directory" files. fplayer could try to parse that data and re-use it, but I don't want the complexity or the hard dependency. Instead, you provide your own lookup map by writing a basic JSON structure and providing the path as an argument to fplayer. As a bonus feature, this also means the value of a given FSEQ "channel" can be changed at program start to any value of your choice. This means you can rearrange existing sequences without modifying anything but the channel map.
 
-### Example Syntax
-Each channel map is saved in a `.csv` file (comma-seperated values) with 5 values on each row (you guessed it: seperated by commas). Any line beginning with a `#` is treated as a comment and ignored. Blank lines are ignored. Here, everything is shown as a table to focus on the values being configured:
+### Example
+A channel map is saved in a `.json` file. For example, the following channel map maps 32-channels from the fseq file to two banks of 16 channels on two different LOR hardware units attached to the network. 
 
-| FSEQ Start Channel | FSEQ End Channel | LOR Unit | LOR Start Channel | LOR End Channel |
-| --- | --- | --- | --- | --- |
-| 0 | 15 | 1 | 1 | 16 |
-| 16 | 19 | 2 | 1 | 4 |
-
-This maps the first 16 FSEQ channels (0-15, remember the data is 0-indexed) to channels 1-16 (LOR channels are 1-indexed) on unit 1. In order to correctly map between the two ranges, the number of channels on each "side" must match. There are no restrictions on values besides basic limits checking, you are responsible for ensuring your values are correct.
-
-The second row maps the next four FSEQ channels `16, 17, 18 & 19` to the first four channels of another unit, 2. These two rows have mapped a combined 20 channels. The fact they were defined sequentially, and without gaps, doesn't matter.
-
-You are free to add as many mapping rows as you need to fully map the FSEQ channel space. Any channels that are not mapped will not have any data written to them at runtime, so you don't have to worry about deleting/blank the unused channels.
-
+```json
+[
+   {
+      "index": {
+         "from": 0,
+         "to": 15
+      },
+      "circuit": {
+         "from": 1,
+         "to": 16
+      },
+      "unit": 1
+   },
+   {
+      "index": {
+         "from": 16,
+         "to": 31
+      },
+      "circuit": {
+         "from": 17,
+         "to": 32
+      },
+      "unit": 2
+   }
+]
 ```
-# redirect FSEQ channels 0,1,2 to LOR 1 to fix a mistake in my sequence
-# this is a comment, they get ignored!
-0,0,255,1,1
-1,1,255,1,1
-2,2,255,1,1
-```
 
-You can also "merge" channels by pointing them to a single output. In this case, FSEQ channels `0, 1 & 2` all output to LOR channel 1 on all connected units. A unit value of `255` indicates "all units" and can be used as a shortcut if you are only controlling one unit, or want all units to behave the same.
+The `index` and `circuit` objects define the range of channels to map from the FSEQ file to the LOR hardware. The `unit` value is the LOR hardware unit number to send the data to. The `from` and `to` values are inclusive, so the first row maps FSEQ channels 0-15 to LOR channels 1-16 on unit 1. The second row maps FSEQ channels 16-31 to LOR channels 17-32 on unit 2.
 
-The included `channels.csv` default simply maps the first 16 FSEQ channels to the first 16 channels of any connected LOR unit. This is likely what most people with AC LOR units are looking for.
+The length of each range must match, and fplayer will print an error at start if they do not. There is no requirement for mappings to be sequential, contiguous or cover the full fseq channel space. You can also map multiple fseq channels to the same LOR hardware channel. Any channels that are not mapped will not have any data written to them at runtime, so you don't have to worry about deleting/blank the unused channels. fplayer will print a status message when starting to notify you of any missing channel mappings.
 
-```
-# FSEQ start, end, LOR unit, start, end
-0,15,255,1,16
-```
+You are free to add as many mapping rows as you need to fully map the fseq's channel space. You can also "merge" channels by pointing multiple fseq channels to a single hardware channel, or vice versa. Any channels that are not mapped will not have any data written to them at runtime, so you don't have to worry about deleting/blank the unused channels.
+
+The included `channels.json` default simply maps the first 16 FSEQ channels to the first 16 channels of any connected LOR unit. This is likely what most people with AC LOR units are looking for.

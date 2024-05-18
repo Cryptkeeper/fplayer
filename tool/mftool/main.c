@@ -9,10 +9,10 @@
 #define TINYFSEQ_IMPLEMENTATION
 #include <tinyfseq.h>
 
-#include "fseq/writer.h"
-#include "std2/errcode.h"
-#include "std2/fc.h"
-#include "std2/string.h"
+#include <fseq/writer.h>
+#include <std2/errcode.h>
+#include <std2/fc.h>
+#include <std2/string.h>
 
 /// @brief Copies the source sequence's binary configuration data section for
 /// compression blocks and channel ranges to the destination file. The data is
