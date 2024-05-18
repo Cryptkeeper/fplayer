@@ -13,6 +13,7 @@
 struct tf_header_t* curSequence;
 
 int Seq_open(struct FC* fc) {
+    assert(curSequence == NULL);
     assert(fc != NULL);
 
     uint8_t b[32] = {0};
@@ -72,6 +73,7 @@ Seq_readVar(uint8_t** head, const int remaining, struct fseq_var_s* var) {
 }
 
 int Seq_getMediaFile(struct FC* fc, char** value) {
+    assert(curSequence != NULL);
     assert(fc != NULL);
     assert(value != NULL);
 
