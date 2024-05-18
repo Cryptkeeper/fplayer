@@ -68,13 +68,24 @@ int CT_init(const struct cr_s* cmap,
 
 void CT_set(struct ctable_s* table,
             const uint32_t index,
-            const uint8_t output,
-            const bool diff) {
+            const uint8_t output) {
     assert(table != NULL);
     assert(index < table->size);
 
     struct cell_s* c = &table->cells[index];
-    if (!c->valid || (diff && c->intensity == output)) return;
+    if (!c->valid) return;
+    c->modified = 1;
+    c->intensity = output;
+}
+
+void CT_change(struct ctable_s* table,
+               const uint32_t index,
+               const uint8_t output) {
+    assert(table != NULL);
+    assert(index < table->size);
+
+    struct cell_s* c = &table->cells[index];
+    if (!c->valid || c->intensity == output) return;
     c->modified = 1;
     c->intensity = output;
 }
@@ -84,7 +95,7 @@ void CT_set(struct ctable_s* table,
 /// @param a first cell to compare
 /// @param b second cell to compare
 /// @return true if the cells match, false otherwise
-static inline bool CT_matches(const struct cell_s* a, const struct cell_s* b) {
+static inline int CT_matches(const struct cell_s* a, const struct cell_s* b) {
     assert(a != NULL);
     assert(b != NULL);
 

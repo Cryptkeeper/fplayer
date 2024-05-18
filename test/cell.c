@@ -14,7 +14,7 @@
 /// @param table table to set
 /// @param intensity intensity value to set
 static void Pop_setAll(struct ctable_s* table, const uint8_t intensity) {
-    for (int i = 0; i < ISIZE; i++) CT_set(table, i, intensity, false);
+    for (int i = 0; i < ISIZE; i++) CT_set(table, i, intensity);
 }
 
 static void Test_setAll(struct ctable_s* table, const uint8_t target) {
@@ -51,7 +51,7 @@ static void
 Pop_halfAndHalf(struct ctable_s* table, const uint8_t low, const uint8_t high) {
     for (int i = 0; i < ISIZE; i++) {
         const uint8_t intensity = i < (ISIZE / 2) ? low : high;
-        CT_set(table, i, intensity, false);
+        CT_set(table, i, intensity);
     }
 }
 
@@ -98,7 +98,7 @@ static void
 Pop_alternating(struct ctable_s* table, const uint8_t low, const uint8_t high) {
     for (int i = 0; i < ISIZE; i++) {
         const uint8_t intensity = i % 2 == 0 ? low : high;
-        CT_set(table, i, intensity, false);
+        CT_set(table, i, intensity);
     }
 }
 

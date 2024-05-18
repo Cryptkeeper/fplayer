@@ -4,31 +4,22 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #include <lorproto/coretypes.h>
-#include <lorproto/easy.h>
-#include <lorproto/effect.h>
 #include <lorproto/heartbeat.h>
-#include <lorproto/uid.h>
 #include <tinyfseq.h>
 
 #include "audio.h"
 #include "cell.h"
-#include "lor/protowriter.h"
 #include "pump.h"
+#include "putil.h"
 #include "seq.h"
 #include "serial.h"
 #include "sleep.h"
-#include "std2/errcode.h"
-#include "std2/string.h"
-#include "std2/time.h"
-
-#ifdef _WIN32
-    #include <windows.h>
-#else
-    #include <time.h>
-#endif
+#include <lor/protowriter.h>
+#include <std2/errcode.h>
+#include <std2/string.h>
+#include <std2/time.h>
 
 struct player_rtd_s {
     struct frame_pump_s* pump; /* frame pump for reading/queueing frame data */
@@ -71,53 +62,6 @@ ret:
     return err;
 }
 
-/// @brief Compensates for the player to connect to the LOR hardware by sending
-/// heartbeat messages for the given number of seconds.
-/// @param seconds number of seconds to wait for connection
-/// @return 0 on success, a negative error code on failure
-static int Player_wait(const unsigned int seconds) {
-    // LOR hardware may require several heartbeat messages are sent
-    // before it considers itself connected to the player
-    // This artificially waits prior to starting playback to ensure the device is
-    // considered connected and ready for frame data
-    if (seconds == 0) return FP_EOK;
-
-    printf("waiting %u seconds for connection...\n", seconds);
-
-    // generate a single heartbeat message to repeatedly send
-    LorBuffer* msg = LB_alloc();
-    if (msg == NULL) return -FP_ENOMEM;
-
-    lorAppendHeartbeat(msg);
-
-    // assumes 2 heartbeat messages per second (500ms delay)
-    for (unsigned int toSend = seconds * 2; toSend > 0; toSend--) {
-        Serial_write(msg->buffer, msg->offset);
-
-#ifdef _WIN32
-        Sleep(LOR_HEARTBEAT_DELAY_MS);
-#else
-        const struct timespec itrSleep = {
-                .tv_sec = 0,
-                .tv_nsec = LOR_HEARTBEAT_DELAY_NS,
-        };
-        nanosleep(&itrSleep, NULL);
-#endif
-    }
-
-    LB_free(msg);
-
-    return FP_EOK;
-}
-
-static char* Player_timeRemaining(struct player_rtd_s* rtd) {
-    const uint32_t framesRemaining = curSequence->frameCount - rtd->nextFrame;
-    const long seconds =
-            framesRemaining / (1000 / curSequence->frameStepTimeMillis);
-
-    return dsprintf("%02ldm %02lds", seconds / 60, seconds % 60);
-}
-
 static void Player_log(struct player_rtd_s* rtd) {
     static timeInstant gLastLog;
 
@@ -130,8 +74,7 @@ static void Player_log(struct player_rtd_s* rtd) {
     const double fps = ms > 0 ? 1000 / ms : 0;
     char* const sleep = dsprintf("%.4fms (%.2f fps)", ms, fps);
 
-    char* const remaining = Player_timeRemaining(rtd);
-
+    char* const remaining = PU_timeRemaining(rtd->nextFrame);
     const int frames = FP_framesRemaining(rtd->pump);
 
     printf("remaining: %s\tdt: %s\tpump: %4d\n", remaining, sleep, frames);
@@ -170,7 +113,7 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
     if ((err = FP_nextFrame(rtd->pump, &frameData))) return err;
 
     for (uint32_t i = 0; i < frameSize; i++)
-        CT_set(rtd->ctable, i, frameData[i], true);
+        CT_change(rtd->ctable, i, frameData[i]);
 
     LorBuffer* msg = LB_alloc();
     if (msg == NULL) return -FP_ENOMEM;// FIXME: may leak frameData
@@ -193,34 +136,17 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
     return FP_EOK;
 }
 
-static int Player_lightsOff(void) {
-    LorBuffer* msg;
-    if ((msg = LB_alloc()) == NULL) return -FP_ENOMEM;
-
-    for (uint8_t u = LOR_UNIT_MIN; u <= LOR_UNIT_MAX; u++) {
-        lorAppendUnitEffect(msg, LOR_EFFECT_SET_OFF, NULL, u);
-        Serial_write(msg->buffer, msg->offset);
-        LB_rewind(msg);
-    }
-
-    LB_free(msg);
-    return FP_EOK;
-}
-
 static int Player_loop(struct player_rtd_s* rtd) {
     int err;
-
     while (rtd->nextFrame < curSequence->frameCount) {
         Sleep_do(&rtd->scoll, curSequence->frameStepTimeMillis);
 
         if ((err = Player_nextFrame(rtd))) return err;
-
         Player_log(rtd);
     }
 
     printf("turning off lights, waiting for end of audio...\n");
-
-    if ((err = Player_lightsOff())) return err;
+    if ((err = PU_lightsOff())) return err;
 
     // continue blocking until audio is finished
     // playback will continue until sequence and audio are both complete
@@ -256,7 +182,7 @@ int Player_exec(struct player_s* player) {
     if ((err = Player_newRTD(player, &rtd))) goto ret;
 
     // sleep/wait for connection if requested
-    if ((err = Player_wait(player->waitsec))) goto ret;
+    if ((err = PU_wait(player->waitsec))) goto ret;
 
     // play audio if available
     // TODO: print err for audio, but ignore

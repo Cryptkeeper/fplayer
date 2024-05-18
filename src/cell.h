@@ -1,7 +1,6 @@
 #ifndef FPLAYER_CELL_H
 #define FPLAYER_CELL_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 struct ctable_s;
@@ -18,14 +17,21 @@ struct cr_s;
 /// @return 0 on success, or a negative error code on failure
 int CT_init(const struct cr_s* cmap, uint32_t size, struct ctable_s** table);
 
-/// @brief Sets the output intensity for the cell at the given index.
+/// @brief Sets the output intensity for the cell at the given index. This marks
+/// the cell as modified, regardless if the new output intensity is the same as
+/// the current value.
 /// @param table table to set the output on
 /// @param index index of the cell to set
 /// @param output intensity to set
-/// @param diff if true, the cell is only marked as modified if the output
-/// intensity is different from the current value, if false, the cell is always
-/// marked as modified
-void CT_set(struct ctable_s* table, uint32_t index, uint8_t output, bool diff);
+void CT_set(struct ctable_s* table, uint32_t index, uint8_t output);
+
+/// @brief Changes the output intensity for the cell at the given index. This
+/// only marks the cell as modified if the new output intensity is different from
+/// the current value.
+/// @param table table to change the output on
+/// @param index index of the cell to change
+/// @param output intensity to change to
+void CT_change(struct ctable_s* table, uint32_t index, uint8_t output);
 
 struct ctgroup_s {
     uint8_t unit;      /* unit number shared by all channels */
