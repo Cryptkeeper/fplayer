@@ -22,15 +22,11 @@ add_subdirectory(dep/liblorproto)
 
 # clang sanitizer flags
 option(USE_ASAN "enable AddressSanitizer" OFF)
-option(USE_MSAN "enable MemorySanitizer" OFF)
 option(USE_UBSAN "enable UndefinedBehaviorSanitizer" OFF)
 
 if (USE_ASAN)
     message(STATUS "AddressSanitizer enabled")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
-elseif (USE_MSAN)
-    message(STATUS "MemorySanitizer enabled")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=memory")
 elseif (USE_UBSAN)
     message(STATUS "UndefinedBehaviorSanitizer enabled")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
@@ -96,9 +92,6 @@ add_test(NAME sl COMMAND test_sl)
 add_executable(test_cell test/cell.c src/crmap.c src/cell.c)
 target_include_directories(test_cell PRIVATE common src)
 target_link_libraries(test_cell common cjson)
-if (USE_MSAN) # MemorySanitizer ignorelist to avoid cJSON undefined value false positives
-    target_compile_options(test_cell PRIVATE "-fsanitize-ignorelist=${CMAKE_SOURCE_DIR}/test/msan_ignorelist.txt")
-endif ()
 add_test(NAME cell COMMAND test_cell)
 
 add_executable(test_fd test/fd.c)

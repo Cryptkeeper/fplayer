@@ -75,7 +75,7 @@ FreeBSD is generally supported, although the build is not automated due to GitHu
 ## Tests & Sanitizers
 Test coverage is provided by CTest for components of fplayer and most of the libraries supporting it (libtinyfseq, liblorproto, and the repo-specific common library).
 
-GitHub Actions workflows provide sanitizer coverage using [AddressSanitizer, MemorySanitizer and UBSan](https://github.com/google/sanitizers) or [Valgrind](https://valgrind.org) (depending on the toolchain). You may enable any of the sanitizers in your CMake build using `-DUSE_ASAN=ON`, `-DUSE_MSAN=ON` and `-DUSE_UBSAN=ON`.
+GitHub Actions workflows provide sanitizer coverage using [AddressSanitizer and UBSan](https://github.com/google/sanitizers) and/or [Valgrind](https://valgrind.org) (depending on the toolchain). You may enable any of the sanitizers in your CMake build using `-DUSE_ASAN=ON` and/or `-DUSE_UBSAN=ON`.
 
 [libFuzzer](https://llvm.org/docs/LibFuzzer.html) is used to provide basic fuzzing coverage for the fseq file format parsing library used by fplayer, [libtinyfseq](https://github.com/Cryptkeeper/libtinyfseq).
 

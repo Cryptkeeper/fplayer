@@ -1,6 +1,0 @@
-# CR_parse operates via cJSON, which is likely not compiled with MemorySanitizer, so we exclude it from the test.
-fun:CR_parse
-# CMap_lookup requires data initialized by CR_parse, so we exclude it from the test by association.
-fun:CMap_lookup
-# sp_* functions are provided by libserialport
-fun:sp_*
