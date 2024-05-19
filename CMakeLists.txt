@@ -20,6 +20,19 @@ endif ()
 enable_testing()
 add_subdirectory(dep/liblorproto)
 
+# clang sanitizer flags
+option(USE_ASAN "enable AddressSanitizer" OFF)
+option(USE_UBSAN "enable UndefinedBehaviorSanitizer" OFF)
+
+if (USE_ASAN)
+    message(STATUS "AddressSanitizer enabled")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+elseif (USE_UBSAN)
+    message(STATUS "UndefinedBehaviorSanitizer enabled")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
+endif ()
+
+# common shared library
 file(GLOB_RECURSE COMMON_FILES "common/*.[ch]")
 set_source_files_properties(${COMMON_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COMPILER_FLAGS})
 add_library(common STATIC ${COMMON_FILES})

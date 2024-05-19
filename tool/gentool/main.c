@@ -219,7 +219,7 @@ static int generateChannelData(struct FC* fc,
         writePos += cmpSize;
 
         // update the matching compression block struct
-        *blocks[idx] = (struct tf_compression_block_t){
+        (*blocks)[idx] = (struct tf_compression_block_t){
                 .firstFrameId = firstFrameId,
                 .size = cmpSize,
         };

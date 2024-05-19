@@ -155,6 +155,17 @@ static int fseqVarsAppend(struct fseq_var_s** vars,
 
 #define VAR_HEADER_SIZE 4
 
+/// @brief Reads the variable size from the given variable data header. The
+/// variable size is the total size of the variable data, minus the header (4).
+/// @param head variable data header
+/// @return the variable size, or -1 to indicate an invalid variable size
+static int32_t fseqReadVarSize(const uint8_t* head) {
+    uint16_t s = 0;
+    memcpy(&s, head, sizeof(s));
+    if (s <= VAR_HEADER_SIZE) return -1;
+    return s - VAR_HEADER_SIZE;
+}
+
 /// @brief Reads the sequence variables from the given file path. The variables
 /// are stored in a dynamically allocated array of `fseq_var_s` structs. The
 /// caller is responsible for freeing the returned array and its contents.
@@ -204,10 +215,11 @@ static int fseqReadVars(const char* fp, struct fseq_var_s** vars, int* count) {
         // only valid until `pos` is modified at end of block
         const uint8_t* head = &varData[pos];
 
-        const int32_t varLen =
-                (int32_t) ((uint16_t*) head)[0] - VAR_HEADER_SIZE;
-
-        assert(varLen > 0);
+        const int32_t varLen = fseqReadVarSize(head);
+        if (varLen <= 0) {
+            err = -FP_EDECODE;
+            goto ret;
+        }
 
         // size includes 4-byte structure, manually offset
         char* const varString = malloc(varLen);

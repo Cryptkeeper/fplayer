@@ -63,11 +63,21 @@ I have included a few package manager commands below to install the dependencies
     - macOS users with the dependencies provided via Homebrew should append `-DCMAKE_PREFIX_PATH=$(brew --prefix)`
     - FreeBSD users may need to append `-DCMAKE_PREFIX_PATH=/usr/local` to correctly link with system libraries
 3. Compile the project with `cmake --build build`
+4. (Optional) Run CTests with `cd build && ctest .`
+
+fplayer can be compiled using (at least) clang and gcc.
 
 ## Artifacts
-macOS, Ubuntu and Windows build downloads are available as artifacts via [Actions](https://github.com/Cryptkeeper/fplayer/actions).
+macOS, Ubuntu and Windows build downloads are available as artifacts via [GitHub Actions](https://github.com/Cryptkeeper/fplayer/actions).
 
 FreeBSD is generally supported, although the build is not automated due to GitHub Actions' lack of support in its Action Runner.
+
+## Tests & Sanitizers
+Test coverage is provided by CTest for components of fplayer and most of the libraries supporting it (libtinyfseq, liblorproto, and the repo-specific common library).
+
+GitHub Actions workflows provide sanitizer coverage using [AddressSanitizer and UBSan](https://github.com/google/sanitizers) and/or [Valgrind](https://valgrind.org) (depending on the toolchain). You may enable any of the sanitizers in your CMake build using `-DUSE_ASAN=ON` and/or `-DUSE_UBSAN=ON`.
+
+[libFuzzer](https://llvm.org/docs/LibFuzzer.html) is used to provide basic fuzzing coverage for the fseq file format parsing library used by fplayer, [libtinyfseq](https://github.com/Cryptkeeper/libtinyfseq).
 
 ## Channel Maps
 In order to map the channel data from an fseq file to your real-life hardware network, fplayer requires you to configure a channel map: fseq files provide a 0-indexed array of frame data, each key a "channel", and the interpreting program is responsible for passing off its value ("brightness") to the corresponding device I/O driver. 

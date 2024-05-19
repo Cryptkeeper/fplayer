@@ -94,7 +94,12 @@ static int CR_parse(const char* s, struct cr_s** cr) {
         err = -FP_EBADJSON;
         goto ret;
     }
+
     const int size = cJSON_GetArraySize(obj);
+    if (size <= 0) {
+        if (size < 0) err = -FP_EBADJSON;// size == 0 is weird, but not an error
+        goto ret;
+    }
 
     // allocate a single block for backing the node linked list
     if ((*cr = calloc(size, sizeof(struct cr_s))) == NULL) {
@@ -103,7 +108,7 @@ static int CR_parse(const char* s, struct cr_s** cr) {
     }
 
     int index = 0;
-    cJSON* item;
+    cJSON* item = NULL;
     cJSON_ArrayForEach(item, obj) {
         if (!cJSON_IsObject(item)) {
             err = -FP_EBADJSON;
