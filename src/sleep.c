@@ -53,7 +53,7 @@ static void Sleep_step(const int64_t ns) {
     int64_t est = 1000000; /* estimated ns required to sleep one millisecond */
     int64_t mean = 0;      /* sum of sleep times used to calculate mean */
     int64_t m2 = 0;        /* sum of squared differences from the mean */
-    unsigned itr = 0;      /* number of sleep iterations */
+    unsigned itr = 1;      /* number of sleep iterations */
     int64_t rem = ns;      /* remaining ns to sleep */
 
     while (rem > est) {
