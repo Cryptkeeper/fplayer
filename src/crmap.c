@@ -103,7 +103,7 @@ static int CR_parse(const char* s, struct cr_s** cr) {
     }
 
     int index = 0;
-    cJSON* item;
+    cJSON* item = NULL;
     cJSON_ArrayForEach(item, obj) {
         if (!cJSON_IsObject(item)) {
             err = -FP_EBADJSON;
