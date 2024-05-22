@@ -7,7 +7,6 @@
 
 #include <lorproto/coretypes.h>
 #include <lorproto/easy.h>
-#include <lorproto/heartbeat.h>
 #include <tinyfseq.h>
 
 #include "audio.h"
@@ -89,23 +88,6 @@ static void Player_log(struct player_rtd_s* rtd) {
     free(sleep);
 }
 
-static int Player_checkHeartbeat(struct player_rtd_s* rtd) {
-    // send a heartbeat if it has been >500ms
-    const timeInstant now = timeGetNow();
-    if (timeElapsedNs(rtd->lastHeartbeat, now) < LOR_HEARTBEAT_DELAY_NS)
-        return FP_EOK;
-    rtd->lastHeartbeat = now;
-
-    LorBuffer* msg = LB_alloc();
-    if (msg == NULL) return -FP_ENOMEM;
-
-    lorAppendHeartbeat(msg);
-    Serial_write(msg->buffer, msg->offset);
-    LB_free(msg);
-
-    return FP_EOK;
-}
-
 static void Player_write(const struct ctgroup_s* group, LorBuffer* msg) {
     assert(group != NULL);
     assert(group->size > 0);
@@ -142,7 +124,7 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
 
     int err = FP_EOK;
 
-    if ((err = Player_checkHeartbeat(rtd))) goto ret;
+    if ((err = PU_doHeartbeat(&rtd->lastHeartbeat))) goto ret;
 
     if ((err = FP_checkPreload(rtd->pump, frameId))) goto ret;
     if ((err = FP_nextFrame(rtd->pump, &frameData))) goto ret;

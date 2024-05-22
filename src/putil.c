@@ -79,3 +79,18 @@ char* PU_timeRemaining(const uint32_t frame) {
 
     return dsprintf("%02ldm %02lds", seconds / 60, seconds % 60);
 }
+
+int PU_doHeartbeat(timeInstant* last) {
+    const timeInstant now = timeGetNow();
+    if (timeElapsedNs(*last, now) < LOR_HEARTBEAT_DELAY_NS) return FP_EOK;
+    *last = now;
+
+    LorBuffer* msg = LB_alloc();
+    if (msg == NULL) return -FP_ENOMEM;
+
+    lorAppendHeartbeat(msg);
+    Serial_write(msg->buffer, msg->offset);
+    LB_free(msg);
+
+    return FP_EOK;
+}

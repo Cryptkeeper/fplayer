@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <std2/time.h>
+
 /// @brief Waits for the given number of seconds by blocking the current thread.
 /// LOR heartbeat messages will intentionally be sent during this time. This
 /// function is used to ensure the LOR hardware is connected to the player before
@@ -21,5 +23,12 @@ int PU_lightsOff(void);
 /// @param frame current frame in the sequence
 /// @return string representing the time remaining in the sequence
 char* PU_timeRemaining(uint32_t frame);
+
+/// @brief Sends a heartbeat message to the LOR hardware every 500ms to keep the
+/// connection alive. Time is checked against the last heartbeat sent, and if
+/// more than 500ms has passed, a new heartbeat is sent and the time is updated.
+/// @param last last time a heartbeat was sent
+/// @return 0 on success, a negative error code on failure
+int PU_doHeartbeat(timeInstant* last);
 
 #endif//FPLAYER_PUTIL_H
