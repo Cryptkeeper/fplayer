@@ -76,15 +76,12 @@ static void Player_log(struct player_rtd_s* rtd) {
 
     const double ms = (double) Sleep_average(rtd->scoll) / 1e6;
     const double fps = ms > 0 ? 1000 / ms : 0;
-    char* const sleep = dsprintf("%.4fms (%.2f fps)", ms, fps);
 
-    char* const remaining = PU_timeRemaining(rtd->nextFrame);
+    const long seconds = PU_secondsRemaining(rtd->nextFrame);
     const int frames = FP_framesRemaining(rtd->pump);
 
-    printf("remaining: %s\tdt: %s\tpump: %4d\n", remaining, sleep, frames);
-
-    free(remaining);
-    free(sleep);
+    printf("remaining: %02ldm %02lds\tdt: %.4fms (%.2f fps)\tpump: %5d\n",
+           seconds / 60, seconds % 60, ms, fps, frames);
 }
 
 static void Player_write(const struct ctgroup_s* group, LorBuffer* msg) {

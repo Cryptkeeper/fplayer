@@ -17,12 +17,11 @@ int PU_wait(unsigned int seconds);
 /// @return 0 on success, a negative error code on failure
 int PU_lightsOff(void);
 
-/// @brief Returns a dynamically allocated string representing the time
-/// remaining in the sequence. The string is formatted as "mm:ss". The string
-/// must be freed by the caller when no longer needed.
+/// @brief Returns the seconds remaining in the sequence based on the current
+/// frame provided by the caller.
 /// @param frame current frame in the sequence
-/// @return string representing the time remaining in the sequence
-char* PU_timeRemaining(uint32_t frame);
+/// @return seconds remaining in the sequence, or 0 if the sequence is complete
+long PU_secondsRemaining(uint32_t frame);
 
 /// @brief Sends a heartbeat message to the LOR hardware every 500ms to keep the
 /// connection alive. Time is checked against the last heartbeat sent, and if

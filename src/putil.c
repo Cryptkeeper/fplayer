@@ -12,7 +12,6 @@
 #include "serial.h"
 #include <lor/protowriter.h>
 #include <std2/errcode.h>
-#include <std2/string.h>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -70,14 +69,11 @@ int PU_lightsOff(void) {
     return FP_EOK;
 }
 
-char* PU_timeRemaining(const uint32_t frame) {
-    if (curSequence->frameCount < frame) return NULL;
+long PU_secondsRemaining(const uint32_t frame) {
+    if (curSequence->frameCount < frame) return 0;
 
     const uint32_t framesRemaining = curSequence->frameCount - frame;
-    const long seconds =
-            framesRemaining / (1000 / curSequence->frameStepTimeMillis);
-
-    return dsprintf("%02ldm %02lds", seconds / 60, seconds % 60);
+    return framesRemaining / (1000 / curSequence->frameStepTimeMillis);
 }
 
 int PU_doHeartbeat(timeInstant* last) {
