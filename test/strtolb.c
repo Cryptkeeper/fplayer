@@ -36,5 +36,12 @@ int main(int argc, char** argv) {
     assert_fail("5,0");
     assert_fail(".5");
 
+    assert_fail("b10");
+    assert_fail("10b");
+    assert_fail("0x10");
+    assert_fail("10x0");
+    assert_fail("_10");
+    assert_fail("10_");
+
     return 0;
 }
