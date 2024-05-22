@@ -74,11 +74,6 @@ else ()
 endif ()
 
 # Testing
-add_executable(test_dsprintf test/dsprintf.c)
-target_include_directories(test_dsprintf PRIVATE common)
-target_link_libraries(test_dsprintf common)
-add_test(NAME dsprintf COMMAND test_dsprintf)
-
 add_executable(test_strtolb test/strtolb.c)
 target_include_directories(test_strtolb PRIVATE common)
 target_link_libraries(test_strtolb common)

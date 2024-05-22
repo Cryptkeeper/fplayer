@@ -274,24 +274,38 @@ static void printUsage(void) {
            "(copies file)\n");
 }
 
+static char* pathWithExt(const char* fp, const char* ext) {
+    const size_t l = strlen(fp) + strlen(ext) + 1;
+    char* const np = malloc(l);
+    if (np == NULL) return NULL;
+    snprintf(np, l, "%s%s", fp, ext);
+    return np;
+}
+
 /// @brief Appends the ".orig" suffix to the source file path by renaming the
 /// file and renames the destination file to the initial value source file path.
 /// @param sfp source file path to append ".orig" to
 /// @param dfp destination file path to rename to the source file path
 /// @return 0 on success, a negative error code on failure
 static int renamePair(const char* const sfp, const char* const dfp) {
-    // rename files to swap them
-    char* const nsfp = dsprintf("%s.orig", sfp);
+
+    char* nsfp = pathWithExt(sfp, ".orig");
     if (nsfp == NULL) return -FP_ENOMEM;
 
-    if (rename(sfp, nsfp) != 0) return -FP_ESYSCALL;
-    if (rename(dfp, sfp) != 0) return -FP_ESYSCALL;
+    int err = FP_EOK;
+
+    // rename files to swap them
+    if (rename(sfp, nsfp) != 0 || rename(dfp, sfp) != 0) {
+        err = -FP_ESYSCALL;
+        goto ret;
+    }
 
     printf("renamed `%s` to `%s`\n", sfp, nsfp);
 
+ret:
     free(nsfp);
 
-    return FP_EOK;
+    return err;
 }
 
 int main(const int argc, char** const argv) {
@@ -308,7 +322,7 @@ int main(const int argc, char** const argv) {
     struct fseq_var_s* vars = NULL;  /* sequence variables */
     int count = 0;                   /* length of variables array */
 
-    if ((dfp = dsprintf("%s.tmp", sfp)) == NULL) {
+    if ((dfp = pathWithExt(sfp, ".tmp")) == NULL) {
         err = -FP_ENOMEM;
         goto exit;
     }
