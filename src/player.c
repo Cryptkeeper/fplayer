@@ -23,7 +23,6 @@
 
 struct player_rtd_s {
     uint32_t nextFrame;         /* index of the next frame to be played */
-    timeInstant lastLog;        /* last time repeating status log was printed */
     timeInstant lastHeartbeat;  /* last time a network heartbeat was sent */
     struct frame_pump_s* pump;  /* frame pump for reading/queueing frame data */
     struct sleep_coll_s* scoll; /* sleep collector for frame rate control */
@@ -71,9 +70,9 @@ ret:
 }
 
 static void Player_log(struct player_rtd_s* rtd) {
-    const timeInstant now = timeGetNow();
-    if (timeElapsedNs(rtd->lastLog, now) < 1000000000) return;
-    rtd->lastLog = now;
+    // only print every second (using the current frame rate as a timer)
+    if ((rtd->nextFrame - 1) % (1000 / curSequence->frameStepTimeMillis) != 0)
+        return;
 
     const double ms = (double) Sleep_average(rtd->scoll) / 1e6;
     const double fps = ms > 0 ? 1000 / ms : 0;
