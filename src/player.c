@@ -22,15 +22,18 @@
 #include <std2/time.h>
 
 struct player_rtd_s {
-    struct frame_pump_s* pump; /* frame pump for reading/queueing frame data */
-    uint32_t nextFrame;        /* index of the next frame to be played */
-    struct sleep_coll_s scoll; /* sleep collector for frame rate control */
-    struct ctable_s* ctable;   /* computed+cached channel map lookup table */
+    uint32_t nextFrame;         /* index of the next frame to be played */
+    timeInstant lastLog;        /* last time repeating status log was printed */
+    timeInstant lastHeartbeat;  /* last time a network heartbeat was sent */
+    struct frame_pump_s* pump;  /* frame pump for reading/queueing frame data */
+    struct sleep_coll_s* scoll; /* sleep collector for frame rate control */
+    struct ctable_s* ctable;    /* computed+cached channel map lookup table */
 };
 
 static void Player_freeRTD(struct player_rtd_s* rtd) {
     if (rtd == NULL) return;
     FP_free(rtd->pump);
+    free(rtd->scoll);
     CT_free(rtd->ctable);
     free(rtd);
 }
@@ -44,6 +47,11 @@ int Player_newRTD(const struct player_s* player, struct player_rtd_s** rtdp) {
     if (rtd == NULL) return -FP_ENOMEM;
 
     int err;
+
+    if ((rtd->scoll = calloc(1, sizeof(*rtd->scoll))) == NULL) {
+        err = -FP_ENOMEM;
+        goto ret;
+    }
 
     // initialize the channel map lookup table
     if ((err = CT_init(player->cmap, curSequence->channelCount, &rtd->ctable)))
@@ -63,14 +71,11 @@ ret:
 }
 
 static void Player_log(struct player_rtd_s* rtd) {
-    static timeInstant gLastLog;
-
     const timeInstant now = timeGetNow();
-    if (timeElapsedNs(gLastLog, now) < 1000000000) return;
+    if (timeElapsedNs(rtd->lastLog, now) < 1000000000) return;
+    rtd->lastLog = now;
 
-    gLastLog = now;
-
-    const double ms = (double) Sleep_average(&rtd->scoll) / 1e6;
+    const double ms = (double) Sleep_average(rtd->scoll) / 1e6;
     const double fps = ms > 0 ? 1000 / ms : 0;
     char* const sleep = dsprintf("%.4fms (%.2f fps)", ms, fps);
 
@@ -83,6 +88,22 @@ static void Player_log(struct player_rtd_s* rtd) {
     free(sleep);
 }
 
+static int Player_checkHeartbeat(struct player_rtd_s* rtd) {
+    // send a heartbeat if it has been >500ms
+    const timeInstant now = timeGetNow();
+    if (timeElapsedNs(rtd->lastHeartbeat, now) < LOR_HEARTBEAT_DELAY_NS)
+        return FP_EOK;
+    rtd->lastLog = now;
+
+    LorBuffer* msg = LB_alloc();
+    if (msg == NULL) return -FP_ENOMEM;
+    lorAppendHeartbeat(msg);
+    Serial_write(msg->buffer, msg->offset);
+    LB_free(msg);
+
+    return FP_EOK;
+}
+
 static int Player_nextFrame(struct player_rtd_s* rtd) {
     assert(rtd != NULL);
     assert(rtd->nextFrame < curSequence->frameCount);
@@ -90,25 +111,13 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
     const uint32_t frameSize = curSequence->channelCount;
     const uint32_t frameId = rtd->nextFrame++;
 
-    // send a heartbeat if it has been >500ms
-    static timeInstant lastHeartbeat;
-
-    if (timeElapsedNs(lastHeartbeat, timeGetNow()) > LOR_HEARTBEAT_DELAY_NS) {
-        lastHeartbeat = timeGetNow();
-
-        LorBuffer* msg = LB_alloc();
-        if (msg == NULL) return -FP_ENOMEM;
-
-        lorAppendHeartbeat(msg);
-        Serial_write(msg->buffer, msg->offset);
-
-        LB_free(msg);
-    }
-
     // fetch the current frame data
     uint8_t* frameData = NULL;
 
     int err;
+
+    if ((err = Player_checkHeartbeat(rtd))) return err;
+
     if ((err = FP_checkPreload(rtd->pump, frameId))) return err;
     if ((err = FP_nextFrame(rtd->pump, &frameData))) return err;
 
@@ -139,7 +148,7 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
 static int Player_loop(struct player_rtd_s* rtd) {
     int err;
     while (rtd->nextFrame < curSequence->frameCount) {
-        Sleep_do(&rtd->scoll, curSequence->frameStepTimeMillis);
+        Sleep_do(rtd->scoll, curSequence->frameStepTimeMillis);
 
         if ((err = Player_nextFrame(rtd))) return err;
         Player_log(rtd);
