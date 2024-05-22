@@ -169,7 +169,7 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
 
 ret:
     free(frameData);
-    free(msg);
+    LB_free(msg);
 
     return err;
 }
