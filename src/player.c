@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #include <lorproto/coretypes.h>
+#include <lorproto/easy.h>
 #include <lorproto/heartbeat.h>
 #include <tinyfseq.h>
 
@@ -97,11 +98,36 @@ static int Player_checkHeartbeat(struct player_rtd_s* rtd) {
 
     LorBuffer* msg = LB_alloc();
     if (msg == NULL) return -FP_ENOMEM;
+
     lorAppendHeartbeat(msg);
     Serial_write(msg->buffer, msg->offset);
     LB_free(msg);
 
     return FP_EOK;
+}
+
+static void Player_write(const struct ctgroup_s* group, LorBuffer* msg) {
+    assert(group != NULL);
+    assert(group->size > 0);
+
+    const LorEffect effect = LOR_EFFECT_SET_INTENSITY;
+    const union LorEffectArgs effectArgs = {
+            .setIntensity = {.intensity = group->intensity}};
+
+    if (group->size > 1) {
+        const LorChannelSet cs = {
+                .offset = group->offset,
+                .channelBits = group->cs,
+        };
+
+        lorAppendChannelSetEffect(msg, effect, &effectArgs, cs, group->unit);
+    } else {
+        assert(__builtin_popcount(group->cs) == 1);
+        const uint16_t channel = __builtin_ctz(group->cs) + group->offset;
+        lorAppendChannelEffect(msg, effect, &effectArgs, channel, group->unit);
+    }
+
+    Serial_write(msg->buffer, msg->offset);
 }
 
 static int Player_nextFrame(struct player_rtd_s* rtd) {
@@ -111,38 +137,41 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
     const uint32_t frameSize = curSequence->channelCount;
     const uint32_t frameId = rtd->nextFrame++;
 
-    // fetch the current frame data
-    uint8_t* frameData = NULL;
+    uint8_t* frameData = NULL; /* frame data buffer */
+    LorBuffer* msg = NULL;     /* shared outbound message buffer */
 
-    int err;
+    int err = FP_EOK;
 
-    if ((err = Player_checkHeartbeat(rtd))) return err;
+    if ((err = Player_checkHeartbeat(rtd))) goto ret;
 
-    if ((err = FP_checkPreload(rtd->pump, frameId))) return err;
-    if ((err = FP_nextFrame(rtd->pump, &frameData))) return err;
+    if ((err = FP_checkPreload(rtd->pump, frameId))) goto ret;
+    if ((err = FP_nextFrame(rtd->pump, &frameData))) goto ret;
 
     for (uint32_t i = 0; i < frameSize; i++)
         CT_change(rtd->ctable, i, frameData[i]);
 
-    LorBuffer* msg = LB_alloc();
-    if (msg == NULL) return -FP_ENOMEM;// FIXME: may leak frameData
-
     struct ctgroup_s group;
     for (uint32_t i = 0; i < curSequence->channelCount; i++) {
         if (CT_groupof(rtd->ctable, i, &group)) {
-            // TODO
+            if (msg == NULL && (msg = LB_alloc()) == NULL) {
+                err = -FP_ENOMEM;
+                goto ret;
+            }
+
+            Player_write(&group, msg);
+            LB_rewind(msg);
         }
     }
-
-    LB_free(msg);
 
     // wait for serial to drain outbound
     // this creates back pressure that results in fps loss if the serial can't keep up
     Serial_drain();
 
+ret:
     free(frameData);
+    free(msg);
 
-    return FP_EOK;
+    return err;
 }
 
 static int Player_loop(struct player_rtd_s* rtd) {
