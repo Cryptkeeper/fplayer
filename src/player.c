@@ -94,7 +94,7 @@ static int Player_checkHeartbeat(struct player_rtd_s* rtd) {
     const timeInstant now = timeGetNow();
     if (timeElapsedNs(rtd->lastHeartbeat, now) < LOR_HEARTBEAT_DELAY_NS)
         return FP_EOK;
-    rtd->lastLog = now;
+    rtd->lastHeartbeat = now;
 
     LorBuffer* msg = LB_alloc();
     if (msg == NULL) return -FP_ENOMEM;
