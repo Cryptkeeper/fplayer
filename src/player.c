@@ -7,6 +7,7 @@
 
 #include <lorproto/coretypes.h>
 #include <lorproto/easy.h>
+#include <lorproto/heartbeat.h>
 #include <tinyfseq.h>
 
 #include "audio.h"
@@ -18,12 +19,9 @@
 #include "sleep.h"
 #include <lor/protowriter.h>
 #include <std2/errcode.h>
-#include <std2/string.h>
-#include <std2/time.h>
 
 struct player_rtd_s {
     uint32_t nextFrame;         /* index of the next frame to be played */
-    timeInstant lastHeartbeat;  /* last time a network heartbeat was sent */
     struct frame_pump_s* pump;  /* frame pump for reading/queueing frame data */
     struct sleep_coll_s* scoll; /* sleep collector for frame rate control */
     struct ctable_s* ctable;    /* computed+cached channel map lookup table */
@@ -67,6 +65,21 @@ ret:
     *rtdp = rtd;
 
     return err;
+}
+
+static int Player_heartbeat(struct player_rtd_s* rtd) {
+    // send heartbeat every ~500ms, or sooner if the fps doesn't divide evenly
+    if (rtd->nextFrame % (500 / curSequence->frameStepTimeMillis) != 0)
+        return FP_EOK;
+
+    LorBuffer* msg = LB_alloc();
+    if (msg == NULL) return -FP_ENOMEM;
+
+    lorAppendHeartbeat(msg);
+    Serial_write(msg->buffer, msg->offset);
+    LB_free(msg);
+
+    return FP_EOK;
 }
 
 static void Player_log(struct player_rtd_s* rtd) {
@@ -120,8 +133,6 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
 
     int err = FP_EOK;
 
-    if ((err = PU_doHeartbeat(&rtd->lastHeartbeat))) goto ret;
-
     if ((err = FP_checkPreload(rtd->pump, frameId))) goto ret;
     if ((err = FP_nextFrame(rtd->pump, &frameData))) goto ret;
 
@@ -157,7 +168,9 @@ static int Player_loop(struct player_rtd_s* rtd) {
     while (rtd->nextFrame < curSequence->frameCount) {
         Sleep_do(rtd->scoll, curSequence->frameStepTimeMillis);
 
+        if ((err = Player_heartbeat(rtd))) return err;
         if ((err = Player_nextFrame(rtd))) return err;
+
         Player_log(rtd);
     }
 

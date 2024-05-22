@@ -75,18 +75,3 @@ long PU_secondsRemaining(const uint32_t frame) {
     const uint32_t framesRemaining = curSequence->frameCount - frame;
     return framesRemaining / (1000 / curSequence->frameStepTimeMillis);
 }
-
-int PU_doHeartbeat(timeInstant* last) {
-    const timeInstant now = timeGetNow();
-    if (timeElapsedNs(*last, now) < LOR_HEARTBEAT_DELAY_NS) return FP_EOK;
-    *last = now;
-
-    LorBuffer* msg = LB_alloc();
-    if (msg == NULL) return -FP_ENOMEM;
-
-    lorAppendHeartbeat(msg);
-    Serial_write(msg->buffer, msg->offset);
-    LB_free(msg);
-
-    return FP_EOK;
-}
