@@ -77,7 +77,7 @@ static int Player_heartbeat(struct player_rtd_s* rtd) {
 
     lorAppendHeartbeat(msg);
     Serial_write(msg->buffer, msg->offset);
-    LB_free(msg);
+    free(msg);
 
     return FP_EOK;
 }
@@ -158,7 +158,7 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
 
 ret:
     free(frameData);
-    LB_free(msg);
+    free(msg);
 
     return err;
 }

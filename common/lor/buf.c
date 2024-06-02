@@ -5,24 +5,24 @@
 
 #include <lorproto/coretypes.h>
 
-#define LOR_BUFFER_SIZE 256
+#define LOR_BUFFER_SIZE 64
+
+/// @brief Conforms to the LorBuffer interface, but uses a fixed-size internal
+/// buffer for storage to avoid a second dynamic allocation. This allows for
+/// callers to free the buffer with a single call to free().
+struct lor_buffer_fixed_s {
+    uint8_t* buffer;
+    uint32_t size;
+    uint32_t offset;
+    uint8_t stack[LOR_BUFFER_SIZE];
+};
 
 struct LorBuffer* LB_alloc(void) {
-    struct LorBuffer* lb = calloc(1, sizeof(struct LorBuffer));
+    struct lor_buffer_fixed_s* lb = calloc(1, sizeof(*lb));
     if (lb == NULL) return NULL;
-    if ((lb->buffer = calloc(LOR_BUFFER_SIZE, 1)) == NULL) {
-        LB_free(lb);
-        return NULL;
-    }
+    lb->buffer = lb->stack;// point write head to internal buffer
     lb->size = LOR_BUFFER_SIZE;
-    lb->offset = 0;
-    return lb;
-}
-
-void LB_free(struct LorBuffer* lb) {
-    if (lb == NULL) return;
-    free(lb->buffer);
-    free(lb);
+    return (struct LorBuffer*) lb;
 }
 
 void LB_rewind(struct LorBuffer* lb) {

@@ -1,6 +1,7 @@
 #include "putil.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <lorproto/easy.h>
 #include <lorproto/effect.h>
@@ -49,7 +50,7 @@ int PU_wait(const unsigned int seconds) {
 #endif
     }
 
-    LB_free(msg);
+    free(msg);
 
     return FP_EOK;
 }
@@ -64,7 +65,7 @@ int PU_lightsOff(void) {
         LB_rewind(msg);
     }
 
-    LB_free(msg);
+    free(msg);
 
     return FP_EOK;
 }
