@@ -10,7 +10,7 @@
 
 #include "seq.h"
 #include "serial.h"
-#include <lor/protowriter.h>
+#include <lor/buf.h>
 #include <std2/errcode.h>
 
 #ifdef _WIN32

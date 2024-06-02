@@ -1,4 +1,4 @@
-#include "protowriter.h"
+#include "buf.h"
 
 #include <assert.h>
 #include <stdlib.h>
