@@ -21,4 +21,19 @@ int PU_lightsOff(void);
 /// @return seconds remaining in the sequence, or 0 if the sequence is complete
 long PU_secondsRemaining(uint32_t frame);
 
+/// @brief Encodes and writes a LOR heartbeat message to the serial port.
+/// @return 0 on success, a negative error code on failure
+int PU_writeHeartbeat(void);
+
+struct ctgroup_s;
+
+struct LorBuffer;
+
+/// @brief Encodes the given channel group state update to the provided message
+/// buffer as a LOR effect.
+/// @param group channel group state to encode
+/// @param msg message buffer to encode the effect to
+/// @return 0 on success, a negative error code on failure
+int PU_writeEffect(const struct ctgroup_s* group, struct LorBuffer* msg);
+
 #endif//FPLAYER_PUTIL_H

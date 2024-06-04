@@ -1,5 +1,6 @@
 #include "putil.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -9,6 +10,7 @@
 #include <lorproto/uid.h>
 #include <tinyfseq.h>
 
+#include "cell.h"
 #include "seq.h"
 #include "serial.h"
 #include <lor/buf.h>
@@ -75,4 +77,39 @@ long PU_secondsRemaining(const uint32_t frame) {
 
     const uint32_t framesRemaining = curSequence->frameCount - frame;
     return framesRemaining / (1000 / curSequence->frameStepTimeMillis);
+}
+
+int PU_writeHeartbeat(void) {
+    LorBuffer* msg;
+    if ((msg = LB_alloc()) == NULL) return -FP_ENOMEM;
+    lorAppendHeartbeat(msg);
+    Serial_write(msg->buffer, msg->offset);
+    free(msg);
+    return FP_EOK;
+}
+
+int PU_writeEffect(const struct ctgroup_s* group, struct LorBuffer* msg) {
+    assert(group != NULL);
+    assert(group->size > 0);
+
+    const LorEffect effect = LOR_EFFECT_SET_INTENSITY;
+    const union LorEffectArgs effectArgs = {
+            .setIntensity = {.intensity = group->intensity}};
+
+    if (group->size > 1) {
+        const LorChannelSet cs = {
+                .offset = group->offset,
+                .channelBits = group->cs,
+        };
+
+        lorAppendChannelSetEffect(msg, effect, &effectArgs, cs, group->unit);
+    } else {
+        assert(__builtin_popcount(group->cs) == 1);
+        const uint16_t channel = __builtin_ctz(group->cs) + group->offset;
+        lorAppendChannelEffect(msg, effect, &effectArgs, channel, group->unit);
+    }
+
+    Serial_write(msg->buffer, msg->offset);
+
+    return FP_EOK;
 }

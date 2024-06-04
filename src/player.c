@@ -6,8 +6,6 @@
 #include <stdlib.h>
 
 #include <lorproto/coretypes.h>
-#include <lorproto/easy.h>
-#include <lorproto/heartbeat.h>
 #include <tinyfseq.h>
 
 #include "audio.h"
@@ -67,21 +65,6 @@ ret:
     return err;
 }
 
-static int Player_heartbeat(struct player_rtd_s* rtd) {
-    // send heartbeat every ~500ms, or sooner if the fps doesn't divide evenly
-    if (rtd->nextFrame % (500 / curSequence->frameStepTimeMillis) != 0)
-        return FP_EOK;
-
-    LorBuffer* msg = LB_alloc();
-    if (msg == NULL) return -FP_ENOMEM;
-
-    lorAppendHeartbeat(msg);
-    Serial_write(msg->buffer, msg->offset);
-    free(msg);
-
-    return FP_EOK;
-}
-
 static void Player_log(struct player_rtd_s* rtd) {
     // only print every second (using the current frame rate as a timer)
     if ((rtd->nextFrame - 1) % (1000 / curSequence->frameStepTimeMillis) != 0)
@@ -95,30 +78,6 @@ static void Player_log(struct player_rtd_s* rtd) {
 
     printf("remaining: %02ldm %02lds\tdt: %.4fms (%.2f fps)\tpump: %5d\n",
            seconds / 60, seconds % 60, ms, fps, frames);
-}
-
-static void Player_write(const struct ctgroup_s* group, LorBuffer* msg) {
-    assert(group != NULL);
-    assert(group->size > 0);
-
-    const LorEffect effect = LOR_EFFECT_SET_INTENSITY;
-    const union LorEffectArgs effectArgs = {
-            .setIntensity = {.intensity = group->intensity}};
-
-    if (group->size > 1) {
-        const LorChannelSet cs = {
-                .offset = group->offset,
-                .channelBits = group->cs,
-        };
-
-        lorAppendChannelSetEffect(msg, effect, &effectArgs, cs, group->unit);
-    } else {
-        assert(__builtin_popcount(group->cs) == 1);
-        const uint16_t channel = __builtin_ctz(group->cs) + group->offset;
-        lorAppendChannelEffect(msg, effect, &effectArgs, channel, group->unit);
-    }
-
-    Serial_write(msg->buffer, msg->offset);
 }
 
 static int Player_nextFrame(struct player_rtd_s* rtd) {
@@ -139,17 +98,18 @@ static int Player_nextFrame(struct player_rtd_s* rtd) {
     for (uint32_t i = 0; i < frameSize; i++)
         CT_change(rtd->ctable, i, frameData[i]);
 
-    struct ctgroup_s group;
     for (uint32_t i = 0; i < curSequence->channelCount; i++) {
-        if (CT_groupof(rtd->ctable, i, &group)) {
-            if (msg == NULL && (msg = LB_alloc()) == NULL) {
-                err = -FP_ENOMEM;
-                goto ret;
-            }
+        struct ctgroup_s group;
+        if (!CT_groupof(rtd->ctable, i, &group)) continue;
 
-            Player_write(&group, msg);
-            LB_rewind(msg);
+        if (msg == NULL && (msg = LB_alloc()) == NULL) {
+            err = -FP_ENOMEM;
+            goto ret;
         }
+
+        if ((err = PU_writeEffect(&group, msg))) goto ret;
+
+        LB_rewind(msg);
     }
 
     // wait for serial to drain outbound
@@ -168,7 +128,10 @@ static int Player_loop(struct player_rtd_s* rtd) {
     while (rtd->nextFrame < curSequence->frameCount) {
         Sleep_do(rtd->scoll, curSequence->frameStepTimeMillis);
 
-        if ((err = Player_heartbeat(rtd))) return err;
+        // send heartbeat every ~500ms, or sooner if the fps doesn't divide evenly
+        if (rtd->nextFrame % (500 / curSequence->frameStepTimeMillis) == 0)
+            if ((err = PU_writeHeartbeat())) return err;
+
         if ((err = Player_nextFrame(rtd))) return err;
 
         Player_log(rtd);
