@@ -118,7 +118,7 @@ int PU_writeEffect(const struct ctgroup_s* group, struct LorBuffer* msg) {
 
 int PU_playFirstAudio(char* audiofp, struct FC* fc) {
     assert(fc != NULL);
-    
+
     if (audiofp != NULL) return Audio_play(audiofp);
 
     char* lookup = NULL;
@@ -126,6 +126,8 @@ int PU_playFirstAudio(char* audiofp, struct FC* fc) {
     // attempt to read file path variable from sequence
     int err;
     if ((err = Seq_getMediaFile(fc, &lookup))) return err;
+    if (lookup == NULL) return FP_EOK;// nothing to play
+
     err = Audio_play(lookup);
     free(lookup);// unused once playback is started
 
