@@ -3,15 +3,12 @@
 
 #include <stdint.h>
 
-#define SLEEP_COLL_SAMPLE_COUNT 20
+struct sleep_coll_s;
 
-/// @brief Sleep collector structure for providing historical sleep performance
-/// data to better estimate sleep times.
-struct sleep_coll_s {
-    int64_t ns[SLEEP_COLL_SAMPLE_COUNT]; /* sleep time samples in nanoseconds */
-    int idx; /* current index in the sleep time samples */
-    int cnt; /* number of sleep time samples */
-};
+/// @brief Allocates and initializes a new sleep collector with default values.
+/// @param coll target sleep collector
+/// @return 0 on success, a negative error code on failure
+int Sleep_init(struct sleep_coll_s** coll);
 
 /// @brief Returns the average sleep time in nanoseconds from the given sleep
 /// collector. This is calculated by summing all sleep times in the collector

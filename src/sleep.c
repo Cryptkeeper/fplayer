@@ -2,13 +2,32 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdlib.h>
 #include <time.h>
 
 #ifdef _WIN32
     #include <windows.h>
 #endif
 
+#include <std2/errcode.h>
 #include <std2/time.h>
+
+#define SLEEP_COLL_SAMPLE_COUNT 20
+
+/// @brief Sleep collector structure for providing historical sleep performance
+/// data to better estimate sleep times.
+struct sleep_coll_s {
+    int64_t ns[SLEEP_COLL_SAMPLE_COUNT]; /* sleep time samples in nanoseconds */
+    int idx; /* current index in the sleep time samples */
+    int cnt; /* number of sleep time samples */
+};
+
+int Sleep_init(struct sleep_coll_s** coll) {
+    assert(coll != NULL);
+    if ((*coll = calloc(1, sizeof(struct sleep_coll_s))) == NULL)
+        return -FP_ENOMEM;
+    return FP_EOK;
+}
 
 /// @brief Appends the given sleep time to the sleep collector, updating the
 /// collector's internal state. This should be called after each sleep operation
