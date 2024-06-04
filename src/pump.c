@@ -27,13 +27,13 @@ struct frame_pump_s {
     } pos;              /* read position data */
 };
 
-struct frame_pump_s* FP_init(struct FC* fc) {
+int FP_init(struct FC* fc, struct frame_pump_s** pump) {
     assert(fc != NULL);
-
-    struct frame_pump_s* pump = calloc(1, sizeof(*pump));
-    if (pump == NULL) return NULL;
-    pump->fc = fc;
-    return pump;
+    assert(pump != NULL);
+    if ((*pump = calloc(1, sizeof(struct frame_pump_s))) == NULL)
+        return -FP_ENOMEM;
+    (*pump)->fc = fc;
+    return FP_EOK;
 }
 
 /// @brief Reads the next frame set from the file controller and stores it in the

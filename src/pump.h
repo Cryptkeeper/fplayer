@@ -9,8 +9,9 @@ struct frame_pump_s;
 
 /// @brief Initializes a frame pump with the provided file controller.
 /// @param fc file controller to read frames from
-/// @return initialized frame pump, NULL on failure
-struct frame_pump_s* FP_init(struct FC* fc);
+/// @param pump pointer to store the initialized frame pump in
+/// @return 0 on success, a negative error code on failure
+int FP_init(struct FC* fc, struct frame_pump_s** pump);
 
 /// @brief Checks if the pump's internal buffer is low, and if so, preloads the
 /// next frame set from the file controller asynchronously in a separate thread.
