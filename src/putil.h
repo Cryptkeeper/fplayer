@@ -36,4 +36,15 @@ struct LorBuffer;
 /// @return 0 on success, a negative error code on failure
 int PU_writeEffect(const struct ctgroup_s* group, struct LorBuffer* msg);
 
+struct FC;
+
+/// @brief If audiofp is not NULL, this function will attempt to play the audio
+/// file at the given path. If audiofp is NULL, this function will attempt to
+/// lookup the `mf` (media file) variable within the file controller and play
+/// the audio file at the path stored in the variable.
+/// @param audiofp suggested audio file path to play, or NULL to lookup from fc
+/// @param fc file controller to read a fallback audio file from
+/// @return 0 on success, a negative error code on failure
+int PU_playFirstAudio(char* audiofp, struct FC* fc);
+
 #endif//FPLAYER_PUTIL_H

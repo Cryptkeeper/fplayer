@@ -10,11 +10,13 @@
 #include <lorproto/uid.h>
 #include <tinyfseq.h>
 
+#include "audio.h"
 #include "cell.h"
 #include "seq.h"
 #include "serial.h"
 #include <lor/buf.h>
 #include <std2/errcode.h>
+#include <std2/fc.h>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -112,4 +114,20 @@ int PU_writeEffect(const struct ctgroup_s* group, struct LorBuffer* msg) {
     Serial_write(msg->buffer, msg->offset);
 
     return FP_EOK;
+}
+
+int PU_playFirstAudio(char* audiofp, struct FC* fc) {
+    assert(fc != NULL);
+    
+    if (audiofp != NULL) return Audio_play(audiofp);
+
+    char* lookup = NULL;
+
+    // attempt to read file path variable from sequence
+    int err;
+    if ((err = Seq_getMediaFile(fc, &lookup))) return err;
+    err = Audio_play(lookup);
+    free(lookup);// unused once playback is started
+
+    return err;
 }
