@@ -37,6 +37,7 @@ int FP_init(struct FC* fc,
     if ((*pump = calloc(1, sizeof(struct frame_pump_s))) == NULL)
         return -FP_ENOMEM;
     (*pump)->fc = fc;
+    (*pump)->seq = seq;
     return FP_EOK;
 }
 
