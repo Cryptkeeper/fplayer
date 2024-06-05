@@ -8,7 +8,6 @@
 #include <tinyfseq.h>
 #include <zstd.h>
 
-#include "../seq.h"
 #include <fseq/fd.h>
 #include <std2/errcode.h>
 #include <std2/fc.h>

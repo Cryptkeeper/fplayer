@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <lorproto/coretypes.h>
 #include <lorproto/easy.h>
 #include <lorproto/effect.h>
 #include <lorproto/heartbeat.h>

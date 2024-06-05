@@ -1,6 +1,7 @@
 #include "buf.h"
 
 #include <assert.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #include <lorproto/coretypes.h>
