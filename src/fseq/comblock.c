@@ -18,20 +18,22 @@
 /// @brief Calculates the absolute address of the given compression block index
 /// and its encoded size.
 /// @param fc target file controller instance
+/// @param seq sequence file for file layout information
 /// @param index index of the compression block to look up
 /// @param cbAddr out pointer to the absolute address of the compression block
 /// @param cbSize out pointer to the size of the compression block
 /// @return 0 on success, a negative error code on failure
 static int ComBlock_findAbsoluteAddr(struct FC* fc,
+                                     const struct tf_header_t* seq,
                                      const int index,
                                      uint32_t* const cbAddr,
                                      uint32_t* const cbSize) {
     assert(fc != NULL);
+    assert(seq != NULL);
     assert(cbAddr != NULL);
     assert(cbSize != NULL);
 
-    if (index < 0 || index >= curSequence->compressionBlockCount)
-        return -FP_ERANGE;
+    if (index < 0 || index >= seq->compressionBlockCount) return -FP_ERANGE;
 
     // read each table entry up to and including index
     // the leading entries are used to calculate the absolute address of a block
@@ -52,7 +54,7 @@ static int ComBlock_findAbsoluteAddr(struct FC* fc,
     uint8_t* head = table;
 
     // base absolute address of the first compression block
-    *cbAddr = curSequence->channelDataOffset;
+    *cbAddr = seq->channelDataOffset;
     *cbSize = 0;
 
     // sum size of each leading compression block to get the absolute address
@@ -92,12 +94,15 @@ ret:
 /// @brief Reads the given compression block (by index) from the given file
 /// controller and decompresses it using zstd.
 /// @param fc target file controller instance
+/// @param seq sequence file for file layout information
 /// @param index index of the compression block to read
 /// @param fn out pointer to the decompressed block data (array of frames) or
 /// NULL on failure
 /// @return 0 on success, a negative error code on failure
-static int
-ComBlock_readZstd(struct FC* fc, const int index, struct fd_node_s** fn) {
+static int ComBlock_readZstd(struct FC* fc,
+                             const struct tf_header_t* seq,
+                             const int index,
+                             struct fd_node_s** fn) {
     assert(fc != NULL);
     assert(index >= 0);
     assert(fn != NULL);
@@ -106,10 +111,10 @@ ComBlock_readZstd(struct FC* fc, const int index, struct fd_node_s** fn) {
 
     // attempt to read the address and size of the compression block
     uint32_t cbAddr = 0, cbSize = 0;
-    if ((err = ComBlock_findAbsoluteAddr(fc, index, &cbAddr, &cbSize)))
+    if ((err = ComBlock_findAbsoluteAddr(fc, seq, index, &cbAddr, &cbSize)))
         return err;
 
-    assert(cbAddr >= curSequence->channelDataOffset);
+    assert(cbAddr >= seq->channelDataOffset);
     assert(cbSize > 0);
 
     void* dIn = NULL;                /* compressed data input buffer */
@@ -142,7 +147,7 @@ ComBlock_readZstd(struct FC* fc, const int index, struct fd_node_s** fn) {
             goto ret;
         }
 
-        const uint32_t frameSize = curSequence->channelCount;
+        const uint32_t frameSize = seq->channelCount;
 
         // the decompressed size should be a product of the frameSize
         // otherwise the data (is most likely) decompressed incorrectly
@@ -186,16 +191,18 @@ ret:
     return err;
 }
 
-int ComBlock_read(struct FC* fc, const int index, struct fd_node_s** fn) {
+int ComBlock_read(struct FC* fc,
+                  const struct tf_header_t* seq,
+                  const int index,
+                  struct fd_node_s** fn) {
     assert(fc != NULL);
     assert(fn != NULL);
 
-    if (index < 0 || index >= curSequence->compressionBlockCount)
-        return -FP_ERANGE;
+    if (index < 0 || index >= seq->compressionBlockCount) return -FP_ERANGE;
 
-    switch (curSequence->compressionType) {
+    switch (seq->compressionType) {
         case TF_COMPRESSION_ZSTD:
-            return ComBlock_readZstd(fc, index, fn);
+            return ComBlock_readZstd(fc, seq, index, fn);
         default:
             return -FP_ENOSUP;
     }

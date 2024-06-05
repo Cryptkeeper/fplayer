@@ -10,28 +10,22 @@
 #include <std2/errcode.h>
 #include <std2/fc.h>
 
-struct tf_header_t* curSequence;
-
-int Seq_open(struct FC* fc) {
-    assert(curSequence == NULL);
+int Seq_open(struct FC* fc, struct tf_header_t** seq) {
     assert(fc != NULL);
+    assert(seq != NULL);
 
     uint8_t b[32] = {0};
     if (!FC_read(fc, 0, sizeof(b), b)) return -FP_ESYSCALL;
 
-    if ((curSequence = calloc(1, sizeof(*curSequence))) == NULL)
+    if ((*seq = calloc(1, sizeof(struct tf_header_t))) == NULL)
         return -FP_ENOMEM;
 
-    if (TFHeader_read(b, sizeof(b), curSequence, NULL)) {
-        free(curSequence), curSequence = NULL;
+    if (TFHeader_read(b, sizeof(b), *seq, NULL)) {
+        free(*seq), *seq = NULL;
         return -FP_EDECODE;
     }
 
     return FP_EOK;
-}
-
-void Seq_close(void) {
-    free(curSequence), curSequence = NULL;
 }
 
 #define VARHEADER_SIZE 4
@@ -72,19 +66,23 @@ Seq_readVar(uint8_t** head, const int remaining, struct fseq_var_s* var) {
     return FP_EOK;
 }
 
-int Seq_getMediaFile(struct FC* fc, char** value) {
-    assert(curSequence != NULL);
+int Seq_getMediaFile(struct FC* fc,
+                     const struct tf_header_t* seq,
+                     char** value) {
     assert(fc != NULL);
+    assert(seq != NULL);
     assert(value != NULL);
 
+    if (seq->channelDataOffset <= seq->variableDataOffset) return FP_EOK;
+
     const uint16_t varTableSize =
-            curSequence->channelDataOffset - curSequence->variableDataOffset;
-    if (varTableSize == 0) return FP_EOK;
+            seq->channelDataOffset - seq->variableDataOffset;
+    assert(varTableSize > 0);
 
     uint8_t* varTable = NULL; /* table of all variable data */
     if ((varTable = malloc(varTableSize)) == NULL) return -FP_ENOMEM;
 
-    if (FC_read(fc, curSequence->variableDataOffset, varTableSize, varTable) <
+    if (FC_read(fc, seq->variableDataOffset, varTableSize, varTable) <
         varTableSize) {
         free(varTable);
         return -FP_ESYSCALL;

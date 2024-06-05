@@ -20,6 +20,7 @@
 
 struct player_rtd_s {
     uint32_t nextFrame;         /* index of the next frame to be played */
+    struct tf_header_t* seq;    /* decoded sequence file metadata header */
     struct frame_pump_s* pump;  /* frame pump for reading/queueing frame data */
     struct sleep_coll_s* scoll; /* sleep collector for frame rate control */
     struct ctable_s* ctable;    /* computed+cached channel map lookup table */
@@ -31,6 +32,7 @@ struct player_rtd_s {
 static void Player_free(struct player_rtd_s* rtd) {
     assert(rtd != NULL);
 
+    free(rtd->seq);
     FP_free(rtd->pump);
     free(rtd->scoll);
     CT_free(rtd->ctable);
@@ -45,7 +47,7 @@ static int Player_init(const struct player_s* player,
                        struct player_rtd_s* rtd) {
     assert(player != NULL);
     assert(rtd != NULL);
-    assert(curSequence != NULL);
+    assert(rtd->seq != NULL);
 
     int err;
 
@@ -53,11 +55,11 @@ static int Player_init(const struct player_s* player,
     if ((err = Sleep_init(&rtd->scoll))) goto ret;
 
     // initialize the channel map lookup table
-    if ((err = CT_init(player->cmap, curSequence->channelCount, &rtd->ctable)))
+    if ((err = CT_init(player->cmap, rtd->seq->channelCount, &rtd->ctable)))
         goto ret;
 
     // initialize the frame pump for reading/queueing frame data
-    if ((err = FP_init(player->fc, &rtd->pump))) goto ret;
+    if ((err = FP_init(player->fc, rtd->seq, &rtd->pump))) goto ret;
 
 ret:
     if (err) Player_free(rtd);
@@ -73,7 +75,7 @@ static void Player_log(struct player_rtd_s* rtd) {
     const double ms = (double) Sleep_average(rtd->scoll) / 1e6;
     const double fps = ms > 0 ? 1000 / ms : 0;
 
-    const long seconds = PU_secondsRemaining(rtd->nextFrame);
+    const long seconds = PU_secondsRemaining(rtd->nextFrame, rtd->seq);
     const int frames = FP_framesRemaining(rtd->pump);
 
     printf("remaining: %02ldm %02lds\tdt: %.4fms (%.2f fps)\tpump: %5d\n",
@@ -86,9 +88,9 @@ static void Player_log(struct player_rtd_s* rtd) {
 /// @return 0 on success, a negative error code on failure
 static int Player_writeFrame(struct player_rtd_s* rtd) {
     assert(rtd != NULL);
-    assert(rtd->nextFrame < curSequence->frameCount);
+    assert(rtd->nextFrame < rtd->seq->frameCount);
 
-    const uint32_t frameSize = curSequence->channelCount;
+    const uint32_t frameSize = rtd->seq->channelCount;
     const uint32_t frameId = rtd->nextFrame++;
 
     uint8_t* frameData = NULL; /* frame data buffer */
@@ -109,7 +111,7 @@ static int Player_writeFrame(struct player_rtd_s* rtd) {
     }
 
     // write the effect data for each matching channel group
-    for (uint32_t i = 0; i < curSequence->channelCount; i++) {
+    for (uint32_t i = 0; i < rtd->seq->channelCount; i++) {
         struct ctgroup_s group;
         if (!CT_groupof(rtd->ctable, i, &group)) continue;
         if ((err = PU_writeEffect(&group, msg))) goto ret;
@@ -139,17 +141,17 @@ static int Player_loop(struct player_rtd_s* rtd) {
 
     int err;
 
-    while (rtd->nextFrame < curSequence->frameCount) {
-        Sleep_do(rtd->scoll, curSequence->frameStepTimeMillis);
+    while (rtd->nextFrame < rtd->seq->frameCount) {
+        Sleep_do(rtd->scoll, rtd->seq->frameStepTimeMillis);
 
         // send heartbeat every ~500ms, or sooner if the fps doesn't divide evenly
-        if (rtd->nextFrame % (500 / curSequence->frameStepTimeMillis) == 0)
+        if (rtd->nextFrame % (500 / rtd->seq->frameStepTimeMillis) == 0)
             if ((err = PU_writeHeartbeat())) return err;
 
         if ((err = Player_writeFrame(rtd))) return err;
 
         // only print every second (using the current frame rate as a timer)
-        if (!(rtd->nextFrame - 1) % (1000 / curSequence->frameStepTimeMillis))
+        if (!(rtd->nextFrame - 1) % (1000 / rtd->seq->frameStepTimeMillis))
             Player_log(rtd);
     }
 
@@ -174,7 +176,7 @@ int Player_exec(struct player_s* player) {
     struct player_rtd_s rtd = {0}; /* player runtime data */
 
     // open, read and configure environment for the sequence provided
-    if ((err = Seq_open(player->fc))) goto ret;
+    if ((err = Seq_open(player->fc, &rtd.seq))) goto ret;
 
     // initialize runtime data for the player
     if ((err = Player_init(player, &rtd))) goto ret;
@@ -184,14 +186,14 @@ int Player_exec(struct player_s* player) {
 
     // play audio if available
     // TODO: print err for audio, but ignore
-    if ((err = PU_playFirstAudio(player->audiofp, player->fc))) goto ret;
+    if ((err = PU_playFirstAudio(player->audiofp, player->fc, rtd.seq)))
+        goto ret;
 
     // begin the main loop of the player
     if ((err = Player_loop(&rtd))) goto ret;
 
 ret:
     Player_free(&rtd);
-    Seq_close();
 
     return err;
 }

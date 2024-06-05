@@ -16,7 +16,6 @@
 #include "serial.h"
 #include <lor/buf.h>
 #include <std2/errcode.h>
-#include <std2/fc.h>
 
 #ifdef _WIN32
     #include <windows.h>
@@ -74,11 +73,11 @@ int PU_lightsOff(void) {
     return FP_EOK;
 }
 
-long PU_secondsRemaining(const uint32_t frame) {
-    if (curSequence->frameCount < frame) return 0;
+long PU_secondsRemaining(const uint32_t frame, const struct tf_header_t* seq) {
+    if (seq->frameCount < frame) return 0;
 
-    const uint32_t framesRemaining = curSequence->frameCount - frame;
-    return framesRemaining / (1000 / curSequence->frameStepTimeMillis);
+    const uint32_t framesRemaining = seq->frameCount - frame;
+    return framesRemaining / (1000 / seq->frameStepTimeMillis);
 }
 
 int PU_writeHeartbeat(void) {
@@ -116,8 +115,11 @@ int PU_writeEffect(const struct ctgroup_s* group, struct LorBuffer* msg) {
     return FP_EOK;
 }
 
-int PU_playFirstAudio(char* audiofp, struct FC* fc) {
+int PU_playFirstAudio(const char* audiofp,
+                      struct FC* fc,
+                      const struct tf_header_t* seq) {
     assert(fc != NULL);
+    assert(seq != NULL);
 
     if (audiofp != NULL) return Audio_play(audiofp);
 
@@ -125,7 +127,7 @@ int PU_playFirstAudio(char* audiofp, struct FC* fc) {
 
     // attempt to read file path variable from sequence
     int err;
-    if ((err = Seq_getMediaFile(fc, &lookup))) return err;
+    if ((err = Seq_getMediaFile(fc, seq, &lookup))) return err;
     if (lookup == NULL) return FP_EOK;// nothing to play
 
     err = Audio_play(lookup);

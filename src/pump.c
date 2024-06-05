@@ -16,19 +16,23 @@
 #include <std2/fc.h>
 
 struct frame_pump_s {
-    struct FC* fc;          /* file controller to read frames from */
-    struct fd_node_s* curr; /* current frame set to read from */
-    struct fd_node_s* next; /* preloaded frame set to read from next */
-    bool preloading;        /* preloading/preloaded state flag */
-    pthread_t thread;       /* preload thread */
+    struct FC* fc;                 /* file controller to read frames from */
+    const struct tf_header_t* seq; /* sequence file metadata header */
+    struct fd_node_s* curr;        /* current frame set to read from */
+    struct fd_node_s* next;        /* preloaded frame set to read from next */
+    bool preloading;               /* preloading/preloaded state flag */
+    pthread_t thread;              /* preload thread */
     union {
         uint32_t frame; /* target frame index */
         int cb;         /* target compression block index */
     } pos;              /* read position data */
 };
 
-int FP_init(struct FC* fc, struct frame_pump_s** pump) {
+int FP_init(struct FC* fc,
+            const struct tf_header_t* seq,
+            struct frame_pump_s** pump) {
     assert(fc != NULL);
+    assert(seq != NULL);
     assert(pump != NULL);
     if ((*pump = calloc(1, sizeof(struct frame_pump_s))) == NULL)
         return -FP_ENOMEM;
@@ -40,26 +44,28 @@ int FP_init(struct FC* fc, struct frame_pump_s** pump) {
 /// provided frame data node pointer. This function is used when the sequence is
 /// not compressed and read sequentially from the file controller.
 /// @param fc file controller to read from
+/// @param seq sequence header for playback configuration
 /// @param frame frame index to read
 /// @param fn frame data node pointer to store the next frame set in
 /// @return 0 on success, a negative error code on failure, or `FP_ESEQEND` if
 /// the pump has reached the end of the sequence
-static int
-FP_readSeq(struct FC* fc, const uint32_t frame, struct fd_node_s** fn) {
+static int FP_readSeq(struct FC* fc,
+                      const struct tf_header_t* seq,
+                      const uint32_t frame,
+                      struct fd_node_s** fn) {
     assert(fc != NULL);
+    assert(seq != NULL);
     assert(fn != NULL);
 
     // attempt to read 10 seconds of frame data at a time
-    const int frames = 10000 / curSequence->frameStepTimeMillis;
-    const uint32_t pos = curSequence->channelDataOffset +
-                         (frame * curSequence->channelCount);
+    const int frames = 10000 / seq->frameStepTimeMillis;
+    const uint32_t pos = seq->channelDataOffset + (frame * seq->channelCount);
 
     // allocate a single block for the full frame set
-    uint8_t* b = calloc(frames, curSequence->channelCount);
+    uint8_t* b = calloc(frames, seq->channelCount);
     if (b == NULL) return -FP_ENOMEM;
 
-    const uint32_t read =
-            FC_readto(fc, pos, curSequence->channelCount, frames, b);
+    const uint32_t read = FC_readto(fc, pos, seq->channelCount, frames, b);
 
     if (read == 0) {// EOF
         free(b);
@@ -72,13 +78,12 @@ FP_readSeq(struct FC* fc, const uint32_t frame, struct fd_node_s** fn) {
     // TODO: this is a slow operation given the memory is *already* structured
     for (uint32_t i = 0; i < read; i++) {
         uint8_t* fd;
-        if ((fd = malloc(curSequence->channelCount)) == NULL) {
+        if ((fd = malloc(seq->channelCount)) == NULL) {
             err = -FP_ENOMEM;
             goto ret;
         }
 
-        memcpy(fd, &b[i * curSequence->channelCount],
-               curSequence->channelCount);
+        memcpy(fd, &b[i * seq->channelCount], seq->channelCount);
 
         if ((err = FD_append(fn, fd)) < 0) goto ret;
     }
@@ -101,14 +106,14 @@ static int FP_read(struct frame_pump_s* pump, struct fd_node_s** fn) {
     assert(pump != NULL);
     assert(fn != NULL);
 
-    switch (curSequence->compressionType) {
+    switch (pump->seq->compressionType) {
         case TF_COMPRESSION_ZSTD:
-            if (pump->pos.cb >= curSequence->compressionBlockCount)
+            if (pump->pos.cb >= pump->seq->compressionBlockCount)
                 return FP_ESEQEND;
-            return ComBlock_read(pump->fc, pump->pos.cb, fn);
+            return ComBlock_read(pump->fc, pump->seq, pump->pos.cb, fn);
         case TF_COMPRESSION_NONE:
-            if (pump->pos.frame >= curSequence->frameCount) return FP_ESEQEND;
-            return FP_readSeq(pump->fc, pump->pos.frame, fn);
+            if (pump->pos.frame >= pump->seq->frameCount) return FP_ESEQEND;
+            return FP_readSeq(pump->fc, pump->seq, pump->pos.frame, fn);
         default:
             return -FP_ENOSUP;
     }
@@ -143,7 +148,7 @@ int FP_checkPreload(struct frame_pump_s* pump, const uint32_t frame) {
     if (pump->preloading) return false;   /* already busy */
 
     // require at least N seconds of frames to be available for playback
-    const int reqd = (1000 / curSequence->frameStepTimeMillis) * 3;
+    const int reqd = (1000 / pump->seq->frameStepTimeMillis) * 3;
     const int rem = FD_scanDepth(pump->curr, reqd + 1);
     if (rem >= reqd) return FP_EOK;
 
@@ -153,7 +158,7 @@ int FP_checkPreload(struct frame_pump_s* pump, const uint32_t frame) {
     // if compressed, request the next block (in order)
     // otherwise, read frame data sequentially starting at the end of the
     // currently available frame data
-    switch (curSequence->compressionType) {
+    switch (pump->seq->compressionType) {
         case TF_COMPRESSION_ZSTD:
             pump->pos.cb++;
             break;

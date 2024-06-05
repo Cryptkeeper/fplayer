@@ -15,11 +15,14 @@ int PU_wait(unsigned int seconds);
 /// @return 0 on success, a negative error code on failure
 int PU_lightsOff(void);
 
+struct tf_header_t;
+
 /// @brief Returns the seconds remaining in the sequence based on the current
-/// frame provided by the caller.
+/// frame and sequence configuration provided by the caller.
 /// @param frame current frame in the sequence
+/// @param seq sequence header for playback configuration
 /// @return seconds remaining in the sequence, or 0 if the sequence is complete
-long PU_secondsRemaining(uint32_t frame);
+long PU_secondsRemaining(uint32_t frame, const struct tf_header_t* seq);
 
 /// @brief Encodes and writes a LOR heartbeat message to the serial port.
 /// @return 0 on success, a negative error code on failure
@@ -44,7 +47,10 @@ struct FC;
 /// the audio file at the path stored in the variable.
 /// @param audiofp suggested audio file path to play, or NULL to lookup from fc
 /// @param fc file controller to read a fallback audio file from
+/// @param seq sequence header for file layout information
 /// @return 0 on success, a negative error code on failure
-int PU_playFirstAudio(char* audiofp, struct FC* fc);
+int PU_playFirstAudio(const char* audiofp,
+                      struct FC* fc,
+                      const struct tf_header_t* seq);
 
 #endif//FPLAYER_PUTIL_H
