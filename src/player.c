@@ -151,7 +151,7 @@ static int Player_loop(struct player_rtd_s* rtd) {
         if ((err = Player_writeFrame(rtd))) return err;
 
         // only print every second (using the current frame rate as a timer)
-        if (!(rtd->nextFrame - 1) % (1000 / rtd->seq->frameStepTimeMillis))
+        if (!((rtd->nextFrame - 1) % (1000 / rtd->seq->frameStepTimeMillis)))
             Player_log(rtd);
     }
 
