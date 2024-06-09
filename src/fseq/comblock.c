@@ -69,9 +69,7 @@ static int ComBlock_findAbsoluteAddr(struct FC* fc,
             goto ret;
         }
 
-        // a fseq file may include multiple empty compression blocks for padding purposes
-        // these will appear with a 0 size value, trailing previously valid blocks
-        if (block.size == 0) break;
+        assert(block.size > 0);
 
         // always update to the "last valid" size, even if it isn't the final block
         *cbSize = block.size;
@@ -205,4 +203,43 @@ int ComBlock_read(struct FC* fc,
         default:
             return -FP_ENOSUP;
     }
+}
+
+int ComBlock_count(struct FC* fc, const struct tf_header_t* seq) {
+    assert(fc != NULL);
+    assert(seq != NULL);
+
+    // read the full compression block table as reported by the sequence file
+    const int tableSize = seq->compressionBlockCount * COMBLOCK_SIZE;
+    uint8_t* const table = malloc(tableSize);
+    if (table == NULL) return -FP_ENOMEM;
+
+    int err = FP_EOK;
+
+    // header is 32 bytes, followed by compression block table
+    if (FC_read(fc, 32, tableSize, table) != (uint32_t) tableSize) {
+        err = -FP_ESYSCALL;
+        goto ret;
+    }
+
+    uint8_t* head = table;
+
+    int i = 0;
+    for (; i < seq->compressionBlockCount; i++) {
+        const int remaining = tableSize - i * COMBLOCK_SIZE;
+        assert(remaining > 0);
+
+        TFCompressionBlock block;
+        if (TFCompressionBlock_read(head, remaining, &block, &head)) {
+            err = -FP_EDECODE;
+            goto ret;
+        }
+
+        if (block.size == 0) break;
+    }
+
+ret:
+    free(table);
+
+    return err ? err : i;
 }

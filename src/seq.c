@@ -10,6 +10,8 @@
 #include <std2/errcode.h>
 #include <std2/fc.h>
 
+#include "fseq/comblock.h"
+
 int Seq_open(struct FC* fc, struct tf_header_t** seq) {
     assert(fc != NULL);
     assert(seq != NULL);
@@ -23,6 +25,17 @@ int Seq_open(struct FC* fc, struct tf_header_t** seq) {
     if (TFHeader_read(b, sizeof(b), *seq, NULL)) {
         free(*seq), *seq = NULL;
         return -FP_EDECODE;
+    }
+
+    // rewrite compression block to exclude potential zero-sized entries
+    if ((*seq)->compressionType != TF_COMPRESSION_NONE) {
+        const int res = ComBlock_count(fc, *seq);
+        if (res < 0) {
+            free(*seq), *seq = NULL;
+            return res;
+        }
+
+        (*seq)->compressionBlockCount = res;
     }
 
     return FP_EOK;
