@@ -75,8 +75,8 @@ static int parseOpts(const int argc, char** const argv) {
                 CMap_free(cmap);
                 if (err) {
                     fprintf(stderr,
-                            "failed to parse channel map file `%s`: %d\n",
-                            optarg, err);
+                            "failed to parse channel map file `%s`: %s %d\n",
+                            optarg, FP_strerror(err), err);
                     return err;
                 }
                 return 1;
@@ -127,7 +127,7 @@ static int parseOpts(const int argc, char** const argv) {
 
     if (gOpts.seqfp == NULL || gOpts.cmapfp == NULL) {
         printUsage();
-        return -FP_EINVAL;
+        return 1;
     }
 
     return FP_EOK;
@@ -156,8 +156,8 @@ int main(const int argc, char** const argv) {
 
     // load required app context configs
     if ((err = CMap_read(gOpts.cmapfp, &player.cmap))) {
-        fprintf(stderr, "failed to read/parse channel map file `%s`: %d\n",
-                gOpts.cmapfp, err);
+        fprintf(stderr, "failed to read/parse channel map file `%s`: %s %d\n",
+                gOpts.cmapfp, FP_strerror(err), err);
         goto ret;
     }
 
@@ -170,13 +170,15 @@ int main(const int argc, char** const argv) {
     // initialize serial port
     const int br = gOpts.spbaud ? gOpts.spbaud : 19200;
     if ((err = Serial_init(gOpts.spname, br))) {
-        fprintf(stderr, "failed to initialize serial port `%s` at %d baud\n",
-                gOpts.spname, br);
+        fprintf(stderr,
+                "failed to initialize serial port `%s` at %d baud: %s %d\n",
+                gOpts.spname, br, FP_strerror(err), err);
         goto ret;
     }
 
     if ((err = Player_exec(&player)))
-        fprintf(stderr, "failed to play sequence: %d\n", err);
+        fprintf(stderr, "failed to play sequence: %s %d\n", FP_strerror(err),
+                err);
 
 ret:
     // attempt shutdown of controlled systems
@@ -188,7 +190,9 @@ ret:
     CMap_free(player.cmap);
     freeOpts();
 
-    if (err) fprintf(stderr, "exiting with internal error code %d\n", err);
+    if (err)
+        fprintf(stderr, "exiting with internal error code: %s %d\n",
+                FP_strerror(err), err);
 
     return err ? 1 : 0;
 }

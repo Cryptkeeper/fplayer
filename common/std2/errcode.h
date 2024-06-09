@@ -16,5 +16,8 @@
 #define FP_EBADJSON 12 /* JSON parsing error            */
 #define FP_EINVAL   13 /* invalid argument              */
 #define FP_EPTHREAD 14 /* pthread error                 */
+#define FP_ECOUNT   15 /* error code count              */
+
+const char* FP_strerror(int err);
 
 #endif//FPLAYER_ERRCODE_H

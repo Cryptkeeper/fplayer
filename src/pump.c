@@ -132,6 +132,8 @@ static void* FP_thread(void* pargs) {
             fprintf(stderr, "failed to preload next frame set: %d\n", err);
     }
 
+    printf("preloaded frame set\n");
+
     return fn;
 }
 
@@ -160,9 +162,11 @@ int FP_checkPreload(struct frame_pump_s* pump, const uint32_t frame) {
     // currently available frame data
     switch (pump->seq->compressionType) {
         case TF_COMPRESSION_ZSTD:
+            printf("preloading compression block %d\n", pump->pos.cb);
             pump->pos.cb++;
             break;
         case TF_COMPRESSION_NONE:
+            printf("preloading frames %d-%d\n", frame, frame + rem);
             pump->pos.frame = frame + rem;
             break;
         default:
@@ -185,12 +189,14 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
     if (pump->curr == NULL) {
         // attempt to pull from a potentially pre-existing preload thread
         if (pump->preloading) {
+            printf("pump is empty, waiting for preload\n");
             if (pthread_join(pump->thread, (void**) &pump->next))
                 return -FP_EPTHREAD;
             pump->preloading = false;
         }
 
         if (pump->next == NULL) {
+            printf("pump is empty without preload, reading next frame set\n");
             // immediately read from source if a preload is not available
             int err;
             if ((err = FP_read(pump, &pump->next))) {
