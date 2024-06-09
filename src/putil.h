@@ -33,11 +33,15 @@ struct ctgroup_s;
 struct LorBuffer;
 
 /// @brief Encodes the given channel group state update to the provided message
-/// buffer as a LOR effect.
+/// buffer as a LOR effect. The number of bytes written to the message buffer
+/// will be added to the optional accumulator parameter.
 /// @param group channel group state to encode
 /// @param msg message buffer to encode the effect to
+/// @param accum optional accumulator to store the number of bytes written
 /// @return 0 on success, a negative error code on failure
-int PU_writeEffect(const struct ctgroup_s* group, struct LorBuffer* msg);
+int PU_writeEffect(const struct ctgroup_s* group,
+                   struct LorBuffer* msg,
+                   uint32_t* accum);
 
 struct FC;
 

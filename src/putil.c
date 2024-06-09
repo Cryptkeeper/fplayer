@@ -90,7 +90,9 @@ int PU_writeHeartbeat(void) {
     return FP_EOK;
 }
 
-int PU_writeEffect(const struct ctgroup_s* group, struct LorBuffer* msg) {
+int PU_writeEffect(const struct ctgroup_s* group,
+                   struct LorBuffer* msg,
+                   uint32_t* accum) {
     assert(group != NULL);
     assert(group->size > 0);
 
@@ -112,6 +114,8 @@ int PU_writeEffect(const struct ctgroup_s* group, struct LorBuffer* msg) {
     }
 
     Serial_write(msg->buffer, msg->offset);
+
+    if (accum != NULL) *accum += msg->offset;
 
     return FP_EOK;
 }

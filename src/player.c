@@ -19,11 +19,12 @@
 #include <std2/errcode.h>
 
 struct player_rtd_s {
-    uint32_t nextFrame;         /* index of the next frame to be played */
-    struct tf_header_t* seq;    /* decoded sequence file metadata header */
+    uint32_t nextFrame;         /* index of the next frame to be played       */
+    struct tf_header_t* seq;    /* decoded sequence file metadata header      */
     struct frame_pump_s* pump;  /* frame pump for reading/queueing frame data */
-    struct sleep_coll_s* scoll; /* sleep collector for frame rate control */
-    struct ctable_s* ctable;    /* computed+cached channel map lookup table */
+    struct sleep_coll_s* scoll; /* sleep collector for frame rate control     */
+    struct ctable_s* ctable;    /* computed+cached channel map lookup table   */
+    uint32_t written;           /* network bytes written in the last second   */
 };
 
 /// @brief Frees dynamic allocated structures referenced by the player runtime data.
@@ -78,8 +79,12 @@ static void Player_log(struct player_rtd_s* rtd) {
     const long seconds = PU_secondsRemaining(rtd->nextFrame, rtd->seq);
     const int frames = FP_framesRemaining(rtd->pump);
 
-    printf("remaining: %02ldm %02lds\tdt: %.4fms (%.2f fps)\tpump: %5d\n",
-           seconds / 60, seconds % 60, ms, fps, frames);
+    const double kbps = rtd->written / 1024.0;
+    rtd->written = 0;
+
+    printf("remaining: %02ldm %02lds\tdt: %.4fms (%.2f fps)\tpump: %5d\t\tkbps: "
+           "%.2f\n",
+           seconds / 60, seconds % 60, ms, fps, frames, kbps);
 }
 
 /// @brief Increments the current frame index and writes the minified frame data
@@ -114,7 +119,7 @@ static int Player_writeFrame(struct player_rtd_s* rtd) {
     for (uint32_t i = 0; i < rtd->seq->channelCount; i++) {
         struct ctgroup_s group;
         if (!CT_groupof(rtd->ctable, i, &group)) continue;
-        if ((err = PU_writeEffect(&group, msg))) goto ret;
+        if ((err = PU_writeEffect(&group, msg, &rtd->written))) goto ret;
 
         LB_rewind(msg);
     }
