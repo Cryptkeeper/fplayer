@@ -133,8 +133,6 @@ static void* FP_thread(void* pargs) {
                     FP_strerror(err), err);
     }
 
-    if (!err) printf("preloaded frame set\n");
-
     return fn;
 }
 
@@ -188,14 +186,12 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
     if (pump->curr == NULL) {
         // attempt to pull from a potentially pre-existing preload thread
         if (pump->preloading) {
-            printf("pump is empty, waiting for preload\n");
             if (pthread_join(pump->thread, (void**) &pump->next))
                 return -FP_EPTHREAD;
             pump->preloading = false;
         }
 
         if (pump->next == NULL) {
-            printf("pump is empty without preload, reading next frame set\n");
             // immediately read from source if a preload is not available
             int err;
             if ((err = FP_read(pump, &pump->next))) {
@@ -206,7 +202,6 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
 
         // handle the swap to the new frame set
         if (pump->next != NULL) {
-            printf("pump is refilled\n");
             FD_free(pump->curr);
             pump->curr = pump->next, pump->next = NULL;
         }
