@@ -328,7 +328,8 @@ int main(const int argc, char** const argv) {
     }
 
     if ((err = fseqReadVars(sfp, &vars, &count))) {
-        fprintf(stderr, "failed to read sequence variables: %d\n", err);
+        fprintf(stderr, "failed to read sequence variables: %s %d\n",
+                FP_strerror(err), err);
         goto exit;
     }
 
