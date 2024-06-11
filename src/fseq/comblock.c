@@ -99,10 +99,10 @@ ret:
 static int ComBlock_readZstd(struct FC* fc,
                              const struct tf_header_t* seq,
                              const int index,
-                             struct fd_node_s** fn) {
+                             struct fd_list_s* list) {
     assert(fc != NULL);
     assert(index >= 0);
-    assert(fn != NULL);
+    assert(list != NULL);
 
     int err = FP_EOK;
 
@@ -114,10 +114,10 @@ static int ComBlock_readZstd(struct FC* fc,
     assert(cbAddr >= seq->channelDataOffset);
     assert(cbSize > 0);
 
-    void* dIn = NULL;                /* compressed data input buffer */
-    void* dOut = NULL;               /* decompressed data output buffer */
-    ZSTD_DCtx* ctx = NULL;           /* zstd decompression context */
-    struct fd_node_s* cbData = NULL; /* decoded frame data */
+    void* dIn = NULL;              /* compressed data input buffer */
+    void* dOut = NULL;             /* decompressed data output buffer */
+    ZSTD_DCtx* ctx = NULL;         /* zstd decompression context */
+    struct fd_list_s cbList = {0}; /* decoded frame data */
 
     const size_t dOutSize = ZSTD_DStreamOutSize();
 
@@ -166,7 +166,7 @@ static int ComBlock_readZstd(struct FC* fc,
             const uint8_t* const src = &((uint8_t*) dOut)[i * frameSize];
             memcpy(frame, src, frameSize);
 
-            if ((err = FD_append(&cbData, frame))) {
+            if ((err = FD_append(&cbList, frame))) {
                 free(frame);
                 goto ret;
             }
@@ -179,10 +179,9 @@ ret:
     ZSTD_freeDCtx(ctx);
 
     if (err) {
-        FD_free(cbData);
-        *fn = NULL;
+        FD_free(&cbList);
     } else {
-        *fn = cbData;
+        *list = cbList;
     }
 
     return err;
@@ -191,15 +190,15 @@ ret:
 int ComBlock_read(struct FC* fc,
                   const struct tf_header_t* seq,
                   const int index,
-                  struct fd_node_s** fn) {
+                  struct fd_list_s* list) {
     assert(fc != NULL);
-    assert(fn != NULL);
+    assert(list != NULL);
 
     if (index < 0 || index >= seq->compressionBlockCount) return -FP_ERANGE;
 
     switch (seq->compressionType) {
         case TF_COMPRESSION_ZSTD:
-            return ComBlock_readZstd(fc, seq, index, fn);
+            return ComBlock_readZstd(fc, seq, index, list);
         default:
             return -FP_ENOSUP;
     }

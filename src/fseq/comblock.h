@@ -5,7 +5,7 @@ struct FC;
 
 struct tf_header_t;
 
-struct fd_node_s;
+struct fd_list_s;
 
 /// @brief Reads the given compression block (by index) from the given file
 /// controller and decompresses it (if supported).
@@ -18,7 +18,7 @@ struct fd_node_s;
 int ComBlock_read(struct FC* fc,
                   const struct tf_header_t* seq,
                   int index,
-                  struct fd_node_s** fn);
+                  struct fd_list_s* fn);
 
 /// @brief Determines the number of compression blocks available within the
 /// given sequence file. The FSEQ file header already contains a field,
