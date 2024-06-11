@@ -12,13 +12,12 @@ struct fd_list_s;
 /// @param fc target file controller instance
 /// @param seq sequence file for file layout information
 /// @param index index of the compression block to read
-/// @param fn out pointer to the decompressed block data (array of frames) or
-/// NULL on failure
+/// @param list pointer to the list for storing the decompressed frame data
 /// @return 0 on success, a negative error code on failure
 int ComBlock_read(struct FC* fc,
                   const struct tf_header_t* seq,
                   int index,
-                  struct fd_list_s* fn);
+                  struct fd_list_s* list);
 
 /// @brief Determines the number of compression blocks available within the
 /// given sequence file. The FSEQ file header already contains a field,
