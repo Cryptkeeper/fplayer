@@ -24,7 +24,9 @@
     #include <time.h>
 #endif
 
-int PU_wait(const unsigned int seconds) {
+int PU_wait(struct serialdev_s* sdev, const unsigned int seconds) {
+    assert(sdev != NULL);
+
     // LOR hardware may require several heartbeat messages are sent
     // before it considers itself connected to the player
     // This artificially waits prior to starting playback to ensure the device is
@@ -41,7 +43,7 @@ int PU_wait(const unsigned int seconds) {
 
     // assumes 2 heartbeat messages per second (500ms delay)
     for (unsigned int toSend = seconds * 2; toSend > 0; toSend--) {
-        Serial_write(msg->buffer, msg->offset);
+        Serial_write(sdev, msg->buffer, msg->offset);
 
 #ifdef _WIN32
         Sleep(LOR_HEARTBEAT_DELAY_MS);
@@ -59,15 +61,18 @@ int PU_wait(const unsigned int seconds) {
     return FP_EOK;
 }
 
-int PU_lightsOff(void) {
+int PU_lightsOff(struct serialdev_s* sdev) {
+    assert(sdev != NULL);
+
     LorBuffer* msg;
     if ((msg = LB_alloc()) == NULL) return -FP_ENOMEM;
 
     for (uint8_t u = LOR_UNIT_MIN; u <= LOR_UNIT_MAX; u++) {
         lorAppendUnitEffect(msg, LOR_EFFECT_SET_OFF, NULL, u);
-        Serial_write(msg->buffer, msg->offset);
+        Serial_write(sdev, msg->buffer, msg->offset);
         LB_rewind(msg);
     }
+    Serial_drain(sdev);
 
     free(msg);
 
@@ -81,18 +86,22 @@ long PU_secondsRemaining(const uint32_t frame, const struct tf_header_t* seq) {
     return framesRemaining / (1000 / seq->frameStepTimeMillis);
 }
 
-int PU_writeHeartbeat(void) {
+int PU_writeHeartbeat(struct serialdev_s* sdev) {
+    assert(sdev != NULL);
+
     LorBuffer* msg;
     if ((msg = LB_alloc()) == NULL) return -FP_ENOMEM;
     lorAppendHeartbeat(msg);
-    Serial_write(msg->buffer, msg->offset);
+    Serial_write(sdev, msg->buffer, msg->offset);
     free(msg);
     return FP_EOK;
 }
 
-int PU_writeEffect(const struct ctgroup_s* group,
+int PU_writeEffect(struct serialdev_s* sdev,
+                   const struct ctgroup_s* group,
                    struct LorBuffer* msg,
                    uint32_t* accum) {
+    assert(sdev != NULL);
     assert(group != NULL);
     assert(group->size > 0);
 
@@ -113,7 +122,7 @@ int PU_writeEffect(const struct ctgroup_s* group,
         lorAppendChannelEffect(msg, effect, &effectArgs, channel, group->unit);
     }
 
-    Serial_write(msg->buffer, msg->offset);
+    Serial_write(sdev, msg->buffer, msg->offset);
 
     if (accum != NULL) *accum += msg->offset;
 

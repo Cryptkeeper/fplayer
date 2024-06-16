@@ -141,7 +141,7 @@ static void freeOpts(void) {
 }
 
 int main(const int argc, char** const argv) {
-    struct player_s player = {
+    struct playreq_s req = {
             .audiofp = gOpts.audiofp,
             .waitsec = gOpts.waitsec,
     };
@@ -155,39 +155,39 @@ int main(const int argc, char** const argv) {
     }
 
     // load required app context configs
-    if ((err = CMap_read(gOpts.cmapfp, &player.cmap))) {
+    if ((err = CMap_read(gOpts.cmapfp, &req.cmap))) {
         fprintf(stderr, "failed to read/parse channel map file `%s`: %s %d\n",
                 gOpts.cmapfp, FP_strerror(err), err);
         goto ret;
     }
 
     // open sequence file
-    if ((player.fc = FC_open(gOpts.seqfp, FC_MODE_READ)) == NULL) {
+    if ((req.fc = FC_open(gOpts.seqfp, FC_MODE_READ)) == NULL) {
         fprintf(stderr, "failed to open sequence file `%s`\n", gOpts.seqfp);
         goto ret;
     }
 
     // initialize serial port
     const int br = gOpts.spbaud ? gOpts.spbaud : 19200;
-    if ((err = Serial_init(gOpts.spname, br))) {
+    if ((err = Serial_init(&req.sdev, gOpts.spname, br))) {
         fprintf(stderr,
                 "failed to initialize serial port `%s` at %d baud: %s %d\n",
                 gOpts.spname, br, FP_strerror(err), err);
         goto ret;
     }
 
-    if ((err = Player_exec(&player)))
+    if ((err = Player_exec(&req)))
         fprintf(stderr, "failed to play sequence: %s %d\n", FP_strerror(err),
                 err);
 
 ret:
     // attempt shutdown of controlled systems
     Audio_exit();
-    Serial_close();
+    Serial_close(req.sdev);
 
     // free immediately owned resources
-    FC_close(player.fc);
-    CMap_free(player.cmap);
+    FC_close(req.fc);
+    CMap_free(req.cmap);
     freeOpts();
 
     if (err)
