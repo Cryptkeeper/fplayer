@@ -66,7 +66,7 @@ static int ComBlock_findAbsoluteAddr(struct FC* fc,
 
         TFCompressionBlock block;
         if (TFCompressionBlock_read(head, remaining, &block, &head)) {
-            err = -FP_EDECODE;
+            err = -FP_EINVLBIN;
             goto ret;
         }
 
@@ -150,7 +150,7 @@ static int ComBlock_readZstd(struct FC* fc,
         // the decompressed size should be a product of the frameSize
         // otherwise the data (is most likely) decompressed incorrectly
         if (out.pos % frameSize != 0) {
-            err = -FP_EDECODE;
+            err = -FP_EINVLBIN;
             goto ret;
         }
 
@@ -201,7 +201,7 @@ int ComBlock_read(struct FC* fc,
         case TF_COMPRESSION_ZSTD:
             return ComBlock_readZstd(fc, seq, index, list);
         default:
-            return -FP_ENOSUP;
+            return -FP_ERANGE;
     }
 }
 
@@ -231,7 +231,7 @@ int ComBlock_count(struct FC* fc, const struct tf_header_t* seq) {
 
         TFCompressionBlock block;
         if (TFCompressionBlock_read(head, remaining, &block, &head)) {
-            err = -FP_EDECODE;
+            err = -FP_EINVLBIN;
             goto ret;
         }
 

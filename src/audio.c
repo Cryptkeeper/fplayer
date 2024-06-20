@@ -31,7 +31,7 @@ static int audioInit(void) {
     gAudio.init = true;
 
     alutInit(0, NULL);
-    if (alutGetError()) return -FP_EALCTL;
+    if (alutGetError()) return -FP_EAUDINIT;
 
     return FP_EOK;
 }
@@ -90,7 +90,7 @@ int Audio_play(const char* const fp) {
 
     if ((gAudio.bid = alutCreateBufferFromFile(fp)) == AL_NONE) {
         perror_alut("error decoding file into buffer");
-        return -FP_EPLAYAUD;
+        return -FP_EAUDPLAY;
     }
 
     alGenSources(1, &gAudio.sid);
@@ -99,7 +99,7 @@ int Audio_play(const char* const fp) {
 
     if (alGetError() != AL_NO_ERROR) {
         perror_al("error starting audio playback");
-        return -FP_EPLAYAUD;
+        return -FP_EAUDPLAY;
     }
 
     return FP_EOK;

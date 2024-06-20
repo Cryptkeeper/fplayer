@@ -79,10 +79,10 @@ static int fseqGetHeader(struct FC* fc, struct tf_header_t* header) {
     uint8_t b[32];
     if (FC_read(fc, 0, sizeof(b), b) != sizeof(b)) return -FP_ESYSCALL;
 
-    if (TFHeader_read(b, sizeof(b), header, NULL)) return -FP_EDECODE;
+    if (TFHeader_read(b, sizeof(b), header, NULL)) return -FP_EINVLBIN;
 
     if (!(header->majorVersion == 2 && header->minorVersion == 0))
-        return -FP_ENOSUP;
+        return -FP_ERANGE;
 
     return FP_EOK;
 }
@@ -217,7 +217,7 @@ static int fseqReadVars(const char* fp, struct fseq_var_s** vars, int* count) {
 
         const int32_t varLen = fseqReadVarSize(head);
         if (varLen <= 0) {
-            err = -FP_EDECODE;
+            err = -FP_EINVLBIN;
             goto ret;
         }
 

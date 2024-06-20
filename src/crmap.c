@@ -35,11 +35,11 @@ int CR_parseOne(const cJSON* item, struct cr_s* cr) {
 
     {
         cJSON* index = cJSON_GetObjectItem(item, "index");
-        if (!cJSON_IsObject(index)) return -FP_EBADJSON;
+        if (!cJSON_IsObject(index)) return -FP_EINVLFMT;
 
         cJSON* from = cJSON_GetObjectItem(index, "from");
         cJSON* to = cJSON_GetObjectItem(index, "to");
-        if (!cJSON_IsNumber(from) || !cJSON_IsNumber(to)) return -FP_EBADJSON;
+        if (!cJSON_IsNumber(from) || !cJSON_IsNumber(to)) return -FP_EINVLFMT;
 
         b.indexr[0] = from->valueint;
         b.indexr[1] = to->valueint;
@@ -47,18 +47,18 @@ int CR_parseOne(const cJSON* item, struct cr_s* cr) {
 
     {
         cJSON* circuit = cJSON_GetObjectItem(item, "circuit");
-        if (!cJSON_IsObject(circuit)) return -FP_EBADJSON;
+        if (!cJSON_IsObject(circuit)) return -FP_EINVLFMT;
 
         cJSON* from = cJSON_GetObjectItem(circuit, "from");
         cJSON* to = cJSON_GetObjectItem(circuit, "to");
-        if (!cJSON_IsNumber(from) || !cJSON_IsNumber(to)) return -FP_EBADJSON;
+        if (!cJSON_IsNumber(from) || !cJSON_IsNumber(to)) return -FP_EINVLFMT;
 
         b.circuitr[0] = from->valueint;
         b.circuitr[1] = to->valueint;
     }
 
     cJSON* unit = cJSON_GetObjectItem(item, "unit");
-    if (!cJSON_IsNumber(unit)) return -FP_EBADJSON;
+    if (!cJSON_IsNumber(unit)) return -FP_EINVLFMT;
 
     b.unit = unit->valueint;
 
@@ -91,13 +91,13 @@ static int CR_parse(const char* s, struct cr_s** cr) {
 
     cJSON* obj = cJSON_Parse(s);
     if (obj == NULL || !cJSON_IsArray(obj)) {
-        err = -FP_EBADJSON;
+        err = -FP_EINVLFMT;
         goto ret;
     }
 
     const int size = cJSON_GetArraySize(obj);
     if (size <= 0) {
-        if (size < 0) err = -FP_EBADJSON;// size == 0 is weird, but not an error
+        if (size < 0) err = -FP_EINVLFMT;// size == 0 is weird, but not an error
         goto ret;
     }
 
@@ -111,7 +111,7 @@ static int CR_parse(const char* s, struct cr_s** cr) {
     cJSON* item = NULL;
     cJSON_ArrayForEach(item, obj) {
         if (!cJSON_IsObject(item)) {
-            err = -FP_EBADJSON;
+            err = -FP_EINVLFMT;
             goto ret;
         }
 

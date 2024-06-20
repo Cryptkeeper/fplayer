@@ -69,7 +69,7 @@ static int FP_readSeq(struct FC* fc,
 
     if (read == 0) {// EOF
         free(b);
-        return FP_ESEQEND;
+        return 1; /* end of sequence */
     }
 
     int err = FP_EOK;
@@ -109,13 +109,14 @@ static int FP_read(struct frame_pump_s* pump, struct fd_list_s* list) {
     switch (pump->seq->compressionType) {
         case TF_COMPRESSION_ZSTD:
             if (pump->pos.cb >= pump->seq->compressionBlockCount)
-                return FP_ESEQEND;
+                return 1; /* end of sequence */
             return ComBlock_read(pump->fc, pump->seq, pump->pos.cb, list);
         case TF_COMPRESSION_NONE:
-            if (pump->pos.frame >= pump->seq->frameCount) return FP_ESEQEND;
+            if (pump->pos.frame >= pump->seq->frameCount)
+                return 1; /* end of sequence */
             return FP_readSeq(pump->fc, pump->seq, pump->pos.frame, list);
         default:
-            return -FP_ENOSUP;
+            return -FP_ERANGE;
     }
 }
 
@@ -166,7 +167,7 @@ int FP_checkPreload(struct frame_pump_s* pump, const uint32_t frame) {
             pump->pos.frame = frame + reqd;
             break;
         default:
-            return -FP_ENOSUP;
+            return -FP_ERANGE;
     }
 
     if (pthread_create(&pump->thread, NULL, FP_thread, pump))
@@ -207,7 +208,7 @@ int FP_nextFrame(struct frame_pump_s* pump, uint8_t** fd) {
 
     // copy the next frame from the current frame set
     struct fd_node_s* node = FD_shift(&pump->curr);
-    if (node == NULL) return FP_ESEQEND;
+    if (node == NULL) return 1; /* end of sequence */
     *fd = node->frame, free(node);
 
     return FP_EOK;

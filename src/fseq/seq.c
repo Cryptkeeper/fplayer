@@ -24,7 +24,7 @@ int Seq_open(struct FC* fc, struct tf_header_t** seq) {
 
     if (TFHeader_read(b, sizeof(b), *seq, NULL)) {
         free(*seq), *seq = NULL;
-        return -FP_EDECODE;
+        return -FP_EINVLBIN;
     }
 
     // rewrite compression block to exclude potential zero-sized entries
@@ -59,7 +59,7 @@ Seq_readVar(uint8_t** head, const int remaining, struct fseq_var_s* var) {
     // fetch the variable header for sizing information
     struct tf_var_header_t h = {0};
     if (TFVarHeader_read(*head, remaining, &h, NULL, 0, NULL))
-        return -FP_EDECODE;
+        return -FP_EINVLBIN;
 
     // allocate a buffer for the decoded variable data
     // remove extra bytes that store id+size
@@ -71,7 +71,7 @@ Seq_readVar(uint8_t** head, const int remaining, struct fseq_var_s* var) {
                          h.size - VARHEADER_SIZE, head)) {
         free(var->value);
         var->value = NULL;
-        return -FP_EDECODE;
+        return -FP_EINVLBIN;
     }
 
     var->size = h.size - VARHEADER_SIZE;

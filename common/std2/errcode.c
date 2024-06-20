@@ -1,9 +1,10 @@
 #include "errcode.h"
 
 static const char* FP_errstr[FP_ECOUNT] = {
-        "FP_EOK",    "FP_ESYSCALL", "FP_ERANGE",   "FP_ENOMEM",   "FP_EDECODE",
-        "FP_ENOSUP", "FP_EZSTD",    "FP_EALCTL",   "FP_EPLAYAUD", "FP_ESEQEND",
-        "FP_ENODEV", "FP_EDEVCONF", "FP_EBADJSON", "FP_EINVAL",   "FP_EPTHREAD",
+        "FP_EOK",       "FP_ERANGE",   "FP_EINVLARG", "FP_ESYSCALL",
+        "FP_ENOMEM",    "FP_EPTHREAD", "FP_EZSTD",    "FP_EAUDINIT",
+        "FP_EAUDPLAY",  "FP_EINVLBIN", "FP_EINVLFMT", "FP_ENOSDEV",
+        "FP_ESDEVINIT",
 };
 
 const char* FP_strerror(int err) {

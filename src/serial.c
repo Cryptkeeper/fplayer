@@ -47,10 +47,10 @@ static int Serial_openPort(struct serialdev_s** sdev,
     enum sp_return err;
     if ((err = sp_get_port_by_name(devName, &(*sdev)->dev.rport))) {
         Serial_printError(err);
-        return -FP_ENODEV;
+        return -FP_ENOSDEV;
     } else if ((err = sp_open((*sdev)->dev.rport, SP_MODE_WRITE))) {
         Serial_printError(err);
-        return -FP_EDEVCONF;
+        return -FP_ESDEVINIT;
     }
 
     // smaller errors from configuring the device connection are not fatal since

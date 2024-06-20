@@ -101,7 +101,7 @@ static int parseOpts(const int argc, char** const argv) {
                             sizeof(gOpts.waitsec))) {
                     fprintf(stderr, "error parsing `%s` as an integer\n",
                             optarg);
-                    return -FP_EINVAL;
+                    return -FP_EINVLARG;
                 }
                 break;
             case 'd':
@@ -112,16 +112,16 @@ static int parseOpts(const int argc, char** const argv) {
                             sizeof(gOpts.spbaud))) {
                     fprintf(stderr, "error parsing `%s` as an integer\n",
                             optarg);
-                    return -FP_EINVAL;
+                    return -FP_EINVLARG;
                 }
                 break;
             case ':':
                 fprintf(stderr, "option is missing argument: %c\n", optopt);
-                return -FP_EINVAL;
+                return -FP_EINVLARG;
             case '?':
             default:
                 fprintf(stderr, "unknown option: %c\n", optopt);
-                return -FP_EINVAL;
+                return -FP_EINVLARG;
         }
     }
 
