@@ -4,13 +4,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <tinyfseq.h>
+#include "tinyfseq.h"
 
-#include <fseq/writer.h>
-#include <std2/errcode.h>
-#include <std2/fc.h>
+#include "fseq/writer.h"
+#include "std2/errcode.h"
+#include "std2/fc.h"
 
-#include "fseq/comblock.h"
+#include "comblock.h"
 
 int Seq_open(struct FC* fc, struct tf_header_t** seq) {
     assert(fc != NULL);

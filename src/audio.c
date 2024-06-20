@@ -5,7 +5,7 @@
 
 #include <AL/alut.h>
 
-#include <std2/errcode.h>
+#include "std2/errcode.h"
 
 static void perror_al(const char* const msg) {
     ALenum err;

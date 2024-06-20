@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <lorproto/coretypes.h>
+#include "lorproto/coretypes.h"
 
 #define LOR_BUFFER_SIZE 64
 

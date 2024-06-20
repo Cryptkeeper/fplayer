@@ -6,14 +6,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <lorproto/intensity.h>
-#include <tinyfseq.h>
 #include <zstd.h>
 
-#include <fseq/writer.h>
-#include <std2/errcode.h>
-#include <std2/fc.h>
-#include <std2/string.h>
+#include "lorproto/intensity.h"
+#include "tinyfseq.h"
+
+#include "fseq/writer.h"
+#include "std2/errcode.h"
+#include "std2/fc.h"
+#include "std2/string.h"
 
 /// @brief Generates a variable wrapper struct for the given id and string
 /// value. The size of the string is calculated using strlen, which requires a

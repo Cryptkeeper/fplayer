@@ -9,8 +9,8 @@
     #include <windows.h>
 #endif
 
-#include <std2/errcode.h>
-#include <std2/time.h>
+#include "std2/errcode.h"
+#include "std2/time.h"
 
 #define SLEEP_COLL_SAMPLE_COUNT 20
 

@@ -4,19 +4,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <lorproto/coretypes.h>
-#include <lorproto/easy.h>
-#include <lorproto/effect.h>
-#include <lorproto/heartbeat.h>
-#include <lorproto/uid.h>
-#include <tinyfseq.h>
+#include "lorproto/coretypes.h"
+#include "lorproto/easy.h"
+#include "lorproto/effect.h"
+#include "lorproto/heartbeat.h"
+#include "lorproto/uid.h"
+#include "tinyfseq.h"
 
 #include "audio.h"
 #include "cell.h"
-#include "seq.h"
+#include "fseq/seq.h"
+#include "lor/buf.h"
 #include "serial.h"
-#include <lor/buf.h>
-#include <std2/errcode.h>
+#include "std2/errcode.h"
 
 #ifdef _WIN32
     #include <windows.h>

@@ -5,16 +5,16 @@
 #include <string.h>
 
 #define TINYFSEQ_IMPLEMENTATION
-#include <tinyfseq.h>
+#include "tinyfseq.h"
 
 #include "audio.h"
 #include "crmap.h"
 #include "player.h"
 #include "serial.h"
-#include <std2/errcode.h>
-#include <std2/fc.h>
-#include <std2/sl.h>
-#include <std2/string.h>
+#include "std2/errcode.h"
+#include "std2/fc.h"
+#include "std2/sl.h"
+#include "std2/string.h"
 
 /// @brief Prints the program usage message to stdout.
 static void printUsage(void) {

@@ -7,7 +7,7 @@
 
 #include <libserialport.h>
 
-#include <std2/errcode.h>
+#include "std2/errcode.h"
 
 struct serialdev_s {
     _Bool virtual : 1;  /* if true, output is written to `vfile` */

@@ -5,18 +5,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <lorproto/coretypes.h>
-#include <tinyfseq.h>
+#include "lorproto/coretypes.h"
+#include "tinyfseq.h"
 
 #include "audio.h"
 #include "cell.h"
+#include "fseq/seq.h"
+#include "lor/buf.h"
 #include "pump.h"
 #include "putil.h"
-#include "seq.h"
 #include "serial.h"
 #include "sleep.h"
-#include <lor/buf.h>
-#include <std2/errcode.h>
+#include "std2/errcode.h"
 
 struct player_rtd_s {
     uint32_t nextFrame;         /* index of the next frame to be played       */

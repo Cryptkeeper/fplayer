@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 #include "crmap.h"
-#include <std2/errcode.h>
+#include "std2/errcode.h"
 
 struct cell_s {
     _Bool valid : 1;    /* cell is configured and valid */

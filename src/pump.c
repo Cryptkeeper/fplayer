@@ -7,12 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <tinyfseq.h>
+#include "tinyfseq.h"
 
 #include "fseq/comblock.h"
-#include <fseq/fd.h>
-#include <std2/errcode.h>
-#include <std2/fc.h>
+#include "fseq/fd.h"
+#include "std2/errcode.h"
+#include "std2/fc.h"
 
 struct frame_pump_s {
     struct FC* fc;                 /* file controller to read frames from */

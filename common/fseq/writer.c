@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <tinyfseq.h>
+#include "tinyfseq.h"
 
 #include "fseq/enc.h"
 #include "std2/errcode.h"
