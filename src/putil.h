@@ -7,8 +7,8 @@ struct serialdev_s;
 
 /// @brief Waits for the given number of seconds by blocking the current thread.
 /// LOR heartbeat messages will intentionally be sent during this time. This
-/// function is used to ensure the LOR hardware is connected to the player before
-/// sending playback commands.
+/// function is used to ensure the LOR hardware is connected to the player
+/// before sending playback commands.
 /// @param sdev serial device to write the heartbeat messages to
 /// @param seconds number of seconds to wait
 /// @return 0 on success, a negative error code on failure

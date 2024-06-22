@@ -26,8 +26,8 @@ int CT_init(const struct cr_s* cmap, uint32_t size, struct ctable_s** table);
 void CT_set(struct ctable_s* table, uint32_t index, uint8_t output);
 
 /// @brief Changes the output intensity for the cell at the given index. This
-/// only marks the cell as modified if the new output intensity is different from
-/// the current value.
+/// only marks the cell as modified if the new output intensity is different
+/// from the current value.
 /// @param table table to change the output on
 /// @param index index of the cell to change
 /// @param output intensity to change to
@@ -41,11 +41,11 @@ struct ctgroup_s {
     int size;          /* the number of active channels */
 };
 
-/// @brief Returns a group of linked cells starting at the given index. The group
-/// is identified by the unit number, channel section, and output intensity
-/// value. Any cells that have not been modified, or do not match, are excluded
-/// from the grouping. Assuming the cell at `at` is valid and modified, `group`
-/// should always contain at least one cell.
+/// @brief Returns a group of linked cells starting at the given index. The
+/// group is identified by the unit number, channel section, and output
+/// intensity value. Any cells that have not been modified, or do not match, are
+/// excluded from the grouping. Assuming the cell at `at` is valid and modified,
+/// `group` should always contain at least one cell.
 /// @param table table to search
 /// @param at index to start the group search
 /// @param group pointer to store the group

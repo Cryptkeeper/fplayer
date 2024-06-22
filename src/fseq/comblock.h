@@ -21,10 +21,11 @@ int ComBlock_read(struct FC* fc,
 
 /// @brief Determines the number of compression blocks available within the
 /// given sequence file. The FSEQ file header already contains a field,
-/// `compressionBlockCount`, that specifies the number of compression blocks, but
-/// other encoding programs are known to write additional zero-sized compression
-/// blocks to align write operations. This results in a discrepancy between the
-/// header field and the actual number of playable blocks in the file.
+/// `compressionBlockCount`, that specifies the number of compression blocks,
+/// but other encoding programs are known to write additional zero-sized
+/// compression blocks to align write operations. This results in a discrepancy
+/// between the header field and the actual number of playable blocks in the
+/// sequence file.
 /// @param fc target file controller instance
 /// @param seq sequence file for file layout information
 /// @return the number of compression blocks on success or a negative error code

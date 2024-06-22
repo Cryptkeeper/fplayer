@@ -10,10 +10,10 @@ struct tf_header_t;
 struct frame_pump_s;
 
 /// @brief Initializes a frame pump with the provided file controller. The pump
-/// will read frames from the file controller and store them in an internal buffer
-/// for playback. The pump will also preload the next frame set asynchronously
-/// in a separate thread to ensure smooth playback. The caller is responsible for
-/// freeing the pump with `FP_free`.
+/// will read frames from the file controller and store them in an internal
+/// buffer for playback. The pump will also preload the next frame set
+/// asynchronously in a separate thread to ensure smooth playback. The caller is
+/// responsible for freeing the pump with `FP_free`.
 /// @param fc file controller to read frames from
 /// @param seq sequence file for file layout information
 /// @param pump pointer to store the initialized frame pump in

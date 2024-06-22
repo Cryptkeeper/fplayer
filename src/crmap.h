@@ -6,9 +6,9 @@
 struct cr_s;
 
 /// @brief Reads a channel range map from the given file path. The channel range
-/// map is a linked list of channel range nodes that map sequence channel indices
-/// to unit and circuit numbers. The caller is responsible for freeing the
-/// returned channel range map using `CMap_free`.
+/// map is a linked list of channel range nodes that map sequence channel
+/// indices to unit and circuit numbers. The caller is responsible for freeing
+/// the returned channel range map using `CMap_free`.
 /// @param fp file path to read from
 /// @param cr pointer to write the channel range map to
 /// @return 0 on success, or a negative error code on failure

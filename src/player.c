@@ -24,7 +24,7 @@ struct player_rtd_s {
     struct frame_pump_s* pump;  /* frame pump for reading/queueing frame data */
     struct sleep_coll_s* scoll; /* sleep collector for frame rate control     */
     struct ctable_s* ctable;    /* computed+cached channel map lookup table   */
-    struct serialdev_s* sdev;   /* serial port device handle */
+    struct serialdev_s* sdev;   /* serial port device handle                  */
     uint32_t written;           /* network bytes written in the last second   */
 };
 

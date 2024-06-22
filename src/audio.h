@@ -15,9 +15,9 @@ void Audio_exit(void);
 bool Audio_isPlaying(void);
 
 /// @brief Attempts to play the audio file at the given file path. This function
-/// initializes the audio system if it has not been initialized yet. If the audio
-/// system is already playing audio, the current audio playback is stopped before
-/// the new audio file is played.
+/// initializes the audio system if it has not been initialized yet. If the
+/// audio system is already playing audio, the current audio playback is stopped
+/// before the new audio file is played.
 /// @param fp the file path of the audio file to play
 /// @return 0 on success, a negative error code on failure
 int Audio_play(const char* fp);
