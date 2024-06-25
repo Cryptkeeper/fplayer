@@ -177,7 +177,7 @@ int main(const int argc, char** const argv) {
     
     // loop through the queue and execute each entry
     struct qentry_s req;
-    while (Q_next(pq, &req)) {
+    while (!Q_next(pq, &req)) {
         printf("playing: %s (channel map: %s)\n", req.seqfp, req.cmapfp);
 
         if (req.audiofp != NULL) printf("audio override: %s\n", req.audiofp);
