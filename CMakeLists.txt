@@ -74,16 +74,6 @@ else ()
 endif ()
 
 # Testing
-add_executable(test_strtolb test/strtolb.c)
-target_include_directories(test_strtolb PRIVATE common)
-target_link_libraries(test_strtolb common)
-add_test(NAME strtolb COMMAND test_strtolb)
-
-add_executable(test_sl test/sl.c)
-target_include_directories(test_sl PRIVATE common)
-target_link_libraries(test_sl common)
-add_test(NAME sl COMMAND test_sl)
-
 add_executable(test_cell test/cell.c src/crmap.c src/cell.c)
 target_include_directories(test_cell PRIVATE common src)
 target_link_libraries(test_cell common cjson)
@@ -93,3 +83,18 @@ add_executable(test_fd test/fd.c)
 target_include_directories(test_fd PRIVATE common)
 target_link_libraries(test_fd common)
 add_test(NAME fd COMMAND test_fd)
+
+add_executable(test_queue test/queue.c src/queue.c)
+target_include_directories(test_queue PRIVATE common src)
+target_link_libraries(test_queue common)
+add_test(NAME queue COMMAND test_queue)
+
+add_executable(test_strtolb test/strtolb.c)
+target_include_directories(test_strtolb PRIVATE common)
+target_link_libraries(test_strtolb common)
+add_test(NAME strtolb COMMAND test_strtolb)
+
+add_executable(test_sl test/sl.c)
+target_include_directories(test_sl PRIVATE common)
+target_link_libraries(test_sl common)
+add_test(NAME sl COMMAND test_sl)

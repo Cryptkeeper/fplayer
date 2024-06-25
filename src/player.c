@@ -10,13 +10,16 @@
 
 #include "audio.h"
 #include "cell.h"
+#include "crmap.h"
 #include "fseq/seq.h"
 #include "lor/buf.h"
 #include "pump.h"
 #include "putil.h"
+#include "queue.h"
 #include "serial.h"
 #include "sleep.h"
 #include "std2/errcode.h"
+#include "std2/fc.h"
 
 struct player_rtd_s {
     uint32_t nextFrame;         /* index of the next frame to be played       */
@@ -24,7 +27,6 @@ struct player_rtd_s {
     struct frame_pump_s* pump;  /* frame pump for reading/queueing frame data */
     struct sleep_coll_s* scoll; /* sleep collector for frame rate control     */
     struct ctable_s* ctable;    /* computed+cached channel map lookup table   */
-    struct serialdev_s* sdev;   /* serial port device handle                  */
     uint32_t written;           /* network bytes written in the last second   */
 };
 
@@ -42,11 +44,14 @@ static void Player_free(struct player_rtd_s* rtd) {
 
 /// @brief Populates the player runtime data with dynamically allocated
 /// structures before initializing each subsystem.
-/// @param req play request to initialize the player with
+/// @param fc sequence file controller to read from
+/// @param cmap channel map to use for index lookups
 /// @param rtd player runtime data to populate
 /// @return 0 on success, a negative error code on failure
-static int Player_init(const struct playreq_s* req, struct player_rtd_s* rtd) {
-    assert(req != NULL);
+static int
+Player_init(struct FC* fc, struct cr_s* cmap, struct player_rtd_s* rtd) {
+    assert(fc != NULL);
+    assert(cmap != NULL);
     assert(rtd != NULL);
     assert(rtd->seq != NULL);
 
@@ -56,11 +61,10 @@ static int Player_init(const struct playreq_s* req, struct player_rtd_s* rtd) {
     if ((err = Sleep_init(&rtd->scoll))) goto ret;
 
     // initialize the channel map lookup table
-    if ((err = CT_init(req->cmap, rtd->seq->channelCount, &rtd->ctable)))
-        goto ret;
+    if ((err = CT_init(cmap, rtd->seq->channelCount, &rtd->ctable))) goto ret;
 
     // initialize the frame pump for reading/queueing frame data
-    if ((err = FP_init(req->fc, rtd->seq, &rtd->pump))) goto ret;
+    if ((err = FP_init(fc, rtd->seq, &rtd->pump))) goto ret;
 
 ret:
     if (err) Player_free(rtd);
@@ -91,10 +95,13 @@ static void Player_log(struct player_rtd_s* rtd) {
 /// @brief Increments the current frame index and writes the minified frame data
 /// to the serial output. This function drives the core functionality of the player.
 /// @param rtd player runtime data to write the next frame from
+/// @param sdev serial device to write the frame data to
 /// @return 0 on success, a negative error code on failure
-static int Player_writeFrame(struct player_rtd_s* rtd) {
+static int Player_writeFrame(struct player_rtd_s* rtd,
+                             struct serialdev_s* sdev) {
     assert(rtd != NULL);
     assert(rtd->nextFrame < rtd->seq->frameCount);
+    assert(sdev != NULL);
 
     const uint32_t frameSize = rtd->seq->channelCount;
     const uint32_t frameId = rtd->nextFrame++;
@@ -120,15 +127,14 @@ static int Player_writeFrame(struct player_rtd_s* rtd) {
     for (uint32_t i = 0; i < rtd->seq->channelCount; i++) {
         struct ctgroup_s group;
         if (!CT_groupof(rtd->ctable, i, &group)) continue;
-        if ((err = PU_writeEffect(rtd->sdev, &group, msg, &rtd->written)))
-            goto ret;
+        if ((err = PU_writeEffect(sdev, &group, msg, &rtd->written))) goto ret;
 
         LB_rewind(msg);
     }
 
     // wait for serial to drain outbound
     // this creates back pressure that results in fps loss if the serial can't keep up
-    Serial_drain(rtd->sdev);
+    Serial_drain(sdev);
 
 ret:
     free(frameData);
@@ -142,9 +148,11 @@ ret:
 /// to the serial output and logging the player's current state. A heartbeat
 /// message is sent every ~500ms to ensure the connection is maintained.
 /// @param rtd initialized player runtime data
+/// @param sdev serial device to write frame data to
 /// @return 0 on success, a negative error code on failure
-static int Player_loop(struct player_rtd_s* rtd) {
+static int Player_loop(struct player_rtd_s* rtd, struct serialdev_s* sdev) {
     assert(rtd != NULL);
+    assert(sdev != NULL);
 
     int err;
 
@@ -153,9 +161,9 @@ static int Player_loop(struct player_rtd_s* rtd) {
 
         // send heartbeat every ~500ms, or sooner if the fps doesn't divide evenly
         if (rtd->nextFrame % (500 / rtd->seq->frameStepTimeMillis) == 0)
-            if ((err = PU_writeHeartbeat(rtd->sdev))) return err;
+            if ((err = PU_writeHeartbeat(sdev))) return err;
 
-        if ((err = Player_writeFrame(rtd))) return err;
+        if ((err = Player_writeFrame(rtd, sdev))) return err;
 
         // only print every second (using the current frame rate as a timer)
         if (!((rtd->nextFrame - 1) % (1000 / rtd->seq->frameStepTimeMillis)))
@@ -163,7 +171,7 @@ static int Player_loop(struct player_rtd_s* rtd) {
     }
 
     printf("turning off lights, waiting for end of audio...\n");
-    if ((err = PU_lightsOff(rtd->sdev))) return err;
+    if ((err = PU_lightsOff(sdev))) return err;
 
     // continue blocking until audio is finished
     // playback will continue until sequence and audio are both complete
@@ -175,35 +183,49 @@ static int Player_loop(struct player_rtd_s* rtd) {
     return FP_EOK;
 }
 
-int Player_exec(struct playreq_s* req) {
+int Player_exec(struct qentry_s* req, struct serialdev_s* sdev) {
     assert(req != NULL);
-    assert(req->sdev != NULL);
+    assert(sdev != NULL);
+
+    struct FC* fc = NULL;          /* sequence file controller */
+    struct cr_s* cmap = NULL;      /* channel map file data */
+    struct player_rtd_s rtd = {0}; /* player runtime data */
 
     int err = FP_EOK;
 
-    // player runtime data
-    struct player_rtd_s rtd = {
-            .sdev = req->sdev,
-    };
+    // open the sequence file
+    if ((fc = FC_open(req->seqfp, FC_MODE_READ)) == NULL) {
+        err = -FP_ESYSCALL;
+        goto ret;
+    }
+
+    // open the channel map file
+    if ((err = CMap_read(req->cmapfp, &cmap))) {
+        fprintf(stderr, "failed to read/parse channel map file `%s`: %s %d\n",
+                req->cmapfp, FP_strerror(err), err);
+        goto ret;
+    }
 
     // open, read and configure environment for the sequence provided
-    if ((err = Seq_open(req->fc, &rtd.seq))) goto ret;
+    if ((err = Seq_open(fc, &rtd.seq))) goto ret;
 
     // initialize runtime data for the player
-    if ((err = Player_init(req, &rtd))) goto ret;
+    if ((err = Player_init(fc, cmap, &rtd))) goto ret;
 
     // sleep/wait for connection if requested
-    if ((err = PU_wait(req->sdev, req->waitsec))) goto ret;
+    if ((err = PU_wait(sdev, req->waitsec))) goto ret;
 
     // play audio if available
     // TODO: print err for audio, but ignore
-    if ((err = PU_playFirstAudio(req->audiofp, req->fc, rtd.seq))) goto ret;
+    if ((err = PU_playFirstAudio(req->audiofp, fc, rtd.seq))) goto ret;
 
     // begin the main loop of the player
-    if ((err = Player_loop(&rtd))) goto ret;
+    if ((err = Player_loop(&rtd, sdev))) goto ret;
 
 ret:
     Player_free(&rtd);
+    CMap_free(cmap);
+    FC_close(fc);
 
     return err;
 }

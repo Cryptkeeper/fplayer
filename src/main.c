@@ -10,9 +10,9 @@
 #include "audio.h"
 #include "crmap.h"
 #include "player.h"
+#include "queue.h"
 #include "serial.h"
 #include "std2/errcode.h"
-#include "std2/fc.h"
 #include "std2/sl.h"
 #include "std2/string.h"
 
@@ -141,10 +141,8 @@ static void freeOpts(void) {
 }
 
 int main(const int argc, char** const argv) {
-    struct playreq_s req = {
-            .audiofp = gOpts.audiofp,
-            .waitsec = gOpts.waitsec,
-    };
+    struct q_s* pq = NULL;           /* playback queue */
+    struct serialdev_s* sdev = NULL; /* serial device */
 
     int err;
     if ((err = parseOpts(argc, argv))) {
@@ -154,40 +152,50 @@ int main(const int argc, char** const argv) {
         goto ret;
     }
 
-    // load required app context configs
-    if ((err = CMap_read(gOpts.cmapfp, &req.cmap))) {
-        fprintf(stderr, "failed to read/parse channel map file `%s`: %s %d\n",
-                gOpts.cmapfp, FP_strerror(err), err);
-        goto ret;
-    }
-
-    // open sequence file
-    if ((req.fc = FC_open(gOpts.seqfp, FC_MODE_READ)) == NULL) {
-        fprintf(stderr, "failed to open sequence file `%s`\n", gOpts.seqfp);
-        goto ret;
-    }
-
-    // initialize serial port
+    // initialize serial port device
     const int br = gOpts.spbaud ? gOpts.spbaud : 19200;
-    if ((err = Serial_init(&req.sdev, gOpts.spname, br))) {
+    if ((err = Serial_init(&sdev, gOpts.spname, br))) {
         fprintf(stderr,
                 "failed to initialize serial port `%s` at %d baud: %s %d\n",
                 gOpts.spname, br, FP_strerror(err), err);
         goto ret;
     }
 
-    if ((err = Player_exec(&req)))
-        fprintf(stderr, "failed to play sequence: %s %d\n", FP_strerror(err),
-                err);
+    // initialize a queue with the single requested entry
+    // TODO: expose ability to queue multiple/schedule playlist
+    if ((err = Q_init(&pq)) ||
+        (err = Q_append(pq, (struct qentry_s){
+                                    .seqfp = gOpts.seqfp,
+                                    .audiofp = gOpts.audiofp,
+                                    .cmapfp = gOpts.cmapfp,
+                                    .waitsec = gOpts.waitsec,
+                            }))) {
+        fprintf(stderr, "failed to initialize playback queue: %s %d\n",
+                FP_strerror(err), err);
+        goto ret;
+    }
+    
+    // loop through the queue and execute each entry
+    struct qentry_s req;
+    while (Q_next(pq, &req)) {
+        printf("playing: %s (channel map: %s)\n", req.seqfp, req.cmapfp);
+
+        if (req.audiofp != NULL) printf("audio override: %s\n", req.audiofp);
+
+        if ((err = Player_exec(&req, sdev))) {
+            fprintf(stderr, "failed to execute player: %s %d\n",
+                    FP_strerror(err), err);
+            goto ret;
+        }
+    }
 
 ret:
     // attempt shutdown of controlled systems
+    Q_free(pq);
+    Serial_close(sdev);
     Audio_exit();
-    Serial_close(req.sdev);
 
     // free immediately owned resources
-    FC_close(req.fc);
-    CMap_free(req.cmap);
     freeOpts();
 
     if (err)
