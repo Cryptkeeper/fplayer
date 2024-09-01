@@ -4,17 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "lorproto/coretypes.h"
-#include "lorproto/easy.h"
-#include "lorproto/effect.h"
-#include "lorproto/heartbeat.h"
-#include "lorproto/uid.h"
 #include "tinyfseq.h"
+#include "tinylor.h"
 
 #include "audio.h"
 #include "cell.h"
 #include "fseq/seq.h"
-#include "lor/buf.h"
 #include "serial.h"
 #include "std2/errcode.h"
 
@@ -35,15 +30,9 @@ int PU_wait(struct serialdev_s* sdev, const unsigned int seconds) {
 
     printf("waiting %u seconds for connection...\n", seconds);
 
-    // generate a single heartbeat message to repeatedly send
-    LorBuffer* msg;
-    if ((msg = LB_alloc()) == NULL) return -FP_ENOMEM;
-
-    lorAppendHeartbeat(msg);
-
     // assumes 2 heartbeat messages per second (500ms delay)
     for (unsigned int toSend = seconds * 2; toSend > 0; toSend--) {
-        Serial_write(sdev, msg->buffer, msg->offset);
+        Serial_write(sdev, LOR_HEARTBEAT_BYTES, LOR_HEARTBEAT_SIZE);
 
 #ifdef _WIN32
         Sleep(LOR_HEARTBEAT_DELAY_MS);
@@ -56,25 +45,21 @@ int PU_wait(struct serialdev_s* sdev, const unsigned int seconds) {
 #endif
     }
 
-    free(msg);
-
     return FP_EOK;
 }
 
 int PU_lightsOff(struct serialdev_s* sdev) {
     assert(sdev != NULL);
 
-    LorBuffer* msg;
-    if ((msg = LB_alloc()) == NULL) return -FP_ENOMEM;
+    lor_req_s req = {0};
+    lor_set_unit(&req, 0xFF);// broadcast to all units
+    lor_set_effect(&req, LOR_SET_OFF, NULL);
 
-    for (uint8_t u = LOR_UNIT_MIN; u <= LOR_UNIT_MAX; u++) {
-        lorAppendUnitEffect(msg, LOR_EFFECT_SET_OFF, NULL, u);
-        Serial_write(sdev, msg->buffer, msg->offset);
-        LB_rewind(msg);
-    }
+    unsigned char b[32] = {0};
+    const size_t w = lor_write(b, sizeof(b), &req, 1);
+
+    Serial_write(sdev, b, w);
     Serial_drain(sdev);
-
-    free(msg);
 
     return FP_EOK;
 }
@@ -89,42 +74,38 @@ long PU_secondsRemaining(const uint32_t frame, const struct tf_header_t* seq) {
 int PU_writeHeartbeat(struct serialdev_s* sdev) {
     assert(sdev != NULL);
 
-    LorBuffer* msg;
-    if ((msg = LB_alloc()) == NULL) return -FP_ENOMEM;
-    lorAppendHeartbeat(msg);
-    Serial_write(sdev, msg->buffer, msg->offset);
-    free(msg);
+    Serial_write(sdev, LOR_HEARTBEAT_BYTES, LOR_HEARTBEAT_SIZE);
+
     return FP_EOK;
 }
 
 int PU_writeEffect(struct serialdev_s* sdev,
                    const struct ctgroup_s* group,
-                   struct LorBuffer* msg,
                    uint32_t* accum) {
     assert(sdev != NULL);
     assert(group != NULL);
     assert(group->size > 0);
 
-    const LorEffect effect = LOR_EFFECT_SET_INTENSITY;
-    const union LorEffectArgs effectArgs = {
-            .setIntensity = {.intensity = group->intensity}};
+    lor_req_s req = {0};
+
+    lor_set_unit(&req, group->unit);
+    lor_set_intensity(&req, lor_get_intensity(group->intensity));
 
     if (group->size > 1) {
-        const LorChannelSet cs = {
-                .offset = group->offset,
-                .channelBits = group->cs,
-        };
-
-        lorAppendChannelSetEffect(msg, effect, &effectArgs, cs, group->unit);
+        req.cset.offset = group->offset;// values already aligned, set directly
+        req.cset.cbits = group->cs;
     } else {
         assert(__builtin_popcount(group->cs) == 1);
         const uint16_t channel = __builtin_ctz(group->cs) + group->offset;
-        lorAppendChannelEffect(msg, effect, &effectArgs, channel, group->unit);
+        lor_set_channel(&req, channel);
     }
 
-    Serial_write(sdev, msg->buffer, msg->offset);
+    unsigned char b[32] = {0};
+    const size_t w = lor_write(b, sizeof(b), &req, 1);
 
-    if (accum != NULL) *accum += msg->offset;
+    Serial_write(sdev, b, w);
+
+    if (accum != NULL) *accum += w;
 
     return FP_EOK;
 }

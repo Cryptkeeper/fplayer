@@ -7,6 +7,9 @@
 #define TINYFSEQ_IMPLEMENTATION
 #include "tinyfseq.h"
 
+#define TINYLOR_IMPL
+#include "tinylor.h"
+
 #include "audio.h"
 #include "crmap.h"
 #include "player.h"

@@ -35,19 +35,15 @@ int PU_writeHeartbeat(struct serialdev_s* sdev);
 
 struct ctgroup_s;
 
-struct LorBuffer;
-
 /// @brief Encodes the given channel group state update to the provided message
 /// buffer as a LOR effect. The number of bytes written to the message buffer
 /// will be added to the optional accumulator parameter.
 /// @param sdev serial device to write the effect to
 /// @param group channel group state to encode
-/// @param msg message buffer to encode the effect to
 /// @param accum optional accumulator to store the number of bytes written
 /// @return 0 on success, a negative error code on failure
 int PU_writeEffect(struct serialdev_s* sdev,
                    const struct ctgroup_s* group,
-                   struct LorBuffer* msg,
                    uint32_t* accum);
 
 struct FC;

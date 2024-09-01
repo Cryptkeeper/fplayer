@@ -8,8 +8,10 @@
 
 #include <zstd.h>
 
-#include "lorproto/intensity.h"
 #include "tinyfseq.h"
+
+#define TINYLOR_IMPL
+#include "tinylor.h"
 
 #include "fseq/writer.h"
 #include "std2/errcode.h"
@@ -53,25 +55,21 @@ static int fseqCreateProgramVars(struct fseq_var_s** vars, int* count) {
     return FP_EOK;
 }
 
-/// @brief Returns a value between [0,100] which is converted to an intensity
+/// @brief Returns a value between [0,255] which is converted to an intensity
 /// value. The oscillation is then advanced for the next invocation of this
 /// function.
 /// @return intensity value
 static uint8_t intensityOscillatorRampVendorNext(void) {
-    static int percentage = 0;
+    static unsigned char step = 0;
     static int mod = 1;
-
-    percentage += mod;
-
-    // flip direction when reaching min/max threshold
-    if (mod > 0) {
-        mod = percentage >= 100 ? -1 : mod;
-    } else if (mod < 0) {
-        mod = percentage <= 0 ? 1 : mod;
+    if (mod < 0) {
+        step = (step > 0 ? step - 1 : 0);
+        if (step == 0) mod = 1;
+    } else {
+        mod = (step < UCHAR_MAX ? step + 1 : UCHAR_MAX);
+        if (step == UCHAR_MAX) mod = -1;
     }
-
-    const float f = (float) percentage / 100.0f;
-    return LorIntensityCurveVendor(f);
+    return lor_get_intensity(step);
 }
 
 /// @brief Compresses the given source data using zstd. Decompressed data is

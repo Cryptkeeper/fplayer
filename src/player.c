@@ -5,14 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "lorproto/coretypes.h"
 #include "tinyfseq.h"
+#include "tinylor.h"
 
 #include "audio.h"
 #include "cell.h"
 #include "crmap.h"
 #include "fseq/seq.h"
-#include "lor/buf.h"
 #include "pump.h"
 #include "putil.h"
 #include "queue.h"
@@ -107,7 +106,6 @@ static int Player_writeFrame(struct player_rtd_s* rtd,
     const uint32_t frameId = rtd->nextFrame++;
 
     uint8_t* frameData = NULL; /* frame data buffer */
-    LorBuffer* msg = NULL;     /* shared outbound message buffer */
 
     int err = FP_EOK;
 
@@ -118,18 +116,11 @@ static int Player_writeFrame(struct player_rtd_s* rtd,
     for (uint32_t i = 0; i < frameSize; i++)
         CT_change(rtd->ctable, i, frameData[i]);
 
-    if ((msg = LB_alloc()) == NULL) {
-        err = -FP_ENOMEM;
-        goto ret;
-    }
-
     // write the effect data for each matching channel group
     for (uint32_t i = 0; i < rtd->seq->channelCount; i++) {
         struct ctgroup_s group;
         if (!CT_groupof(rtd->ctable, i, &group)) continue;
-        if ((err = PU_writeEffect(sdev, &group, msg, &rtd->written))) goto ret;
-
-        LB_rewind(msg);
+        if ((err = PU_writeEffect(sdev, &group, &rtd->written))) goto ret;
     }
 
     // wait for serial to drain outbound
@@ -138,7 +129,6 @@ static int Player_writeFrame(struct player_rtd_s* rtd,
 
 ret:
     free(frameData);
-    free(msg);
 
     return err;
 }

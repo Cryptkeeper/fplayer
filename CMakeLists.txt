@@ -16,10 +16,6 @@ if (APPLE)
     add_compile_definitions(OPENAL_DEPRECATED=)
 endif ()
 
-# liblorproto dependency (include tests)
-enable_testing()
-add_subdirectory(dep/liblorproto)
-
 # clang sanitizer flags
 option(USE_ASAN "enable AddressSanitizer" OFF)
 option(USE_UBSAN "enable UndefinedBehaviorSanitizer" OFF)
@@ -36,8 +32,7 @@ endif ()
 file(GLOB_RECURSE COMMON_FILES "common/*.[ch]")
 set_source_files_properties(${COMMON_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COMPILER_FLAGS})
 add_library(common STATIC ${COMMON_FILES})
-target_include_directories(common PUBLIC "dep/libtinyfseq" common)
-target_link_libraries(common PUBLIC lorproto)
+target_include_directories(common PUBLIC "dep/libtinyfseq" "dep/libtinylor" common)
 
 # mftool executable
 file(GLOB_RECURSE MFTOOL_FILES "tool/mftool/*.c")
@@ -74,6 +69,8 @@ else ()
 endif ()
 
 # Testing
+enable_testing()
+
 add_executable(test_cell test/cell.c src/crmap.c src/cell.c)
 target_include_directories(test_cell PRIVATE common src)
 target_link_libraries(test_cell common cjson)

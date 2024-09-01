@@ -1,6 +1,6 @@
-[submodule "dep/liblorproto"]
-	path = dep/liblorproto
-	url = https://github.com/Cryptkeeper/liblorproto
 [submodule "dep/libtinyfseq"]
 	path = dep/libtinyfseq
 	url = https://github.com/Cryptkeeper/libtinyfseq
+[submodule "dep/libtinylor"]
+	path = dep/libtinylor
+	url = https://github.com/Cryptkeeper/libtinylor
