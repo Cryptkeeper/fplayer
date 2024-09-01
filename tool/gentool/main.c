@@ -10,9 +10,6 @@
 
 #include "tinyfseq.h"
 
-#define TINYLOR_IMPL
-#include "tinylor.h"
-
 #include "fseq/writer.h"
 #include "std2/errcode.h"
 #include "std2/fc.h"
@@ -69,7 +66,7 @@ static uint8_t intensityOscillatorRampVendorNext(void) {
         mod = (step < UCHAR_MAX ? step + 1 : UCHAR_MAX);
         if (step == UCHAR_MAX) mod = -1;
     }
-    return lor_get_intensity(step);
+    return step;
 }
 
 /// @brief Compresses the given source data using zstd. Decompressed data is
