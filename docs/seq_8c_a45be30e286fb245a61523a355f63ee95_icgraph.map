@@ -1,0 +1,11 @@
+<map id="Seq_readVar" name="Seq_readVar">
+<area shape="rect" id="Node000001" title="Reads a variable from the variable table and populates the provided var struct with the variable id,..." alt="" coords="596,5,691,31"/>
+<area shape="rect" id="Node000002" href="$seq_8c.html#aa46d33d98cef6abf5a1027e93ec87862" title="Retrieves the audio file path from the sequence for playback by searching the FSEQ&#39;s variable table f..." alt="" coords="422,5,548,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="580,21,548,21,548,16,580,16"/>
+<area shape="rect" id="Node000003" href="$putil_8c.html#ab280e2231023e7e95533aa0134fc61d9" title="If audiofp is not NULL, this function will attempt to play the audio file at the given path...." alt="" coords="244,5,374,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="407,21,375,21,375,16,407,16"/>
+<area shape="rect" id="Node000004" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,5,196,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="228,21,196,21,196,16,228,16"/>
+<area shape="rect" id="Node000005" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,5,55,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="87,21,55,21,55,16,87,16"/>
+</map>

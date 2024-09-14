@@ -1,0 +1,7 @@
+<map id="src/player.h" name="src/player.h">
+<area shape="rect" id="Node000001" title="Playback execution function declaration." alt="" coords="57,5,145,31"/>
+<area shape="rect" id="Node000002" href="$main_8c.html" title="Main program entry point." alt="" coords="5,79,88,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="85,45,58,80,54,77,81,41"/>
+<area shape="rect" id="Node000003" href="$player_8c.html" title="Playback execution function implementation." alt="" coords="112,79,200,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="121,41,149,77,144,80,117,45"/>
+</map>

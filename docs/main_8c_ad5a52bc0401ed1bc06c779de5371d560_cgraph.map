@@ -1,0 +1,121 @@
+<map id="main" name="main">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,1057,55,1083"/>
+<area shape="rect" id="Node000002" href="$audio_8c.html#a0f835b89e652069b65ca05572e340add" title="Exits the audio system and frees all resources. This function should be called before the program exi..." alt="" coords="461,1259,544,1284"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="54,1057,83,1047,119,1038,158,1035,197,1042,240,1062,274,1084,300,1109,322,1135,369,1190,399,1217,438,1244,448,1250,446,1254,435,1248,395,1221,365,1193,318,1138,296,1113,270,1088,238,1067,195,1047,158,1041,120,1043,85,1052,56,1062"/>
+<area shape="rect" id="Node000006" href="$errcode_8c.html#aa8f97434516ad3fd89df7d8d239d4927" title="Returns the error message string for the given error code." alt="" coords="273,205,359,231"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="29,1057,36,944,49,766,70,581,84,503,100,447,127,383,154,335,190,294,242,248,261,236,264,240,246,252,194,298,159,338,132,385,105,448,89,505,76,581,54,767,41,945,35,1057"/>
+<area shape="rect" id="Node000007" href="$main_8c.html#ab4c90859b21c68ff2d8097d23d7fd727" title="Frees all allocated memory retained by gOpts." alt="" coords="114,460,185,486"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="29,1057,31,951,40,784,49,695,61,613,78,544,100,496,101,495,105,498,105,498,83,546,67,614,54,696,45,784,36,951,34,1057"/>
+<area shape="rect" id="Node000008" href="$main_8c.html#a9dc5e5175937c64fec9827bdb18a7531" title="Parse command line options and sets global variables for program execution via gOpts." alt="" coords="109,156,190,182"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="29,1057,31,949,41,764,62,536,79,417,100,302,116,244,134,195,139,197,121,246,105,303,84,418,67,537,46,764,36,950,34,1057"/>
+<area shape="rect" id="Node000021" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,509,196,535"/>
+<area shape="poly" id="edge23_Node000001_Node000021" title=" " alt="" coords="31,1057,139,550,145,551,37,1058"/>
+<area shape="rect" id="Node000076" href="$queue_8c.html#a1e1f3982f01741f54dba21459e3b8dd0" title="Appends a new entry to the end of the queue." alt="" coords="109,1057,190,1083"/>
+<area shape="poly" id="edge62_Node000001_Node000076" title=" " alt="" coords="55,1068,94,1068,94,1073,55,1073"/>
+<area shape="rect" id="Node000077" href="$queue_8c.html#a819ee85f077de0b5553364efba7b805c" title="Frees the memory allocated for the queue instance and all of its remaining entries." alt="" coords="119,1107,180,1132"/>
+<area shape="poly" id="edge63_Node000001_Node000077" title=" " alt="" coords="56,1078,106,1099,104,1104,54,1083"/>
+<area shape="rect" id="Node000078" href="$queue_8c.html#a0654f80d54790baf2d8674d1d7fea737" title="Allocates and initializes a new queue instance." alt="" coords="122,1156,177,1182"/>
+<area shape="poly" id="edge64_Node000001_Node000078" title=" " alt="" coords="44,1082,70,1111,104,1143,110,1147,107,1151,101,1147,66,1115,40,1085"/>
+<area shape="rect" id="Node000079" href="$queue_8c.html#acbd75a3aa5bc269208a25ac6dca19a67" title="Gets the next entry from the queue and removes it from the queue." alt="" coords="118,1205,181,1231"/>
+<area shape="poly" id="edge65_Node000001_Node000079" title=" " alt="" coords="38,1082,62,1134,81,1165,105,1192,107,1194,103,1198,101,1196,77,1168,58,1137,34,1084"/>
+<area shape="rect" id="Node000080" href="$serial_8c.html#afa4b988fcd5d58932b03c81c58c74d70" title="Closes the open serial device and frees all resources." alt="" coords="103,1255,196,1280"/>
+<area shape="poly" id="edge66_Node000001_Node000080" title=" " alt="" coords="36,1083,56,1156,76,1201,105,1242,106,1243,102,1246,101,1245,72,1204,51,1158,31,1084"/>
+<area shape="rect" id="Node000081" href="$serial_8c.html#ad20234908a0adb0a134c0217bbac58fb" title="Initializes a write&#45;mode serial port with the provided device name and baud rate pre&#45;configured for u..." alt="" coords="110,1305,188,1331"/>
+<area shape="poly" id="edge67_Node000001_Node000081" title=" " alt="" coords="35,1083,40,1122,51,1177,72,1237,87,1265,105,1291,107,1294,103,1297,101,1294,82,1268,67,1239,46,1178,34,1123,30,1084"/>
+<area shape="rect" id="Node000003" href="$audio_8c.html#a088c9ba211c55d9a74c2cdba5f880a61" title="Stops the current audio playback, if any. The last allocated AL buffer is then detached from the sour..." alt="" coords="779,1157,912,1183"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="545,1280,617,1294,676,1304,700,1304,730,1294,762,1275,789,1249,828,1195,832,1198,793,1252,765,1279,732,1299,701,1309,675,1309,616,1299,544,1285"/>
+<area shape="rect" id="Node000005" href="$audio_8c.html#a684cbaee8df68440661b3b06ff1b8f51" title="Prints the last ALUT error to stderr with the given message." alt="" coords="633,1259,715,1284"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="544,1269,617,1269,617,1274,544,1274"/>
+<area shape="rect" id="Node000004" href="$audio_8c.html#ab8d211abfcf3a5272bc45db36f041ea8" title="Prints the last OpenAL error to stderr with the given message." alt="" coords="960,1157,1032,1183"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="913,1168,945,1168,945,1173,913,1173"/>
+<area shape="poly" id="edge18_Node000008_Node000006" title=" " alt="" coords="191,178,259,199,258,204,190,183"/>
+<area shape="rect" id="Node000009" href="$crmap_8c.html#aa8639f1dbce189cad0ae124f22a98bfb" title="Frees the given channel range map by walking the linked list and freeing each node." alt="" coords="631,156,716,182"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="190,153,244,141,335,132,406,131,569,148,616,155,616,160,568,153,406,137,335,137,244,146,191,158"/>
+<area shape="rect" id="Node000010" href="$crmap_8c.html#aa78ac33184789e0eefd5c7d832c4e0ee" title="Reads a channel range map from the given file path. The channel range map is a linked list of channel..." alt="" coords="272,307,360,332"/>
+<area shape="poly" id="edge9_Node000008_Node000010" title=" " alt="" coords="167,180,291,294,288,298,163,184"/>
+<area shape="rect" id="Node000017" href="$main_8c.html#ab85a58a9f7a657c797631e1cd40d9d7b" title="Enumerates available serial ports and prints their reported device names to stdout." alt="" coords="244,55,388,80"/>
+<area shape="poly" id="edge19_Node000008_Node000017" title=" " alt="" coords="165,153,200,126,243,97,267,85,269,89,245,102,203,130,168,158"/>
+<area shape="rect" id="Node000019" href="$main_8c.html#ace03e7c899495e901b54ab13ba0d492e" title="Prints the program usage message to stdout." alt="" coords="274,156,358,182"/>
+<area shape="poly" id="edge21_Node000008_Node000019" title=" " alt="" coords="190,166,259,166,259,172,190,172"/>
+<area shape="rect" id="Node000020" href="$string_8c.html#a20ff9f67f3d32cebd26678c9b45d1a0f" title="Attempts to parse the given string as a long using strtol. If the parsed value is within the given ra..." alt="" coords="288,5,345,31"/>
+<area shape="poly" id="edge22_Node000008_Node000020" title=" " alt="" coords="155,154,187,100,212,68,242,40,271,25,274,30,246,44,216,71,191,103,159,157"/>
+<area shape="rect" id="Node000011" href="$crmap_8c.html#a4909bc64abe2fc71ea5dc6e769e9c1cb" title="Parses the given channel range map string into a linked list of struct cr_s nodes...." alt="" coords="462,207,543,232"/>
+<area shape="poly" id="edge10_Node000010_Node000011" title=" " alt="" coords="352,304,387,285,410,263,435,241,447,235,449,240,438,246,414,267,390,290,354,309"/>
+<area shape="rect" id="Node000013" href="$fc_8c.html#a71eeb6fecce7b6562f003584e5612783" title="Closes the given file controller instance and frees its resources." alt="" coords="635,357,712,383"/>
+<area shape="poly" id="edge13_Node000010_Node000013" title=" " alt="" coords="361,319,457,327,569,342,621,353,620,359,568,347,456,333,361,325"/>
+<area shape="rect" id="Node000014" href="$fc_8c.html#a5b3b2c2c573c6055e557907a7c3c19e9" title="Returns the size of the file backing the given file controller. This performs a seek to the end of th..." alt="" coords="459,256,546,282"/>
+<area shape="poly" id="edge14_Node000010_Node000014" title=" " alt="" coords="360,305,443,282,444,287,361,310"/>
+<area shape="rect" id="Node000015" href="$fc_8c.html#a187fc5e1ed767a5f93723badd5522f9c" title="Opens a file controller instance for the given file path and mode." alt="" coords="465,357,540,383"/>
+<area shape="poly" id="edge15_Node000010_Node000015" title=" " alt="" coords="361,329,451,354,450,359,360,334"/>
+<area shape="rect" id="Node000016" href="$fc_8c.html#a567dd57b805c1d46e224bd218e9c4293" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="638,1057,710,1083"/>
+<area shape="poly" id="edge17_Node000010_Node000016" title=" " alt="" coords="327,331,370,404,402,451,438,495,474,524,508,542,540,561,556,576,571,597,589,661,617,790,669,1041,664,1042,612,791,584,662,566,599,552,580,537,566,505,547,471,529,434,499,397,454,365,407,322,334"/>
+<area shape="poly" id="edge11_Node000011_Node000009" title=" " alt="" coords="542,205,615,183,617,188,544,210"/>
+<area shape="rect" id="Node000012" href="$crmap_8c.html#a0009bf67270c308ce93c198c5ec03350" title="Parses a single channel range map object into the given cr struct. The object is expected to have the..." alt="" coords="622,207,726,232"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="543,217,606,217,606,222,543,222"/>
+<area shape="poly" id="edge16_Node000015_Node000013" title=" " alt="" coords="540,368,620,368,620,373,540,373"/>
+<area shape="rect" id="Node000018" href="$serial_8c.html#ace873b41bf59ecaa670e24591abbd1b6" title="Retrieves a list of available serial ports. The caller is responsible for freeing the list with slfre..." alt="" coords="447,55,558,80"/>
+<area shape="poly" id="edge20_Node000017_Node000018" title=" " alt="" coords="389,65,432,65,432,70,389,70"/>
+<area shape="poly" id="edge28_Node000021_Node000006" title=" " alt="" coords="183,507,194,497,212,464,219,433,220,403,216,374,213,344,214,313,222,281,242,248,258,235,261,239,246,252,227,283,219,314,219,343,222,373,225,403,225,434,217,466,198,500,186,511"/>
+<area shape="poly" id="edge24_Node000021_Node000009" title=" " alt="" coords="182,507,194,496,209,470,216,445,215,395,214,370,216,344,224,319,242,292,259,277,277,268,311,261,347,257,367,252,387,241,401,229,410,216,419,203,435,192,480,175,528,166,574,162,616,162,616,167,575,167,529,171,482,180,438,197,423,207,414,219,405,232,390,246,369,257,349,262,312,266,279,273,262,281,246,296,229,321,221,345,219,370,221,394,221,445,214,472,198,500,186,511"/>
+<area shape="poly" id="edge25_Node000021_Node000010" title=" " alt="" coords="182,507,194,496,206,478,213,460,217,424,221,388,228,369,242,350,256,338,260,342,246,353,233,372,226,389,222,425,218,461,211,480,198,500,185,511"/>
+<area shape="poly" id="edge26_Node000021_Node000013" title=" " alt="" coords="175,506,195,496,218,480,243,466,332,436,403,421,476,411,568,393,619,381,621,386,569,398,477,416,404,427,333,441,245,471,221,485,197,500,178,511"/>
+<area shape="poly" id="edge27_Node000021_Node000015" title=" " alt="" coords="181,507,194,496,210,472,215,447,222,423,230,411,242,400,267,386,293,375,348,362,403,359,450,361,450,366,403,364,349,367,295,380,269,390,246,404,234,415,227,425,220,448,215,474,198,500,184,511"/>
+<area shape="rect" id="Node000022" href="$player_8c.html#a4ec5687289d18651562957a247d20385" title="Frees dynamic allocated structures referenced by the player runtime data. rtd itself is not freed by ..." alt="" coords="459,459,546,484"/>
+<area shape="poly" id="edge29_Node000021_Node000022" title=" " alt="" coords="193,506,244,494,349,480,443,472,444,477,350,485,244,499,195,511"/>
+<area shape="rect" id="Node000026" href="$player_8c.html#a3762a659d4e6c34bdf73d29dd0b8dc75" title="Populates the player runtime data with dynamically allocated structures before initializing each subs..." alt="" coords="275,611,357,636"/>
+<area shape="poly" id="edge32_Node000021_Node000026" title=" " alt="" coords="174,533,282,600,279,605,171,538"/>
+<area shape="rect" id="Node000031" href="$player_8c.html#a30eb7f640562f5e082f537431fabfae0" title="Main loop of the player that drives the playback of the sequence. This function will block until the ..." alt="" coords="272,857,361,883"/>
+<area shape="poly" id="edge37_Node000021_Node000031" title=" " alt="" coords="159,534,304,842,300,844,154,537"/>
+<area shape="rect" id="Node000068" href="$putil_8c.html#ab280e2231023e7e95533aa0134fc61d9" title="If audiofp is not NULL, this function will attempt to play the audio file at the given path...." alt="" coords="251,956,381,982"/>
+<area shape="poly" id="edge48_Node000021_Node000068" title=" " alt="" coords="155,535,164,618,182,740,209,863,226,911,246,943,247,945,244,948,242,946,222,913,204,864,176,741,158,618,149,536"/>
+<area shape="rect" id="Node000073" href="$putil_8c.html#ab3d0be82de2dfcc8994230af517dbee9" title="Waits for the given number of seconds by blocking the current thread. LOR heartbeat messages will int..." alt="" coords="280,509,352,535"/>
+<area shape="poly" id="edge56_Node000021_Node000073" title=" " alt="" coords="196,520,265,520,265,525,196,525"/>
+<area shape="rect" id="Node000074" href="$seq_8c.html#a5ef6aea9ace33c3d02417d67d0d6319e" title="Reads a FSEQ header and initializes the header struct with the sequence&#39;s metadata...." alt="" coords="276,907,356,932"/>
+<area shape="poly" id="edge58_Node000021_Node000074" title=" " alt="" coords="155,535,165,609,185,717,212,824,228,866,246,894,263,906,260,910,242,897,223,868,207,825,179,718,160,610,150,536"/>
+<area shape="rect" id="Node000023" href="$cell_8c.html#a65ff64f02741fc9b0e24bf2749cdfffd" title="Frees the table and any held resources." alt="" coords="640,435,708,460"/>
+<area shape="poly" id="edge30_Node000022_Node000023" title=" " alt="" coords="546,463,624,452,624,457,547,468"/>
+<area shape="rect" id="Node000024" href="$pump_8c.html#a7c99ef7d16fc21de2c707fa78e86ab81" title="Frees the resources associated with the provided frame pump." alt="" coords="640,484,708,510"/>
+<area shape="poly" id="edge31_Node000022_Node000024" title=" " alt="" coords="547,475,625,487,624,492,546,481"/>
+<area shape="poly" id="edge35_Node000026_Node000022" title=" " alt="" coords="332,608,472,492,475,496,335,612"/>
+<area shape="rect" id="Node000027" href="$cell_8c.html#a253791e070bf0f98a8fb31eab6f08f5d" title="Initializes table that maps the raw fseq sequence indexes to a known LOR unit and channel number usin..." alt="" coords="471,709,534,735"/>
+<area shape="poly" id="edge33_Node000026_Node000027" title=" " alt="" coords="338,635,382,664,438,696,457,704,455,709,435,701,379,669,335,639"/>
+<area shape="rect" id="Node000029" href="$pump_8c.html#ace12e3aec7ac03743a8cf3d73bb37969" title="Initializes a frame pump with the provided file controller. The pump will read frames from the file c..." alt="" coords="471,611,534,636"/>
+<area shape="poly" id="edge34_Node000026_Node000029" title=" " alt="" coords="358,621,456,621,456,626,358,626"/>
+<area shape="rect" id="Node000030" href="$sleep_8c.html#afd098fd42a9f3b7a5616d0d772cbdb08" title="Allocates and initializes a new sleep collector with default values." alt="" coords="463,660,542,686"/>
+<area shape="poly" id="edge36_Node000026_Node000030" title=" " alt="" coords="358,632,449,656,447,661,357,637"/>
+<area shape="rect" id="Node000032" href="$audio_8c.html#a31ee90daccbe20571bf17f4706a8103a" title="Checks the playback status of the audio system." alt="" coords="617,1107,731,1132"/>
+<area shape="poly" id="edge38_Node000031_Node000032" title=" " alt="" coords="363,877,390,892,409,918,415,943,421,968,438,992,455,1005,470,1013,501,1020,533,1026,570,1043,585,1056,595,1068,604,1081,618,1093,624,1097,621,1101,615,1098,600,1084,591,1072,582,1059,567,1047,532,1031,500,1025,468,1018,452,1009,434,996,416,970,410,945,404,920,387,896,360,881"/>
+<area shape="rect" id="Node000033" href="$player_8c.html#a56fa00589840072b269070591b8c155d" title="Prints a log message summarizing the player&#39;s current state." alt="" coords="461,907,544,932"/>
+<area shape="poly" id="edge41_Node000031_Node000033" title=" " alt="" coords="362,879,447,902,445,907,361,885"/>
+<area shape="rect" id="Node000037" href="$player_8c.html#a0be44cb011fa97a198c60458b0761809" title="Increments the current frame index and writes the minified frame data to the serial output...." alt="" coords="437,956,568,982"/>
+<area shape="poly" id="edge42_Node000031_Node000037" title=" " alt="" coords="363,879,390,892,405,905,415,918,424,930,438,943,444,947,442,951,435,947,420,934,410,921,401,909,387,896,360,884"/>
+<area shape="rect" id="Node000059" href="$putil_8c.html#aecc0ea5bccde45a6f82364c2b9a38a7d" title="Turns off all lights by sending a set off effect to all LOR units." alt="" coords="454,759,551,784"/>
+<area shape="poly" id="edge43_Node000031_Node000059" title=" " alt="" coords="335,855,379,825,435,793,446,788,448,793,438,798,382,829,338,859"/>
+<area shape="rect" id="Node000060" href="$putil_8c.html#ad065eb627423f95e1ee6245f81c170d5" title="Encodes and writes a LOR heartbeat message to the serial port." alt="" coords="436,857,569,883"/>
+<area shape="poly" id="edge45_Node000031_Node000060" title=" " alt="" coords="361,868,421,868,421,873,361,873"/>
+<area shape="rect" id="Node000061" href="$sleep_8c.html#a616fde30e190c5b8198c0c4423ee707e" title="Sleeps for the given number of milliseconds using incremental sleep calls that estimate the time rema..." alt="" coords="465,808,540,834"/>
+<area shape="poly" id="edge47_Node000031_Node000061" title=" " alt="" coords="361,856,449,832,450,837,362,861"/>
+<area shape="poly" id="edge39_Node000032_Node000003" title=" " alt="" coords="721,1130,786,1150,785,1155,719,1135"/>
+<area shape="poly" id="edge40_Node000032_Node000004" title=" " alt="" coords="731,1120,817,1127,913,1142,946,1151,945,1156,912,1147,817,1133,731,1125"/>
+<area shape="rect" id="Node000054" href="$serial_8c.html#a59d3d8b6bd5c63d8346079182204f30e" title="Writes the binary data to the open serial port. The data is copied to an internal buffer and written ..." alt="" coords="629,759,718,784"/>
+<area shape="poly" id="edge44_Node000059_Node000054" title=" " alt="" coords="551,769,614,769,614,774,551,774"/>
+<area shape="poly" id="edge46_Node000060_Node000054" title=" " alt="" coords="544,854,567,844,608,818,644,792,647,796,611,823,570,849,546,859"/>
+<area shape="rect" id="Node000069" href="$audio_8c.html#a0c9f7a75cf5e965c07b70cdde5f15cfa" title="Attempts to play the audio file at the given file path. This function initializes the audio system if..." alt="" coords="460,1208,545,1234"/>
+<area shape="poly" id="edge49_Node000068_Node000069" title=" " alt="" coords="365,980,390,999,407,1025,414,1051,414,1100,413,1124,414,1147,422,1171,438,1195,448,1203,444,1207,434,1199,417,1173,409,1148,407,1124,409,1100,409,1052,402,1027,386,1003,362,984"/>
+<area shape="rect" id="Node000071" href="$seq_8c.html#aa46d33d98cef6abf5a1027e93ec87862" title="Retrieves the audio file path from the sequence for playback by searching the FSEQ&#39;s variable table f..." alt="" coords="440,1159,565,1184"/>
+<area shape="poly" id="edge54_Node000068_Node000071" title=" " alt="" coords="363,980,390,999,404,1017,411,1035,415,1070,419,1103,426,1120,438,1138,451,1149,447,1153,434,1141,421,1123,414,1105,410,1070,406,1037,399,1020,386,1003,360,984"/>
+<area shape="poly" id="edge51_Node000069_Node000003" title=" " alt="" coords="545,1211,616,1200,763,1178,764,1184,617,1205,546,1216"/>
+<area shape="poly" id="edge52_Node000069_Node000004" title=" " alt="" coords="545,1219,707,1215,809,1207,912,1193,945,1185,946,1190,913,1198,810,1212,707,1220,545,1224"/>
+<area shape="poly" id="edge53_Node000069_Node000005" title=" " alt="" coords="546,1231,619,1253,617,1258,545,1236"/>
+<area shape="poly" id="edge50_Node000069_Node000032" title=" " alt="" coords="545,1206,567,1195,591,1173,615,1149,632,1138,635,1143,618,1154,595,1177,570,1199,547,1211"/>
+<area shape="poly" id="edge55_Node000071_Node000016" title=" " alt="" coords="535,1156,567,1137,591,1115,615,1092,623,1087,626,1092,618,1096,594,1119,570,1142,537,1160"/>
+<area shape="poly" id="edge57_Node000073_Node000054" title=" " alt="" coords="353,522,399,529,456,542,516,564,570,596,604,630,631,670,652,709,666,743,661,745,647,712,627,673,600,634,567,600,514,568,455,547,398,534,352,527"/>
+<area shape="poly" id="edge61_Node000074_Node000016" title=" " alt="" coords="357,923,375,930,390,942,405,962,411,982,412,1023,414,1061,422,1077,438,1093,454,1103,469,1109,498,1109,529,1101,568,1093,623,1082,624,1087,569,1098,531,1106,499,1114,468,1114,452,1108,435,1098,418,1081,409,1062,407,1023,406,983,400,964,386,945,372,935,355,928"/>
+<area shape="rect" id="Node000075" href="$comblock_8c.html#a633e09c265a4649fecfa3a3035c953b5" title="Determines the number of compression blocks available within the given sequence file...." alt="" coords="442,1057,563,1083"/>
+<area shape="poly" id="edge59_Node000074_Node000075" title=" " alt="" coords="357,924,374,931,390,942,409,965,416,989,422,1013,438,1036,452,1047,449,1052,434,1040,417,1015,411,991,404,968,387,945,372,936,355,929"/>
+<area shape="poly" id="edge60_Node000075_Node000016" title=" " alt="" coords="564,1068,623,1068,623,1073,564,1073"/>
+<area shape="rect" id="Node000082" href="$serial_8c.html#ad22b87067ed5d32f2628f21dab1e4164" title="Opens the serial port with the given device name and baud rate." alt="" coords="260,1307,373,1332"/>
+<area shape="poly" id="edge68_Node000081_Node000082" title=" " alt="" coords="189,1316,244,1316,244,1322,189,1321"/>
+<area shape="rect" id="Node000056" href="$serial_8c.html#a706542c2b6ac4b13b60019221d8972ee" title="Prints an error message to stderr for the given error code, including the libserialport error message..." alt="" coords="445,1308,560,1334"/>
+<area shape="poly" id="edge69_Node000082_Node000056" title=" " alt="" coords="373,1317,430,1318,430,1323,373,1323"/>
+</map>

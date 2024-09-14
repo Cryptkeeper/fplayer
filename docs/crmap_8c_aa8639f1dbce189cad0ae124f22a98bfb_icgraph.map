@@ -1,0 +1,16 @@
+<map id="CMap_free" name="CMap_free">
+<area shape="rect" id="Node000001" title="Frees the given channel range map by walking the linked list and freeing each node." alt="" coords="509,29,594,55"/>
+<area shape="rect" id="Node000002" href="$crmap_8c.html#a4909bc64abe2fc71ea5dc6e769e9c1cb" title="Parses the given channel range map string into a linked list of struct cr_s nodes...." alt="" coords="380,29,461,55"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="493,45,461,45,461,40,493,40"/>
+<area shape="rect" id="Node000004" href="$main_8c.html#a9dc5e5175937c64fec9827bdb18a7531" title="Parse command line options and sets global variables for program execution via gOpts." alt="" coords="109,5,190,31"/>
+<area shape="poly" id="edge7_Node000001_Node000004" title=" " alt="" coords="496,27,460,19,386,13,312,11,191,17,190,12,312,6,386,7,461,14,497,22"/>
+<area shape="rect" id="Node000006" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,55,196,80"/>
+<area shape="poly" id="edge8_Node000001_Node000006" title=" " alt="" coords="497,62,461,70,389,77,317,79,197,74,197,69,317,73,389,72,460,65,496,57"/>
+<area shape="rect" id="Node000003" href="$crmap_8c.html#aa78ac33184789e0eefd5c7d832c4e0ee" title="Reads a channel range map from the given file path. The channel range map is a linked list of channel..." alt="" coords="244,29,332,55"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="365,45,333,45,333,40,365,40"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="228,35,190,28,191,23,229,29"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="229,56,197,62,196,56,228,50"/>
+<area shape="rect" id="Node000005" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,31,55,56"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="94,33,56,41,55,36,93,27"/>
+<area shape="poly" id="edge6_Node000006_Node000005" title=" " alt="" coords="87,58,55,51,56,46,88,52"/>
+</map>

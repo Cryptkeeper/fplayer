@@ -1,0 +1,9 @@
+<map id="Player_free" name="Player_free">
+<area shape="rect" id="Node000001" title="Frees dynamic allocated structures referenced by the player runtime data. rtd itself is not freed by ..." alt="" coords="5,31,93,56"/>
+<area shape="rect" id="Node000002" href="$cell_8c.html#a65ff64f02741fc9b0e24bf2749cdfffd" title="Frees the table and any held resources." alt="" coords="141,5,209,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="93,32,125,25,126,31,94,37"/>
+<area shape="rect" id="Node000003" href="$pump_8c.html#a7c99ef7d16fc21de2c707fa78e86ab81" title="Frees the resources associated with the provided frame pump." alt="" coords="141,55,208,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="94,49,126,56,125,61,93,54"/>
+<area shape="rect" id="Node000004" href="$fd_8c.html#a04dc0c764a0555ae69a945fe0531167d" title="Frees all entry nodes in the list, but does not free the list itself." alt="" coords="257,55,325,80"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="209,65,242,65,242,70,209,70"/>
+</map>

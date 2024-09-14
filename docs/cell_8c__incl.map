@@ -1,0 +1,18 @@
+<map id="src/cell.c" name="src/cell.c">
+<area shape="rect" id="Node000001" title="Cell table for tracking output states." alt="" coords="209,5,283,31"/>
+<area shape="rect" id="Node000002" href="$cell_8h.html" title="Cell table for tracking output states." alt="" coords="5,79,58,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="211,34,73,80,71,75,209,29"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="81,79,150,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="225,34,152,74,149,69,223,29"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="173,79,234,105"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="241,33,221,67,216,64,237,30"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="257,79,320,105"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="255,30,276,64,272,67,251,33"/>
+<area shape="rect" id="Node000007" href="$crmap_8h.html" title="Channel range map interface." alt="" coords="344,79,412,105"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="270,29,344,69,341,74,267,34"/>
+<area shape="rect" id="Node000008" href="$errcode_8h.html" title="Error code definitions and message strings." alt="" coords="437,79,541,105"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="284,28,434,72,432,77,283,33"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="173,153,237,178"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="59,102,162,144,160,149,57,107"/>
+<area shape="poly" id="edge7_Node000007_Node000003" title=" " alt="" coords="350,108,249,149,247,144,348,103"/>
+</map>

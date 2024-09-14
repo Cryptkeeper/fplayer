@@ -1,0 +1,24 @@
+<map id="Serial_writeVirtual" name="Serial_writeVirtual">
+<area shape="rect" id="Node000001" title="Writes the binary data to the virtual file handle within the virtual serial device structure." alt="" coords="857,68,984,94"/>
+<area shape="rect" id="Node000002" href="$serial_8c.html#a59d3d8b6bd5c63d8346079182204f30e" title="Writes the binary data to the open serial port. The data is copied to an internal buffer and written ..." alt="" coords="720,68,809,94"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="842,84,810,84,810,78,842,78"/>
+<area shape="rect" id="Node000003" href="$putil_8c.html#aecc0ea5bccde45a6f82364c2b9a38a7d" title="Turns off all lights by sending a set off effect to all LOR units." alt="" coords="399,43,496,68"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="704,79,496,62,497,57,705,73"/>
+<area shape="rect" id="Node000007" href="$putil_8c.html#ab3d0be82de2dfcc8994230af517dbee9" title="Waits for the given number of seconds by blocking the current thread. LOR heartbeat messages will int..." alt="" coords="253,5,324,31"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="714,65,671,53,574,36,477,26,325,20,325,15,477,21,575,30,673,48,715,60"/>
+<area shape="rect" id="Node000008" href="$putil_8c.html#a4eb13572c6a1cf5854bb058e36e20562" title="Encodes the given channel group state update to the provided message buffer as a LOR effect...." alt="" coords="562,144,672,170"/>
+<area shape="poly" id="edge8_Node000002_Node000008" title=" " alt="" coords="726,104,645,146,642,141,723,99"/>
+<area shape="rect" id="Node000010" href="$putil_8c.html#ad065eb627423f95e1ee6245f81c170d5" title="Encodes and writes a LOR heartbeat message to the serial port." alt="" coords="381,93,514,119"/>
+<area shape="poly" id="edge11_Node000002_Node000010" title=" " alt="" coords="705,88,514,104,514,98,704,83"/>
+<area shape="rect" id="Node000004" href="$player_8c.html#a30eb7f640562f5e082f537431fabfae0" title="Main loop of the player that drives the playback of the sequence. This function will block until the ..." alt="" coords="244,68,333,94"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="384,68,334,76,333,71,383,63"/>
+<area shape="rect" id="Node000005" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,44,196,70"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="228,73,196,68,197,62,229,68"/>
+<area shape="rect" id="Node000006" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,44,55,70"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="87,60,55,60,55,54,87,54"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="239,35,197,46,196,41,237,30"/>
+<area shape="rect" id="Node000009" href="$player_8c.html#a0be44cb011fa97a198c60458b0761809" title="Increments the current frame index and writes the minified frame data to the serial output...." alt="" coords="382,143,513,168"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="546,159,513,159,513,153,546,154"/>
+<area shape="poly" id="edge10_Node000009_Node000004" title=" " alt="" coords="392,139,380,134,311,97,313,92,382,129,394,134"/>
+<area shape="poly" id="edge12_Node000010_Node000004" title=" " alt="" coords="365,96,333,91,334,85,366,91"/>
+</map>

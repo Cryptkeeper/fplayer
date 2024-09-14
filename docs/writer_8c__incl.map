@@ -1,0 +1,27 @@
+<map id="common/fseq/writer.c" name="common/fseq/writer.c">
+<area shape="rect" id="Node000001" title="FSEQ sequence file encoding function implementations." alt="" coords="378,5,525,31"/>
+<area shape="rect" id="Node000002" href="$writer_8h.html" title="FSEQ sequence file encoding functions." alt="" coords="5,79,69,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="378,32,245,51,84,81,83,76,244,46,377,26"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="92,79,160,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="393,34,176,81,175,76,392,29"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="185,79,260,105"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="414,34,275,77,273,72,412,29"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="284,79,352,105"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="430,34,356,74,353,69,428,29"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="376,79,439,105"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="447,33,425,67,421,64,442,30"/>
+<area shape="rect" id="Node000008" href="$string_8h.html" title="String parsing functions." alt="" coords="464,79,528,105"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="461,30,482,64,478,67,457,33"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="552,79,631,105"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="477,29,556,69,553,74,474,34"/>
+<area shape="rect" id="Node000010" href="$enc_8h.html" title="Binary encoding utility functions." alt="" coords="654,79,737,105"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="494,29,640,72,639,77,492,34"/>
+<area shape="rect" id="Node000011" href="$errcode_8h.html" title="Error code definitions and message strings." alt="" coords="761,79,865,105"/>
+<area shape="poly" id="edge11_Node000001_Node000011" title=" " alt="" coords="514,29,746,75,745,80,513,34"/>
+<area shape="rect" id="Node000012" href="$fc_8h.html" title="File controller interface for reading/writing files." alt="" coords="889,79,961,105"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="526,25,682,45,874,76,873,81,681,50,525,30"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="664,153,728,178"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="70,100,80,102,243,126,404,143,649,160,648,165,404,149,242,132,79,107,68,105"/>
+<area shape="poly" id="edge10_Node000010_Node000003" title=" " alt="" coords="698,105,698,137,693,137,693,105"/>
+<area shape="poly" id="edge13_Node000012_Node000003" title=" " alt="" coords="889,107,744,152,742,147,888,102"/>
+</map>

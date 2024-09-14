@@ -1,0 +1,21 @@
+<map id="src/serial.c" name="src/serial.c">
+<area shape="rect" id="Node000001" title="Serial port communication implementation." alt="" coords="296,5,382,31"/>
+<area shape="rect" id="Node000002" href="$serial_8h.html" title="Serial port communication interface." alt="" coords="44,79,108,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="297,34,123,81,122,75,295,28"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="131,79,200,105"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="310,34,210,75,208,70,308,29"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="223,79,284,105"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="326,34,281,71,278,67,323,29"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="307,79,370,105"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="342,31,342,63,336,63,336,31"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="395,79,466,105"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="356,29,405,67,402,72,353,34"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="491,79,589,105"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="374,29,492,71,491,76,372,34"/>
+<area shape="rect" id="Node000010" href="$errcode_8h.html" title="Error code definitions and message strings." alt="" coords="613,79,718,105"/>
+<area shape="poly" id="edge9_Node000001_Node000010" title=" " alt="" coords="382,26,599,73,598,78,381,31"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,153,70,178"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="72,106,54,140,49,138,67,104"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="94,153,136,178"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="85,104,103,138,99,140,80,106"/>
+</map>

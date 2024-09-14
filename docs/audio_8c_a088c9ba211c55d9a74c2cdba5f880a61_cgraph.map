@@ -1,0 +1,5 @@
+<map id="audioStopPlayback" name="audioStopPlayback">
+<area shape="rect" id="Node000001" title="Stops the current audio playback, if any. The last allocated AL buffer is then detached from the sour..." alt="" coords="5,5,139,31"/>
+<area shape="rect" id="Node000002" href="$audio_8c.html#ab8d211abfcf3a5272bc45db36f041ea8" title="Prints the last OpenAL error to stderr with the given message." alt="" coords="187,5,258,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="139,16,171,16,171,21,139,21"/>
+</map>

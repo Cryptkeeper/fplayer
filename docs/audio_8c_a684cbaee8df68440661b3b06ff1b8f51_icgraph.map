@@ -1,0 +1,14 @@
+<map id="perror_alut" name="perror_alut">
+<area shape="rect" id="Node000001" title="Prints the last ALUT error to stderr with the given message." alt="" coords="556,31,638,56"/>
+<area shape="rect" id="Node000002" href="$audio_8c.html#a0f835b89e652069b65ca05572e340add" title="Exits the audio system and frees all resources. This function should be called before the program exi..." alt="" coords="268,5,350,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="540,41,351,24,351,19,540,36"/>
+<area shape="rect" id="Node000004" href="$audio_8c.html#a0c9f7a75cf5e965c07b70cdde5f15cfa" title="Attempts to play the audio file at the given file path. This function initializes the audio system if..." alt="" coords="422,56,508,82"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="541,57,509,63,508,58,540,52"/>
+<area shape="rect" id="Node000003" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,31,55,56"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="253,26,55,44,55,39,252,21"/>
+<area shape="rect" id="Node000005" href="$putil_8c.html#ab280e2231023e7e95533aa0134fc61d9" title="If audiofp is not NULL, this function will attempt to play the audio file at the given path...." alt="" coords="244,56,374,82"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="407,72,375,72,375,66,407,66"/>
+<area shape="rect" id="Node000006" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,56,196,82"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="228,72,196,72,196,66,228,66"/>
+<area shape="poly" id="edge6_Node000006_Node000003" title=" " alt="" coords="87,58,55,51,56,46,88,53"/>
+</map>

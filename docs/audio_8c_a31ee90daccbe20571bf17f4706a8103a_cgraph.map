@@ -1,0 +1,8 @@
+<map id="Audio_isPlaying" name="Audio_isPlaying">
+<area shape="rect" id="Node000001" title="Checks the playback status of the audio system." alt="" coords="5,31,120,56"/>
+<area shape="rect" id="Node000002" href="$audio_8c.html#a088c9ba211c55d9a74c2cdba5f880a61" title="Stops the current audio playback, if any. The last allocated AL buffer is then detached from the sour..." alt="" coords="168,5,301,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,32,152,28,153,33,121,38"/>
+<area shape="rect" id="Node000003" href="$audio_8c.html#ab8d211abfcf3a5272bc45db36f041ea8" title="Prints the last OpenAL error to stderr with the given message." alt="" coords="349,31,420,56"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="120,41,333,41,333,46,120,46"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="302,27,334,32,333,38,301,32"/>
+</map>

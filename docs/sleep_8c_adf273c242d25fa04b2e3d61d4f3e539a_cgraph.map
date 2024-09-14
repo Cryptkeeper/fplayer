@@ -1,0 +1,9 @@
+<map id="Sleep_step" name="Sleep_step">
+<area shape="rect" id="Node000001" title="Sleeps for the given number of nanoseconds using incremental sleep calls that estimate the time remai..." alt="" coords="5,55,92,80"/>
+<area shape="rect" id="Node000002" href="$sleep_8c.html#aa1f93b05367399c7c43b3b6b7acefaeb" title="Sleeps for one millisecond using the system&#39;s equivalent sleep function. This is used to provide a ba..." alt="" coords="142,5,248,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="88,51,139,34,141,39,90,57"/>
+<area shape="rect" id="Node000003" href="$time_8c.html#a7289d3896393480a4d4e8cfff5ff88e9" title="Return the time elapsed from end since the start time in nanoseconds." alt="" coords="140,55,250,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="92,65,124,65,124,70,92,70"/>
+<area shape="rect" id="Node000004" href="$time_8c.html#a0df3061922c6f7365103ab1d2a74d383" title="Get the current system time." alt="" coords="148,104,242,130"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="90,78,141,96,139,101,88,84"/>
+</map>

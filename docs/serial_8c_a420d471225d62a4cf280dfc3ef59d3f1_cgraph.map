@@ -1,0 +1,5 @@
+<map id="Serial_drain" name="Serial_drain">
+<area shape="rect" id="Node000001" title="Waits for all data to be written to the serial device." alt="" coords="5,5,95,31"/>
+<area shape="rect" id="Node000002" href="$serial_8c.html#a706542c2b6ac4b13b60019221d8972ee" title="Prints an error message to stderr for the given error code, including the libserialport error message..." alt="" coords="143,5,257,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,16,127,16,127,21,95,21"/>
+</map>

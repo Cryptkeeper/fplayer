@@ -1,0 +1,14 @@
+<map id="Audio_isPlaying" name="Audio_isPlaying">
+<area shape="rect" id="Node000001" title="Checks the playback status of the audio system." alt="" coords="556,31,670,56"/>
+<area shape="rect" id="Node000002" href="$audio_8c.html#a0c9f7a75cf5e965c07b70cdde5f15cfa" title="Attempts to play the audio file at the given file path. This function initializes the audio system if..." alt="" coords="422,5,508,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="540,34,507,28,508,23,541,28"/>
+<area shape="rect" id="Node000006" href="$player_8c.html#a30eb7f640562f5e082f537431fabfae0" title="Main loop of the player that drives the playback of the sequence. This function will block until the ..." alt="" coords="264,56,354,82"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="540,52,355,68,354,62,540,47"/>
+<area shape="rect" id="Node000003" href="$putil_8c.html#ab280e2231023e7e95533aa0134fc61d9" title="If audiofp is not NULL, this function will attempt to play the audio file at the given path...." alt="" coords="244,7,374,32"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="407,21,375,22,375,16,407,16"/>
+<area shape="rect" id="Node000004" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,32,196,58"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="229,35,197,40,196,35,228,30"/>
+<area shape="rect" id="Node000005" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,32,55,58"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="87,48,55,48,55,42,87,42"/>
+<area shape="poly" id="edge6_Node000006_Node000004" title=" " alt="" coords="249,63,196,54,197,49,250,57"/>
+</map>

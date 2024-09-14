@@ -1,0 +1,7 @@
+<map id="fseqGetVarSectionSize" name="fseqGetVarSectionSize">
+<area shape="rect" id="Node000001" title="Calculates the size in bytes of the variable section according to the given variables...." alt="" coords="229,31,385,56"/>
+<area shape="rect" id="Node000002" href="$writer_8c.html#afe310f6832e5858cf7e3e7312219a70f" title="Re&#45;aligns the offsets in the given header to account for the length of the variable data that will be..." alt="" coords="5,5,181,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="213,35,181,31,181,26,213,30"/>
+<area shape="rect" id="Node000003" href="$writer_8c.html#a9ae57da8e5924f067c258cf80461d7a0" title="Encodes the given variables and writes them to the file after the compression block and channel range..." alt="" coords="42,55,144,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="213,57,145,64,145,59,213,51"/>
+</map>

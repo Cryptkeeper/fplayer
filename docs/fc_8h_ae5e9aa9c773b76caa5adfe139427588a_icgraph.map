@@ -1,0 +1,44 @@
+<map id="FC_read" name="FC_read">
+<area shape="rect" id="Node000001" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="1583,131,1654,156"/>
+<area shape="rect" id="Node000002" href="$crmap_8c.html#aa78ac33184789e0eefd5c7d832c4e0ee" title="Reads a channel range map from the given file path. The channel range map is a linked list of channel..." alt="" coords="244,29,333,55"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1601,118,1573,78,1555,59,1533,45,1492,25,1455,14,1421,9,1388,8,1318,15,1230,20,621,20,462,27,333,39,333,34,462,21,620,14,1229,14,1317,9,1388,3,1421,4,1456,9,1494,20,1536,40,1558,55,1578,75,1606,115"/>
+<area shape="rect" id="Node000006" href="$comblock_8c.html#a633e09c265a4649fecfa3a3035c953b5" title="Determines the number of compression blocks available within the given sequence file...." alt="" coords="1380,55,1501,80"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="1580,125,1534,102,1484,83,1486,78,1536,97,1582,120"/>
+<area shape="rect" id="Node000007" href="$seq_8c.html#a5ef6aea9ace33c3d02417d67d0d6319e" title="Reads a FSEQ header and initializes the header struct with the sequence&#39;s metadata...." alt="" coords="1188,80,1268,106"/>
+<area shape="poly" id="edge24_Node000001_Node000007" title=" " alt="" coords="1567,140,1268,101,1269,95,1568,134"/>
+<area shape="rect" id="Node000008" href="$comblock_8c.html#a184922fb41719bd272b55c1402a9e7de" title="Calculates the absolute address of the given compression block index and its encoded size." alt="" coords="1346,156,1535,182"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="1568,153,1535,158,1534,153,1567,148"/>
+<area shape="rect" id="Node000009" href="$comblock_8c.html#abaf2a087d477ec548fe50d7815089279" title="Reads the given compression block (by index) from the given file controller and decompresses it using..." alt="" coords="1158,169,1298,195"/>
+<area shape="poly" id="edge20_Node000001_Node000009" title=" " alt="" coords="1591,168,1565,184,1535,197,1471,208,1406,210,1344,206,1291,198,1291,193,1344,201,1406,205,1471,203,1534,192,1562,180,1588,164"/>
+<area shape="rect" id="Node000017" href="$seq_8c.html#aa46d33d98cef6abf5a1027e93ec87862" title="Retrieves the audio file path from the sequence for playback by searching the FSEQ&#39;s variable table f..." alt="" coords="1378,257,1503,283"/>
+<area shape="poly" id="edge21_Node000001_Node000017" title=" " alt="" coords="1602,171,1574,207,1536,240,1497,259,1495,254,1533,236,1570,203,1598,168"/>
+<area shape="rect" id="Node000003" href="$main_8c.html#a9dc5e5175937c64fec9827bdb18a7531" title="Parse command line options and sets global variables for program execution via gOpts." alt="" coords="109,31,190,56"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="229,45,190,46,190,41,229,40"/>
+<area shape="rect" id="Node000005" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,80,196,106"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="238,63,188,82,186,77,236,58"/>
+<area shape="rect" id="Node000004" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,56,55,82"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="94,58,56,66,55,61,93,53"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="87,83,55,76,56,71,88,78"/>
+<area shape="poly" id="edge7_Node000006_Node000007" title=" " alt="" coords="1365,79,1268,91,1268,86,1364,74"/>
+<area shape="poly" id="edge8_Node000007_Node000005" title=" " alt="" coords="1173,96,898,96,445,96,197,96,197,90,445,90,898,90,1173,90"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="1331,178,1299,180,1298,175,1331,173"/>
+<area shape="rect" id="Node000010" href="$comblock_8c.html#aa718f4faf13580abe13ffdba68e8d81c" title="Reads the given compression block (by index) from the given file controller and decompresses it (if s..." alt="" coords="988,169,1102,195"/>
+<area shape="poly" id="edge11_Node000009_Node000010" title=" " alt="" coords="1142,185,1102,185,1102,180,1142,180"/>
+<area shape="rect" id="Node000011" href="$pump_8c.html#a0264c0768947899db76d3ab1ce394f95" title="Reads the next frame set from the file controller and stores it in the provided frame data node point..." alt="" coords="861,169,932,195"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="972,185,932,185,932,180,972,180"/>
+<area shape="rect" id="Node000012" href="$pump_8c.html#a2b6a9a5b1d91947a2eb549b4460f7366" title="Copies the next frame of data from the pump to the provided frame data buffer. If the pump&#39;s internal..." alt="" coords="568,131,676,156"/>
+<area shape="poly" id="edge13_Node000011_Node000012" title=" " alt="" coords="845,177,813,172,676,153,676,148,814,166,846,171"/>
+<area shape="rect" id="Node000015" href="$pump_8c.html#a41c6c4a221b68550e0b0ad6fbf0fd1ce" title=" " alt="" coords="732,181,813,207"/>
+<area shape="poly" id="edge17_Node000011_Node000015" title=" " alt="" coords="846,190,814,193,813,188,845,184"/>
+<area shape="rect" id="Node000013" href="$player_8c.html#a0be44cb011fa97a198c60458b0761809" title="Increments the current frame index and writes the minified frame data to the serial output...." alt="" coords="381,131,512,156"/>
+<area shape="poly" id="edge14_Node000012_Node000013" title=" " alt="" coords="552,146,512,146,512,141,552,141"/>
+<area shape="rect" id="Node000014" href="$player_8c.html#a30eb7f640562f5e082f537431fabfae0" title="Main loop of the player that drives the playback of the sequence. This function will block until the ..." alt="" coords="244,131,333,156"/>
+<area shape="poly" id="edge15_Node000013_Node000014" title=" " alt="" coords="365,146,334,146,334,141,365,141"/>
+<area shape="poly" id="edge16_Node000014_Node000005" title=" " alt="" coords="236,127,186,109,188,104,238,122"/>
+<area shape="rect" id="Node000016" href="$pump_8c.html#a52ae12b729974435a410e9753a2c6bb6" title="Checks if the pump&#39;s internal buffer is low, and if so, preloads the next frame set from the file con..." alt="" coords="560,180,684,206"/>
+<area shape="poly" id="edge18_Node000015_Node000016" title=" " alt="" coords="716,196,684,196,684,191,716,191"/>
+<area shape="poly" id="edge19_Node000016_Node000013" title=" " alt="" coords="558,178,494,160,496,154,560,173"/>
+<area shape="rect" id="Node000018" href="$putil_8c.html#ab280e2231023e7e95533aa0134fc61d9" title="If audiofp is not NULL, this function will attempt to play the audio file at the given path...." alt="" coords="980,251,1110,276"/>
+<area shape="poly" id="edge22_Node000017_Node000018" title=" " alt="" coords="1362,272,1110,267,1110,262,1362,266"/>
+<area shape="poly" id="edge23_Node000018_Node000005" title=" " alt="" coords="964,261,774,254,445,254,399,249,354,237,311,218,271,195,205,147,162,108,165,104,208,143,274,191,314,213,356,232,400,244,445,249,774,249,964,255"/>
+</map>

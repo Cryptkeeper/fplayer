@@ -1,0 +1,5 @@
+<map id="FC_open" name="FC_open">
+<area shape="rect" id="Node000001" title="Opens a file controller instance for the given file path and mode." alt="" coords="5,5,80,31"/>
+<area shape="rect" id="Node000002" href="$fc_8c.html#a71eeb6fecce7b6562f003584e5612783" title="Closes the given file controller instance and frees its resources." alt="" coords="128,5,205,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="80,16,112,16,112,21,80,21"/>
+</map>

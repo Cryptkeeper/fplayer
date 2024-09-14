@@ -1,0 +1,7 @@
+<map id="Serial_init" name="Serial_init">
+<area shape="rect" id="Node000001" title="Initializes a write&#45;mode serial port with the provided device name and baud rate pre&#45;configured for u..." alt="" coords="5,5,84,31"/>
+<area shape="rect" id="Node000002" href="$serial_8c.html#ad22b87067ed5d32f2628f21dab1e4164" title="Opens the serial port with the given device name and baud rate." alt="" coords="132,5,245,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="84,16,116,16,116,21,84,21"/>
+<area shape="rect" id="Node000003" href="$serial_8c.html#a706542c2b6ac4b13b60019221d8972ee" title="Prints an error message to stderr for the given error code, including the libserialport error message..." alt="" coords="293,5,407,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="245,16,277,16,277,21,245,21"/>
+</map>

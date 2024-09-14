@@ -1,0 +1,17 @@
+<map id="timeGetNow" name="timeGetNow">
+<area shape="rect" id="Node000001" title="Get the current system time." alt="" coords="666,23,760,49"/>
+<area shape="rect" id="Node000002" href="$sleep_8c.html#a616fde30e190c5b8198c0c4423ee707e" title="Sleeps for the given number of milliseconds using incremental sleep calls that estimate the time rema..." alt="" coords="381,23,457,49"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="656,21,618,13,561,8,505,13,457,25,456,20,504,8,561,3,618,8,657,16"/>
+<area shape="rect" id="Node000006" href="$sleep_8c.html#ab2391db426ae715d9758d1e14ce9fc39" title="Sleeps for the given number of nanoseconds using a spin lock. This is a blocking operation that will ..." alt="" coords="505,23,618,49"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="650,39,618,39,618,33,650,33"/>
+<area shape="rect" id="Node000007" href="$sleep_8c.html#adf273c242d25fa04b2e3d61d4f3e539a" title="Sleeps for the given number of nanoseconds using incremental sleep calls that estimate the time remai..." alt="" coords="518,72,604,98"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="658,57,604,74,603,69,656,52"/>
+<area shape="rect" id="Node000003" href="$player_8c.html#a30eb7f640562f5e082f537431fabfae0" title="Main loop of the player that drives the playback of the sequence. This function will block until the ..." alt="" coords="244,23,333,49"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="366,39,334,39,334,33,366,33"/>
+<area shape="rect" id="Node000004" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,23,196,49"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="228,39,196,39,196,33,228,33"/>
+<area shape="rect" id="Node000005" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,23,55,49"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="87,39,55,39,55,33,87,33"/>
+<area shape="poly" id="edge6_Node000006_Node000002" title=" " alt="" coords="489,39,457,39,457,33,489,33"/>
+<area shape="poly" id="edge8_Node000007_Node000002" title=" " alt="" coords="507,69,456,51,458,46,508,64"/>
+</map>

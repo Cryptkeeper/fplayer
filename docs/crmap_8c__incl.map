@@ -1,0 +1,18 @@
+<map id="src/crmap.c" name="src/crmap.c">
+<area shape="rect" id="Node000001" title="Channel range map implementation." alt="" coords="230,5,321,31"/>
+<area shape="rect" id="Node000002" href="$crmap_8h.html" title="Channel range map interface." alt="" coords="5,79,74,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="236,34,89,78,88,73,235,29"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="97,79,166,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="252,34,171,74,168,69,250,29"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="189,79,252,105"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="269,33,241,68,237,65,264,30"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="276,79,387,105"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="287,30,315,65,311,68,283,33"/>
+<area shape="rect" id="Node000007" href="$errcode_8h.html" title="Error code definitions and message strings." alt="" coords="411,79,516,105"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="308,29,418,70,416,75,306,34"/>
+<area shape="rect" id="Node000008" href="$fc_8h.html" title="File controller interface for reading/writing files." alt="" coords="539,79,612,105"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="322,28,525,76,524,81,320,33"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="275,153,340,178"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="75,100,261,149,259,154,73,105"/>
+<area shape="poly" id="edge8_Node000008_Node000003" title=" " alt="" coords="539,105,355,154,354,149,538,100"/>
+</map>

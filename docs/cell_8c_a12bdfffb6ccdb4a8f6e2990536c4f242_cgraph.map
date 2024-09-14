@@ -1,0 +1,5 @@
+<map id="CT_findMatches" name="CT_findMatches">
+<area shape="rect" id="Node000001" title="Finds all cells in the table that match the provided reference cell. The reference cell must be valid..." alt="" coords="5,5,123,31"/>
+<area shape="rect" id="Node000002" href="$cell_8c.html#a1dd10c5cc02001ce37b42f6d32d71347" title="Checks if two cells match, which indicates they are addressed to the same hardware controller (unit+s..." alt="" coords="171,5,267,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,16,155,16,155,21,123,21"/>
+</map>

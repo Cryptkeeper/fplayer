@@ -1,0 +1,7 @@
+<map id="Sleep_spinLock" name="Sleep_spinLock">
+<area shape="rect" id="Node000001" title="Sleeps for the given number of nanoseconds using a spin lock. This is a blocking operation that will ..." alt="" coords="5,31,119,56"/>
+<area shape="rect" id="Node000002" href="$time_8c.html#a7289d3896393480a4d4e8cfff5ff88e9" title="Return the time elapsed from end since the start time in nanoseconds." alt="" coords="167,5,277,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,32,151,27,152,32,120,37"/>
+<area shape="rect" id="Node000003" href="$time_8c.html#a0df3061922c6f7365103ab1d2a74d383" title="Get the current system time." alt="" coords="175,55,269,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="120,49,160,55,159,61,119,55"/>
+</map>

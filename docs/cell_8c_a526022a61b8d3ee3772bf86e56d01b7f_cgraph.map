@@ -1,0 +1,7 @@
+<map id="CT_groupof" name="CT_groupof">
+<area shape="rect" id="Node000001" title="Returns a group of linked cells starting at the given index. The group is identified by the unit numb..." alt="" coords="5,5,95,31"/>
+<area shape="rect" id="Node000002" href="$cell_8c.html#a12bdfffb6ccdb4a8f6e2990536c4f242" title="Finds all cells in the table that match the provided reference cell. The reference cell must be valid..." alt="" coords="143,5,260,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,16,127,16,127,21,95,21"/>
+<area shape="rect" id="Node000003" href="$cell_8c.html#a1dd10c5cc02001ce37b42f6d32d71347" title="Checks if two cells match, which indicates they are addressed to the same hardware controller (unit+s..." alt="" coords="308,5,404,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="261,16,292,16,292,21,261,21"/>
+</map>

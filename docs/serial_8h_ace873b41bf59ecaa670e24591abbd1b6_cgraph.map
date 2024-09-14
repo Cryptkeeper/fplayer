@@ -1,0 +1,7 @@
+<map id="Serial_getPorts" name="Serial_getPorts">
+<area shape="rect" id="Node000001" title="Retrieves a list of available serial ports. The caller is responsible for freeing the list with slfre..." alt="" coords="5,31,116,56"/>
+<area shape="rect" id="Node000002" href="$sl_8c.html#a40ce382eb4b0e93c8bcd52bd7d1fa2e4" title="sladd() duplicates a string and appends it to a string list. The string list is dynamically resized a..." alt="" coords="164,5,216,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="116,30,148,24,149,29,117,35"/>
+<area shape="rect" id="Node000003" href="$sl_8c.html#a715a3e3a248161d90c81a4fad39572bf" title="slfree() frees a string list and all its elements." alt="" coords="164,55,217,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="117,51,149,57,148,62,116,56"/>
+</map>

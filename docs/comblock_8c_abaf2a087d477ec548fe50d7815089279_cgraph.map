@@ -1,0 +1,12 @@
+<map id="ComBlock_readZstd" name="ComBlock_readZstd">
+<area shape="rect" id="Node000001" title="Reads the given compression block (by index) from the given file controller and decompresses it using..." alt="" coords="5,81,146,107"/>
+<area shape="rect" id="Node000002" href="$comblock_8c.html#a184922fb41719bd272b55c1402a9e7de" title="Calculates the absolute address of the given compression block index and its encoded size." alt="" coords="194,5,382,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,78,193,48,231,34,233,39,195,53,112,83"/>
+<area shape="rect" id="Node000003" href="$fc_8c.html#a567dd57b805c1d46e224bd218e9c4293" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="430,31,501,56"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="146,82,415,47,415,53,146,88"/>
+<area shape="rect" id="Node000004" href="$fd_8c.html#a0adfd6501d174720db95b64d706ac476" title="Appends a new frame data block to the end of the list. The frame data provided is not copied,..." alt="" coords="244,107,332,132"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="146,100,229,110,228,115,146,105"/>
+<area shape="rect" id="Node000005" href="$fd_8c.html#a04dc0c764a0555ae69a945fe0531167d" title="Frees all entry nodes in the list, but does not free the list itself." alt="" coords="254,156,322,182"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="105,105,195,142,239,155,238,161,193,147,103,110"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="383,29,415,34,414,39,382,34"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="ctable_s" name="ctable_s">
+<area shape="rect" id="Node000001" title="Represents a table of cells that map raw FSEQ sequence indexes to a known unit and channel number." alt="" coords="5,94,76,120"/>
+<area shape="rect" id="Node000002" href="$structcell__s.html" title="A single cell in the cell table, repesenting a single output channel." alt="" coords="13,5,68,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="43,47,43,94,38,94,38,47"/>
+</map>

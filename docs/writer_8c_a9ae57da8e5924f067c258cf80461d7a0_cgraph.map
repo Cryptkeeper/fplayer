@@ -1,0 +1,9 @@
+<map id="fseqWriteVars" name="fseqWriteVars">
+<area shape="rect" id="Node000001" title="Encodes the given variables and writes them to the file after the compression block and channel range..." alt="" coords="5,55,108,80"/>
+<area shape="rect" id="Node000002" href="$enc_8c.html#af1ca3f909ec7cb1c6c1e84ab5cacb4a2" title="Encodes a little&#45;endian 16&#45;bit unsigned integer into a byte array." alt="" coords="183,5,284,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,51,170,33,171,38,106,57"/>
+<area shape="rect" id="Node000003" href="$fc_8c.html#a387fcc2421ee7a96bce79b95c700ba0f" title="Writes the given number of bytes to the file controller starting at the given offset." alt="" coords="197,55,271,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="108,65,181,65,181,70,108,70"/>
+<area shape="rect" id="Node000004" href="$writer_8c.html#ac6c0c71d5aec610c233bd16a64cb93c6" title="Calculates the size in bytes of the variable section according to the given variables...." alt="" coords="156,104,312,130"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="106,78,171,97,170,102,105,84"/>
+</map>

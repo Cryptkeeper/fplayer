@@ -1,0 +1,5 @@
+<map id="Serial_openPort" name="Serial_openPort">
+<area shape="rect" id="Node000001" title="Opens the serial port with the given device name and baud rate." alt="" coords="5,5,119,31"/>
+<area shape="rect" id="Node000002" href="$serial_8c.html#a706542c2b6ac4b13b60019221d8972ee" title="Prints an error message to stderr for the given error code, including the libserialport error message..." alt="" coords="167,5,281,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,16,151,16,151,21,119,21"/>
+</map>

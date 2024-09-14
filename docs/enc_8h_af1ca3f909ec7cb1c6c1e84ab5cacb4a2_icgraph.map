@@ -1,0 +1,7 @@
+<map id="enc_uint16_le" name="enc_uint16_le">
+<area shape="rect" id="Node000001" title="Encodes a little&#45;endian 16&#45;bit unsigned integer into a byte array." alt="" coords="172,31,273,56"/>
+<area shape="rect" id="Node000002" href="$writer_8c.html#a3bb75675c6790c259e54dbaf5320d47d" title="Encodes the given header and writes it at the beginning of the file." alt="" coords="5,5,124,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,36,123,30,124,25,157,30"/>
+<area shape="rect" id="Node000003" href="$writer_8c.html#a9ae57da8e5924f067c258cf80461d7a0" title="Encodes the given variables and writes them to the file after the compression block and channel range..." alt="" coords="13,55,116,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="157,56,117,62,116,57,156,51"/>
+</map>

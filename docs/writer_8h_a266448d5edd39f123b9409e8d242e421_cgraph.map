@@ -1,0 +1,5 @@
+<map id="fseqRealignHeaderOffsets" name="fseqRealignHeaderOffsets">
+<area shape="rect" id="Node000001" title="Re&#45;aligns the offsets in the given header to account for the length of the variable data that will be..." alt="" coords="5,5,181,31"/>
+<area shape="rect" id="Node000002" href="$writer_8c.html#ac6c0c71d5aec610c233bd16a64cb93c6" title="Calculates the size in bytes of the variable section according to the given variables...." alt="" coords="229,5,385,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="181,16,213,16,213,21,181,21"/>
+</map>

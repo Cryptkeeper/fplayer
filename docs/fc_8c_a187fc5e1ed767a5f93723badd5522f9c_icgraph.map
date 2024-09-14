@@ -1,0 +1,13 @@
+<map id="FC_open" name="FC_open">
+<area shape="rect" id="Node000001" title="Opens a file controller instance for the given file path and mode." alt="" coords="380,31,455,56"/>
+<area shape="rect" id="Node000002" href="$crmap_8c.html#aa78ac33184789e0eefd5c7d832c4e0ee" title="Reads a channel range map from the given file path. The channel range map is a linked list of channel..." alt="" coords="244,5,332,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="364,36,332,29,334,24,365,31"/>
+<area shape="rect" id="Node000005" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,55,196,80"/>
+<area shape="poly" id="edge6_Node000001_Node000005" title=" " alt="" coords="365,51,197,66,196,61,365,45"/>
+<area shape="rect" id="Node000003" href="$main_8c.html#a9dc5e5175937c64fec9827bdb18a7531" title="Parse command line options and sets global variables for program execution via gOpts." alt="" coords="109,5,190,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="228,21,190,21,190,16,228,16"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="236,39,189,57,187,52,235,34"/>
+<area shape="rect" id="Node000004" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,31,55,56"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="94,33,56,41,55,36,93,27"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="87,58,55,51,56,46,88,52"/>
+</map>

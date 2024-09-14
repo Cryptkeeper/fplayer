@@ -1,0 +1,7 @@
+<map id="fseqWriteCompressionBlocks" name="fseqWriteCompressionBlocks">
+<area shape="rect" id="Node000001" title="Encodes the given compression blocks writes them to the file at the at the end of the format header." alt="" coords="5,31,199,56"/>
+<area shape="rect" id="Node000002" href="$enc_8c.html#a573b921ec2de20a17622dee3ceac5ec8" title="Encodes a little&#45;endian 32&#45;bit unsigned integer into a byte array." alt="" coords="247,5,348,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="199,28,231,24,231,29,199,34"/>
+<area shape="rect" id="Node000003" href="$fc_8c.html#a387fcc2421ee7a96bce79b95c700ba0f" title="Writes the given number of bytes to the file controller starting at the given offset." alt="" coords="260,55,334,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="199,53,245,58,244,64,199,58"/>
+</map>

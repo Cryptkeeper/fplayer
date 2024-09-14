@@ -1,0 +1,5 @@
+<map id="ComBlock_findAbsoluteAddr" name="ComBlock_findAbsoluteAddr">
+<area shape="rect" id="Node000001" title="Calculates the absolute address of the given compression block index and its encoded size." alt="" coords="5,5,194,31"/>
+<area shape="rect" id="Node000002" href="$fc_8c.html#a567dd57b805c1d46e224bd218e9c4293" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="242,5,313,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="194,16,226,16,226,21,194,21"/>
+</map>

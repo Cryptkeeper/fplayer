@@ -1,0 +1,12 @@
+<map id="CT_free" name="CT_free">
+<area shape="rect" id="Node000001" title="Frees the table and any held resources." alt="" coords="510,5,578,31"/>
+<area shape="rect" id="Node000002" href="$player_8c.html#a4ec5687289d18651562957a247d20385" title="Frees dynamic allocated structures referenced by the player runtime data. rtd itself is not freed by ..." alt="" coords="374,5,462,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="494,21,462,21,462,16,494,16"/>
+<area shape="rect" id="Node000003" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,5,196,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="359,21,196,21,196,16,359,16"/>
+<area shape="rect" id="Node000005" href="$player_8c.html#a3762a659d4e6c34bdf73d29dd0b8dc75" title="Populates the player runtime data with dynamically allocated structures before initializing each subs..." alt="" coords="244,31,326,56"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="359,32,327,38,326,33,358,27"/>
+<area shape="rect" id="Node000004" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,5,55,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="87,21,55,21,55,16,87,16"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="228,36,196,29,197,24,229,30"/>
+</map>

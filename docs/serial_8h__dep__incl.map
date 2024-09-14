@@ -1,0 +1,11 @@
+<map id="src/serial.h" name="src/serial.h">
+<area shape="rect" id="Node000001" title="Serial port communication interface." alt="" coords="166,5,252,31"/>
+<area shape="rect" id="Node000002" href="$main_8c.html" title="Main program entry point." alt="" coords="5,79,88,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="169,40,75,81,73,76,167,35"/>
+<area shape="rect" id="Node000003" href="$player_8c.html" title="Playback execution function implementation." alt="" coords="112,79,200,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="193,45,167,80,163,77,189,42"/>
+<area shape="rect" id="Node000004" href="$putil_8c.html" title="Player utility functions implementation." alt="" coords="225,79,303,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="229,41,257,77,252,80,225,45"/>
+<area shape="rect" id="Node000005" href="$serial_8c.html" title="Serial port communication implementation." alt="" coords="326,79,412,105"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="251,35,343,76,341,81,249,40"/>
+</map>

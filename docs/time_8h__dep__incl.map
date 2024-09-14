@@ -1,0 +1,10 @@
+<map id="common/std2/time.h" name="common/std2/time.h">
+<area shape="rect" id="Node000001" title="Basic time tracking utility functions." alt="" coords="139,6,279,32"/>
+<area shape="poly" id="edge2_Node000001_Node000001" title=" " alt="" coords="274,3,295,7,303,12,306,19,301,28,290,33,258,35,258,30,289,28,298,24,300,19,299,15,293,12,273,8"/>
+<area shape="rect" id="Node000002" href="$time_8c.html" title="Basic time tracking utility function implementations." alt="" coords="5,80,146,106"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="174,42,99,82,97,77,172,37"/>
+<area shape="rect" id="Node000003" href="$putil_8c.html" title="Player utility functions implementation." alt="" coords="170,80,248,106"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="212,47,212,79,206,79,206,47"/>
+<area shape="rect" id="Node000004" href="$sleep_8c.html" title="Adaptive sleep time controller implementation." alt="" coords="272,80,357,106"/>
+<area shape="poly" id="edge4_Node000001_Node000004" title=" " alt="" coords="241,39,298,77,295,81,238,43"/>
+</map>

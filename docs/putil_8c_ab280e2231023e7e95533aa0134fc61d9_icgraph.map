@@ -1,0 +1,7 @@
+<map id="PU_playFirstAudio" name="PU_playFirstAudio">
+<area shape="rect" id="Node000001" title="If audiofp is not NULL, this function will attempt to play the audio file at the given path...." alt="" coords="244,5,374,31"/>
+<area shape="rect" id="Node000002" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,5,196,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,21,196,21,196,16,228,16"/>
+<area shape="rect" id="Node000003" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,5,55,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="87,21,55,21,55,16,87,16"/>
+</map>

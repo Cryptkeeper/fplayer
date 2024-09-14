@@ -1,0 +1,15 @@
+<map id="common/std2/fc.c" name="common/std2/fc.c">
+<area shape="rect" id="Node000001" title="File controller implementation." alt="" coords="150,5,277,31"/>
+<area shape="rect" id="Node000002" href="$fc_8h.html" title="File controller interface for reading/writing files." alt="" coords="16,79,59,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="185,34,75,78,73,73,183,29"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="84,79,159,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="200,34,150,72,147,67,196,29"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="183,79,244,105"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="216,31,216,63,211,63,211,31"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="267,79,330,105"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="230,29,275,67,271,71,226,34"/>
+<area shape="rect" id="Node000007" href="$string_8h.html" title="String parsing functions." alt="" coords="355,79,419,105"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="244,29,344,70,342,75,242,34"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="5,153,70,178"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="40,105,40,137,35,137,35,105"/>
+</map>

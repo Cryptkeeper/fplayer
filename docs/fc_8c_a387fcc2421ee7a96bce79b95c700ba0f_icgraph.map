@@ -1,0 +1,9 @@
+<map id="FC_write" name="FC_write">
+<area shape="rect" id="Node000001" title="Writes the given number of bytes to the file controller starting at the given offset." alt="" coords="247,55,321,80"/>
+<area shape="rect" id="Node000002" href="$writer_8c.html#aa8b49954512410fa8d28f44f7bffa9b1" title="Encodes the given compression blocks writes them to the file at the at the end of the format header." alt="" coords="5,5,199,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="231,54,198,45,158,34,159,29,199,40,233,49"/>
+<area shape="rect" id="Node000003" href="$writer_8c.html#a3bb75675c6790c259e54dbaf5320d47d" title="Encodes the given header and writes it at the beginning of the file." alt="" coords="43,55,161,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="231,70,162,70,162,65,231,65"/>
+<area shape="rect" id="Node000004" href="$writer_8c.html#a9ae57da8e5924f067c258cf80461d7a0" title="Encodes the given variables and writes them to the file after the compression block and channel range..." alt="" coords="51,104,153,130"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="233,86,199,95,154,107,153,102,198,90,231,81"/>
+</map>

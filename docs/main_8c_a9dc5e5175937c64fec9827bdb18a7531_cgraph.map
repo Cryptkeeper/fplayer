@@ -1,0 +1,31 @@
+<map id="parseOpts" name="parseOpts">
+<area shape="rect" id="Node000001" title="Parse command line options and sets global variables for program execution via gOpts." alt="" coords="5,231,87,256"/>
+<area shape="rect" id="Node000002" href="$crmap_8c.html#aa8639f1dbce189cad0ae124f22a98bfb" title="Frees the given channel range map by walking the linked list and freeing each node." alt="" coords="495,5,580,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="54,228,87,187,133,141,182,104,223,79,268,59,326,40,406,23,479,16,480,22,406,28,328,45,270,64,226,83,185,109,136,146,91,191,59,232"/>
+<area shape="rect" id="Node000003" href="$crmap_8c.html#aa78ac33184789e0eefd5c7d832c4e0ee" title="Reads a channel range map from the given file path. The channel range map is a linked list of channel..." alt="" coords="163,156,251,182"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="67,228,134,190,147,185,149,190,136,195,69,232"/>
+<area shape="rect" id="Node000010" href="$errcode_8c.html#aa8f97434516ad3fd89df7d8d239d4927" title="Returns the error message string for the given error code." alt="" coords="164,205,250,231"/>
+<area shape="poly" id="edge11_Node000001_Node000010" title=" " alt="" coords="87,234,148,225,149,230,88,240"/>
+<area shape="rect" id="Node000011" href="$main_8c.html#ab85a58a9f7a657c797631e1cd40d9d7b" title="Enumerates available serial ports and prints their reported device names to stdout." alt="" coords="135,255,279,280"/>
+<area shape="poly" id="edge12_Node000001_Node000011" title=" " alt="" coords="88,247,119,252,119,257,87,252"/>
+<area shape="rect" id="Node000013" href="$main_8c.html#ace03e7c899495e901b54ab13ba0d492e" title="Prints the program usage message to stdout." alt="" coords="165,304,249,330"/>
+<area shape="poly" id="edge14_Node000001_Node000013" title=" " alt="" coords="70,254,136,290,151,297,149,302,134,295,67,259"/>
+<area shape="rect" id="Node000014" href="$string_8c.html#a20ff9f67f3d32cebd26678c9b45d1a0f" title="Attempts to parse the given string as a long using strtol. If the parsed value is within the given ra..." alt="" coords="178,353,236,379"/>
+<area shape="poly" id="edge15_Node000001_Node000014" title=" " alt="" coords="58,255,89,297,111,320,136,340,164,353,162,358,133,344,108,324,85,300,54,259"/>
+<area shape="rect" id="Node000004" href="$crmap_8c.html#a4909bc64abe2fc71ea5dc6e769e9c1cb" title="Parses the given channel range map string into a linked list of struct cr_s nodes...." alt="" coords="342,55,422,80"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="230,153,344,86,347,91,232,158"/>
+<area shape="rect" id="Node000006" href="$fc_8c.html#a71eeb6fecce7b6562f003584e5612783" title="Closes the given file controller instance and frees its resources." alt="" coords="499,155,576,180"/>
+<area shape="poly" id="edge6_Node000003_Node000006" title=" " alt="" coords="251,155,327,141,382,137,438,141,484,150,483,155,437,146,382,142,327,146,252,160"/>
+<area shape="rect" id="Node000007" href="$fc_8c.html#a5b3b2c2c573c6055e557907a7c3c19e9" title="Returns the size of the file backing the given file controller. This performs a seek to the end of th..." alt="" coords="338,156,426,182"/>
+<area shape="poly" id="edge7_Node000003_Node000007" title=" " alt="" coords="251,166,323,166,323,172,251,172"/>
+<area shape="rect" id="Node000008" href="$fc_8c.html#a187fc5e1ed767a5f93723badd5522f9c" title="Opens a file controller instance for the given file path and mode." alt="" coords="345,205,419,231"/>
+<area shape="poly" id="edge8_Node000003_Node000008" title=" " alt="" coords="252,179,331,201,329,206,251,184"/>
+<area shape="rect" id="Node000009" href="$fc_8c.html#a567dd57b805c1d46e224bd218e9c4293" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="346,255,418,280"/>
+<area shape="poly" id="edge10_Node000003_Node000009" title=" " alt="" coords="253,177,280,191,296,203,305,216,314,229,329,241,334,245,331,249,325,246,311,232,301,219,292,207,278,195,251,182"/>
+<area shape="poly" id="edge4_Node000004_Node000002" title=" " alt="" coords="422,52,480,34,481,39,424,57"/>
+<area shape="rect" id="Node000005" href="$crmap_8c.html#a0009bf67270c308ce93c198c5ec03350" title="Parses a single channel range map object into the given cr struct. The object is expected to have the..." alt="" coords="485,55,590,80"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="423,65,470,65,470,70,423,70"/>
+<area shape="poly" id="edge9_Node000008_Node000006" title=" " alt="" coords="419,204,484,182,485,187,421,209"/>
+<area shape="rect" id="Node000012" href="$serial_8c.html#ace873b41bf59ecaa670e24591abbd1b6" title="Retrieves a list of available serial ports. The caller is responsible for freeing the list with slfre..." alt="" coords="327,304,437,330"/>
+<area shape="poly" id="edge13_Node000011_Node000012" title=" " alt="" coords="256,278,320,297,319,302,255,284"/>
+</map>

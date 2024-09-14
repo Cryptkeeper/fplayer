@@ -1,0 +1,24 @@
+<map id="PU_playFirstAudio" name="PU_playFirstAudio">
+<area shape="rect" id="Node000001" title="If audiofp is not NULL, this function will attempt to play the audio file at the given path...." alt="" coords="5,207,136,232"/>
+<area shape="rect" id="Node000002" href="$audio_8c.html#a0c9f7a75cf5e965c07b70cdde5f15cfa" title="Attempts to play the audio file at the given file path. This function initializes the audio system if..." alt="" coords="204,132,289,158"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="102,204,199,162,201,167,104,209"/>
+<area shape="rect" id="Node000008" href="$seq_8c.html#aa46d33d98cef6abf5a1027e93ec87862" title="Retrieves the audio file path from the sequence for playback by searching the FSEQ&#39;s variable table f..." alt="" coords="184,256,309,282"/>
+<area shape="poly" id="edge10_Node000001_Node000008" title=" " alt="" coords="120,230,184,249,183,254,118,236"/>
+<area shape="rect" id="Node000003" href="$audio_8c.html#a31ee90daccbe20571bf17f4706a8103a" title="Checks the playback status of the audio system." alt="" coords="357,56,471,82"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="276,129,369,86,371,91,278,134"/>
+<area shape="rect" id="Node000004" href="$audio_8c.html#a088c9ba211c55d9a74c2cdba5f880a61" title="Stops the current audio playback, if any. The last allocated AL buffer is then detached from the sour..." alt="" coords="519,5,653,31"/>
+<area shape="poly" id="edge7_Node000002_Node000004" title=" " alt="" coords="255,130,295,85,324,60,356,41,392,28,430,19,504,12,504,18,431,24,394,33,358,46,327,65,299,89,259,133"/>
+<area shape="rect" id="Node000005" href="$audio_8c.html#ab8d211abfcf3a5272bc45db36f041ea8" title="Prints the last OpenAL error to stderr with the given message." alt="" coords="701,56,772,82"/>
+<area shape="poly" id="edge8_Node000002_Node000005" title=" " alt="" coords="289,136,685,74,686,79,290,141"/>
+<area shape="rect" id="Node000006" href="$audio_8c.html#a42e1c8367745030b6c984745e79dc43e" title="Initializes the audio system if it has not been initialized yet." alt="" coords="379,157,449,183"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="290,149,364,160,363,165,289,154"/>
+<area shape="rect" id="Node000007" href="$audio_8c.html#a684cbaee8df68440661b3b06ff1b8f51" title="Prints the last ALUT error to stderr with the given message." alt="" coords="373,207,455,232"/>
+<area shape="poly" id="edge9_Node000002_Node000007" title=" " alt="" coords="277,156,358,193,369,198,367,203,356,198,275,161"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="460,53,525,33,527,38,461,58"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="472,66,685,66,685,72,472,72"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="627,29,687,49,685,55,626,34"/>
+<area shape="rect" id="Node000009" href="$fc_8c.html#a567dd57b805c1d46e224bd218e9c4293" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="378,256,450,282"/>
+<area shape="poly" id="edge11_Node000008_Node000009" title=" " alt="" coords="310,266,363,266,363,272,310,272"/>
+<area shape="rect" id="Node000010" href="$seq_8c.html#a45be30e286fb245a61523a355f63ee95" title="Reads a variable from the variable table and populates the provided var struct with the variable id,..." alt="" coords="366,305,462,331"/>
+<area shape="poly" id="edge12_Node000008_Node000010" title=" " alt="" coords="294,280,354,298,353,303,292,285"/>
+</map>

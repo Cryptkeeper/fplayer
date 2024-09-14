@@ -1,0 +1,9 @@
+<map id="CT_init" name="CT_init">
+<area shape="rect" id="Node000001" title="Initializes table that maps the raw fseq sequence indexes to a known LOR unit and channel number usin..." alt="" coords="374,5,438,31"/>
+<area shape="rect" id="Node000002" href="$player_8c.html#a3762a659d4e6c34bdf73d29dd0b8dc75" title="Populates the player runtime data with dynamically allocated structures before initializing each subs..." alt="" coords="244,5,326,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="359,21,327,21,327,16,359,16"/>
+<area shape="rect" id="Node000003" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,5,196,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="228,21,196,21,196,16,228,16"/>
+<area shape="rect" id="Node000004" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,5,55,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="87,21,55,21,55,16,87,16"/>
+</map>

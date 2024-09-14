@@ -1,0 +1,7 @@
+<map id="CR_parse" name="CR_parse">
+<area shape="rect" id="Node000001" title="Parses the given channel range map string into a linked list of struct cr_s nodes...." alt="" coords="5,31,86,56"/>
+<area shape="rect" id="Node000002" href="$crmap_8c.html#aa8639f1dbce189cad0ae124f22a98bfb" title="Frees the given channel range map by walking the linked list and freeing each node." alt="" coords="143,5,228,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="86,34,127,26,128,31,87,39"/>
+<area shape="rect" id="Node000003" href="$crmap_8c.html#a0009bf67270c308ce93c198c5ec03350" title="Parses a single channel range map object into the given cr struct. The object is expected to have the..." alt="" coords="134,55,238,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="87,48,119,53,118,59,86,53"/>
+</map>

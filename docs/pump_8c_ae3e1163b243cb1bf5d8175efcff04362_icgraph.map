@@ -1,0 +1,20 @@
+<map id="FP_readSeq" name="FP_readSeq">
+<area shape="rect" id="Node000001" title="Reads the next frame set from the file controller and stores it in the provided frame data node point..." alt="" coords="980,29,1073,55"/>
+<area shape="rect" id="Node000002" href="$pump_8c.html#a0264c0768947899db76d3ab1ce394f95" title="Reads the next frame set from the file controller and stores it in the provided frame data node point..." alt="" coords="861,29,932,55"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="964,45,932,45,932,40,964,40"/>
+<area shape="rect" id="Node000003" href="$pump_8c.html#a2b6a9a5b1d91947a2eb549b4460f7366" title="Copies the next frame of data from the pump to the provided frame data buffer. If the pump&#39;s internal..." alt="" coords="568,5,676,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="845,40,676,25,676,20,846,35"/>
+<area shape="rect" id="Node000008" href="$pump_8c.html#a41c6c4a221b68550e0b0ad6fbf0fd1ce" title=" " alt="" coords="732,55,813,80"/>
+<area shape="poly" id="edge7_Node000002_Node000008" title=" " alt="" coords="847,55,814,62,813,57,845,50"/>
+<area shape="rect" id="Node000004" href="$player_8c.html#a0be44cb011fa97a198c60458b0761809" title="Increments the current frame index and writes the minified frame data to the serial output...." alt="" coords="381,31,512,56"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="553,31,512,37,511,31,552,25"/>
+<area shape="rect" id="Node000005" href="$player_8c.html#a30eb7f640562f5e082f537431fabfae0" title="Main loop of the player that drives the playback of the sequence. This function will block until the ..." alt="" coords="244,31,333,56"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="365,46,334,46,334,41,365,41"/>
+<area shape="rect" id="Node000006" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,31,196,56"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="228,46,196,46,196,41,228,41"/>
+<area shape="rect" id="Node000007" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,31,55,56"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="87,46,55,46,55,41,87,41"/>
+<area shape="rect" id="Node000009" href="$pump_8c.html#a52ae12b729974435a410e9753a2c6bb6" title="Checks if the pump&#39;s internal buffer is low, and if so, preloads the next frame set from the file con..." alt="" coords="560,55,684,80"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="716,70,684,70,684,65,716,65"/>
+<area shape="poly" id="edge9_Node000009_Node000004" title=" " alt="" coords="544,60,512,55,512,50,545,54"/>
+</map>

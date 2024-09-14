@@ -1,0 +1,5 @@
+<map id="enc_uint64_le" name="enc_uint64_le">
+<area shape="rect" id="Node000001" title="Encodes a little&#45;endian 64&#45;bit unsigned integer into a byte array." alt="" coords="172,5,273,31"/>
+<area shape="rect" id="Node000002" href="$writer_8c.html#a3bb75675c6790c259e54dbaf5320d47d" title="Encodes the given header and writes it at the beginning of the file." alt="" coords="5,5,124,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="156,21,124,21,124,16,156,16"/>
+</map>

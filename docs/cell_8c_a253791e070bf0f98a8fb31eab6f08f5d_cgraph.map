@@ -1,0 +1,5 @@
+<map id="CT_init" name="CT_init">
+<area shape="rect" id="Node000001" title="Initializes table that maps the raw fseq sequence indexes to a known LOR unit and channel number usin..." alt="" coords="5,5,69,31"/>
+<area shape="rect" id="Node000002" href="$crmap_8c.html#a6f57342dcb3c2ed3aefb0ad1f1361b74" title="Remaps the given sequence channel index to a unit and circuit number using the channel range mapping...." alt="" coords="117,5,218,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="69,16,101,16,101,21,69,21"/>
+</map>

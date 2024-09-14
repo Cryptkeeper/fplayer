@@ -1,0 +1,9 @@
+<map id="src/queue.h" name="src/queue.h">
+<area shape="rect" id="Node000001" title="Playback queue interface." alt="" coords="111,5,200,31"/>
+<area shape="rect" id="Node000002" href="$main_8c.html" title="Main program entry point." alt="" coords="5,79,88,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="126,42,67,81,64,76,123,37"/>
+<area shape="rect" id="Node000003" href="$player_8c.html" title="Playback execution function implementation." alt="" coords="112,79,200,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="158,46,158,79,153,79,153,46"/>
+<area shape="rect" id="Node000004" href="$queue_8c.html" title="Playback queue implementation." alt="" coords="224,79,314,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="189,37,251,76,248,81,186,42"/>
+</map>

@@ -1,0 +1,10 @@
+<map id="CMap_read" name="CMap_read">
+<area shape="rect" id="Node000001" title="Reads a channel range map from the given file path. The channel range map is a linked list of channel..." alt="" coords="244,31,332,56"/>
+<area shape="rect" id="Node000002" href="$main_8c.html#a9dc5e5175937c64fec9827bdb18a7531" title="Parse command line options and sets global variables for program execution via gOpts." alt="" coords="109,5,190,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="228,35,190,28,191,23,229,30"/>
+<area shape="rect" id="Node000004" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,55,196,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="229,56,197,62,196,57,228,51"/>
+<area shape="rect" id="Node000003" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,31,55,56"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="94,33,56,41,55,36,93,27"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="87,58,55,51,56,46,88,52"/>
+</map>

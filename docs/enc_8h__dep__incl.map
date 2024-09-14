@@ -1,0 +1,7 @@
+<map id="common/fseq/enc.h" name="common/fseq/enc.h">
+<area shape="rect" id="Node000001" title="Binary encoding utility functions." alt="" coords="88,5,224,31"/>
+<area shape="rect" id="Node000002" href="$enc_8c.html" title="Binary encoding utility function implementations." alt="" coords="5,79,142,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="132,44,89,81,86,77,129,39"/>
+<area shape="rect" id="Node000003" href="$writer_8c.html" title="FSEQ sequence file encoding function implementations." alt="" coords="166,79,312,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="184,39,227,77,223,81,180,44"/>
+</map>

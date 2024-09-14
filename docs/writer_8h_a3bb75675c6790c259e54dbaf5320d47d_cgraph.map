@@ -1,0 +1,11 @@
+<map id="fseqWriteHeader" name="fseqWriteHeader">
+<area shape="rect" id="Node000001" title="Encodes the given header and writes it at the beginning of the file." alt="" coords="5,80,124,106"/>
+<area shape="rect" id="Node000002" href="$enc_8c.html#af1ca3f909ec7cb1c6c1e84ab5cacb4a2" title="Encodes a little&#45;endian 16&#45;bit unsigned integer into a byte array." alt="" coords="172,5,273,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,77,178,36,180,41,95,82"/>
+<area shape="rect" id="Node000003" href="$enc_8c.html#a573b921ec2de20a17622dee3ceac5ec8" title="Encodes a little&#45;endian 32&#45;bit unsigned integer into a byte array." alt="" coords="172,55,273,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="124,81,156,75,157,81,124,86"/>
+<area shape="rect" id="Node000004" href="$enc_8c.html#a4981725876b4ce9752e5b04e2f2a987f" title="Encodes a little&#45;endian 64&#45;bit unsigned integer into a byte array." alt="" coords="172,104,273,130"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="124,99,157,104,156,109,124,104"/>
+<area shape="rect" id="Node000005" href="$fc_8c.html#a387fcc2421ee7a96bce79b95c700ba0f" title="Writes the given number of bytes to the file controller starting at the given offset." alt="" coords="185,153,260,179"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="95,104,180,144,178,149,93,109"/>
+</map>

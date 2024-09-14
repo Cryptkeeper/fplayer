@@ -1,0 +1,14 @@
+<map id="PU_lightsOff" name="PU_lightsOff">
+<area shape="rect" id="Node000001" title="Turns off all lights by sending a set off effect to all LOR units." alt="" coords="5,31,102,56"/>
+<area shape="rect" id="Node000002" href="$serial_8c.html#a420d471225d62a4cf280dfc3ef59d3f1" title="Waits for all data to be written to the serial device." alt="" coords="150,5,239,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="102,32,134,26,135,32,102,37"/>
+<area shape="rect" id="Node000004" href="$serial_8c.html#a59d3d8b6bd5c63d8346079182204f30e" title="Writes the binary data to the open serial port. The data is copied to an internal buffer and written ..." alt="" coords="150,55,239,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="102,49,135,55,134,60,102,54"/>
+<area shape="rect" id="Node000003" href="$serial_8c.html#a706542c2b6ac4b13b60019221d8972ee" title="Prints an error message to stderr for the given error code, including the libserialport error message..." alt="" coords="461,29,576,55"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="240,19,446,34,446,40,239,24"/>
+<area shape="rect" id="Node000005" href="$serial_8c.html#a4ff646f526789549fa410a488a47abae" title="Writes the binary data to the &quot;real&quot; opened serial port handle within the virtual serial device struc..." alt="" coords="292,55,408,80"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="240,65,277,65,277,70,240,70"/>
+<area shape="rect" id="Node000006" href="$serial_8c.html#a1375dc381934802544fa63f692f1d782" title="Writes the binary data to the virtual file handle within the virtual serial device structure." alt="" coords="287,104,413,130"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="238,78,294,96,292,101,237,84"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="409,56,446,50,446,56,409,61"/>
+</map>

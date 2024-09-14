@@ -1,0 +1,22 @@
+<map id="FP_read" name="FP_read">
+<area shape="rect" id="Node000001" title="Reads the next frame set from the file controller and stores it in the provided frame data node point..." alt="" coords="5,106,76,132"/>
+<area shape="rect" id="Node000002" href="$comblock_8c.html#aa718f4faf13580abe13ffdba68e8d81c" title="Reads the given compression block (by index) from the given file controller and decompresses it (if s..." alt="" coords="124,81,238,106"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="76,110,108,104,109,109,77,115"/>
+<area shape="rect" id="Node000008" href="$pump_8c.html#ae3e1163b243cb1bf5d8175efcff04362" title="Reads the next frame set from the file controller and stores it in the provided frame data node point..." alt="" coords="310,131,403,157"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="76,119,294,137,294,142,76,124"/>
+<area shape="rect" id="Node000003" href="$comblock_8c.html#abaf2a087d477ec548fe50d7815089279" title="Reads the given compression block (by index) from the given file controller and decompresses it using..." alt="" coords="286,81,426,106"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="238,91,270,91,270,96,238,96"/>
+<area shape="rect" id="Node000004" href="$comblock_8c.html#a184922fb41719bd272b55c1402a9e7de" title="Calculates the absolute address of the given compression block index and its encoded size." alt="" coords="474,33,663,58"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="416,77,493,60,494,65,417,83"/>
+<area shape="rect" id="Node000005" href="$fc_8c.html#a567dd57b805c1d46e224bd218e9c4293" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="711,7,782,33"/>
+<area shape="poly" id="edge5_Node000003_Node000005" title=" " alt="" coords="371,78,414,46,443,30,474,18,532,6,592,3,648,5,696,10,695,15,648,10,592,8,533,12,475,23,445,34,417,50,374,82"/>
+<area shape="rect" id="Node000006" href="$fd_8c.html#a0adfd6501d174720db95b64d706ac476" title="Appends a new frame data block to the end of the list. The frame data provided is not copied,..." alt="" coords="524,131,613,157"/>
+<area shape="poly" id="edge6_Node000003_Node000006" title=" " alt="" coords="414,104,510,128,509,133,413,110"/>
+<area shape="rect" id="Node000007" href="$fd_8c.html#a04dc0c764a0555ae69a945fe0531167d" title="Frees all entry nodes in the list, but does not free the list itself." alt="" coords="534,82,603,108"/>
+<area shape="poly" id="edge7_Node000003_Node000007" title=" " alt="" coords="427,91,519,92,519,97,427,97"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="663,29,695,25,696,30,663,35"/>
+<area shape="poly" id="edge10_Node000008_Node000006" title=" " alt="" coords="403,142,509,142,509,147,403,147"/>
+<area shape="poly" id="edge11_Node000008_Node000007" title=" " alt="" coords="402,131,519,104,520,109,404,136"/>
+<area shape="rect" id="Node000009" href="$fc_8c.html#a479c14c40649932a98343269452e6111" title="Reads up to the given number of bytes from the file controller starting at the given offset,..." alt="" coords="527,181,610,206"/>
+<area shape="poly" id="edge9_Node000008_Node000009" title=" " alt="" coords="404,152,512,178,511,183,402,158"/>
+</map>

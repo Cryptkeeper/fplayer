@@ -1,0 +1,100 @@
+<map id="Player_loop" name="Player_loop">
+<area shape="rect" id="Node000001" title="Main loop of the player that drives the playback of the sequence. This function will block until the ..." alt="" coords="5,428,95,454"/>
+<area shape="rect" id="Node000002" href="$audio_8c.html#a31ee90daccbe20571bf17f4706a8103a" title="Checks the playback status of the audio system." alt="" coords="152,31,266,56"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="51,427,81,308,107,224,140,141,162,101,186,67,190,70,167,104,145,143,112,226,86,309,57,428"/>
+<area shape="rect" id="Node000005" href="$player_8c.html#a56fa00589840072b269070591b8c155d" title="Prints a log message summarizing the player&#39;s current state." alt="" coords="168,155,250,180"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="57,426,190,192,195,195,61,429"/>
+<area shape="rect" id="Node000009" href="$player_8c.html#a0be44cb011fa97a198c60458b0761809" title="Increments the current frame index and writes the minified frame data to the serial output...." alt="" coords="144,377,274,403"/>
+<area shape="poly" id="edge9_Node000001_Node000009" title=" " alt="" coords="92,425,151,406,153,411,94,430"/>
+<area shape="rect" id="Node000034" href="$putil_8c.html#aecc0ea5bccde45a6f82364c2b9a38a7d" title="Turns off all lights by sending a set off effect to all LOR units." alt="" coords="161,477,257,503"/>
+<area shape="poly" id="edge41_Node000001_Node000034" title=" " alt="" coords="95,452,151,470,150,475,93,457"/>
+<area shape="rect" id="Node000035" href="$putil_8c.html#ad065eb627423f95e1ee6245f81c170d5" title="Encodes and writes a LOR heartbeat message to the serial port." alt="" coords="143,553,275,579"/>
+<area shape="poly" id="edge44_Node000001_Node000035" title=" " alt="" coords="69,452,144,513,180,542,177,546,141,518,66,456"/>
+<area shape="rect" id="Node000036" href="$sleep_8c.html#a616fde30e190c5b8198c0c4423ee707e" title="Sleeps for the given number of milliseconds using incremental sleep calls that estimate the time rema..." alt="" coords="171,704,246,730"/>
+<area shape="poly" id="edge46_Node000001_Node000036" title=" " alt="" coords="61,453,195,689,190,692,57,455"/>
+<area shape="rect" id="Node000003" href="$audio_8c.html#a088c9ba211c55d9a74c2cdba5f880a61" title="Stops the current audio playback, if any. The last allocated AL buffer is then detached from the sour..." alt="" coords="336,31,469,56"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="266,41,320,41,320,46,266,46"/>
+<area shape="rect" id="Node000004" href="$audio_8c.html#ab8d211abfcf3a5272bc45db36f041ea8" title="Prints the last OpenAL error to stderr with the given message." alt="" coords="552,5,624,31"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="259,27,323,16,438,10,537,12,537,18,438,15,323,21,260,33"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="469,32,536,22,537,28,469,37"/>
+<area shape="rect" id="Node000006" href="$pump_8c.html#a48fea78925df64034f443f952fddf680" title="Returns the number of frames remaining in the pump&#39;s internal buffer." alt="" coords="328,80,476,106"/>
+<area shape="poly" id="edge6_Node000005_Node000006" title=" " alt="" coords="237,152,322,114,339,108,341,113,324,119,239,156"/>
+<area shape="rect" id="Node000007" href="$putil_8c.html#ac34b8e816274fbd4207f4d02dfe54fed" title="Returns the seconds remaining in the sequence based on the current frame and sequence configuration p..." alt="" coords="323,129,481,155"/>
+<area shape="poly" id="edge7_Node000005_Node000007" title=" " alt="" coords="250,159,307,152,308,157,251,165"/>
+<area shape="rect" id="Node000008" href="$sleep_8c.html#ab73bd393dfeb5e2ee2fe4d110fd3e567" title="Returns the average sleep time in nanoseconds from the given sleep collector. This is calculated by s..." alt="" coords="348,179,456,204"/>
+<area shape="poly" id="edge8_Node000005_Node000008" title=" " alt="" coords="251,170,334,180,333,186,250,175"/>
+<area shape="rect" id="Node000010" href="$cell_8c.html#ac0fa837105dc0a8e0f6d380068ea9b11" title="Changes the output intensity for the cell at the given index. This only marks the cell as modified if..." alt="" coords="358,277,446,303"/>
+<area shape="poly" id="edge10_Node000009_Node000010" title=" " alt="" coords="225,375,267,344,322,312,342,303,344,308,324,317,270,348,228,379"/>
+<area shape="rect" id="Node000011" href="$cell_8c.html#a526022a61b8d3ee3772bf86e56d01b7f" title="Returns a group of linked cells starting at the given index. The group is identified by the unit numb..." alt="" coords="358,228,447,254"/>
+<area shape="poly" id="edge11_Node000009_Node000011" title=" " alt="" coords="216,375,257,321,287,290,322,263,342,252,344,257,324,267,291,294,261,325,221,379"/>
+<area shape="rect" id="Node000014" href="$pump_8c.html#a52ae12b729974435a410e9753a2c6bb6" title="Checks if the pump&#39;s internal buffer is low, and if so, preloads the next frame set from the file con..." alt="" coords="340,327,464,352"/>
+<area shape="poly" id="edge14_Node000009_Node000014" title=" " alt="" coords="260,374,335,354,337,359,261,379"/>
+<area shape="rect" id="Node000026" href="$pump_8c.html#a2b6a9a5b1d91947a2eb549b4460f7366" title="Copies the next frame of data from the pump to the provided frame data buffer. If the pump&#39;s internal..." alt="" coords="534,377,642,403"/>
+<area shape="poly" id="edge30_Node000009_Node000026" title=" " alt="" coords="274,388,519,388,519,393,274,393"/>
+<area shape="rect" id="Node000028" href="$putil_8c.html#a4eb13572c6a1cf5854bb058e36e20562" title="Encodes the given channel group state update to the provided message buffer as a LOR effect...." alt="" coords="347,428,457,454"/>
+<area shape="poly" id="edge34_Node000009_Node000028" title=" " alt="" coords="261,401,337,421,335,426,260,406"/>
+<area shape="rect" id="Node000033" href="$serial_8c.html#a420d471225d62a4cf280dfc3ef59d3f1" title="Waits for all data to be written to the serial device." alt="" coords="358,477,447,503"/>
+<area shape="poly" id="edge39_Node000009_Node000033" title=" " alt="" coords="228,401,270,432,324,464,344,472,342,477,322,469,267,437,225,406"/>
+<area shape="rect" id="Node000012" href="$cell_8c.html#a12bdfffb6ccdb4a8f6e2990536c4f242" title="Finds all cells in the table that match the provided reference cell. The reference cell must be valid..." alt="" coords="529,176,647,202"/>
+<area shape="poly" id="edge12_Node000011_Node000012" title=" " alt="" coords="447,226,524,204,526,209,448,231"/>
+<area shape="rect" id="Node000013" href="$cell_8c.html#a1dd10c5cc02001ce37b42f6d32d71347" title="Checks if two cells match, which indicates they are addressed to the same hardware controller (unit+s..." alt="" coords="710,125,806,151"/>
+<area shape="poly" id="edge13_Node000012_Node000013" title=" " alt="" coords="633,173,698,153,699,158,634,178"/>
+<area shape="rect" id="Node000015" href="$pump_8c.html#a41c6c4a221b68550e0b0ad6fbf0fd1ce" title=" " alt="" coords="547,276,629,302"/>
+<area shape="poly" id="edge15_Node000014_Node000015" title=" " alt="" coords="451,323,532,301,533,306,453,329"/>
+<area shape="rect" id="Node000016" href="$fd_8c.html#a04dc0c764a0555ae69a945fe0531167d" title="Frees all entry nodes in the list, but does not free the list itself." alt="" coords="1280,273,1348,299"/>
+<area shape="poly" id="edge16_Node000015_Node000016" title=" " alt="" coords="629,281,737,270,869,261,980,260,1090,264,1264,278,1264,283,1090,269,980,265,869,266,737,276,629,287"/>
+<area shape="rect" id="Node000017" href="$pump_8c.html#a0264c0768947899db76d3ab1ce394f95" title="Reads the next frame set from the file controller and stores it in the provided frame data node point..." alt="" coords="723,301,793,327"/>
+<area shape="poly" id="edge17_Node000015_Node000017" title=" " alt="" coords="629,292,707,304,707,309,629,297"/>
+<area shape="rect" id="Node000025" href="$errcode_8c.html#aa8f97434516ad3fd89df7d8d239d4927" title="Returns the error message string for the given error code." alt="" coords="715,175,801,200"/>
+<area shape="poly" id="edge29_Node000015_Node000025" title=" " alt="" coords="607,273,693,217,714,205,717,210,696,222,610,278"/>
+<area shape="rect" id="Node000018" href="$comblock_8c.html#aa718f4faf13580abe13ffdba68e8d81c" title="Reads the given compression block (by index) from the given file controller and decompresses it (if s..." alt="" coords="869,276,983,302"/>
+<area shape="poly" id="edge18_Node000017_Node000018" title=" " alt="" coords="793,306,853,297,854,302,794,312"/>
+<area shape="rect" id="Node000023" href="$pump_8c.html#ae3e1163b243cb1bf5d8175efcff04362" title="Reads the next frame set from the file controller and stores it in the provided frame data node point..." alt="" coords="1055,300,1148,326"/>
+<area shape="poly" id="edge25_Node000017_Node000023" title=" " alt="" coords="793,312,983,312,1039,311,1039,316,983,317,793,317"/>
+<area shape="rect" id="Node000019" href="$comblock_8c.html#abaf2a087d477ec548fe50d7815089279" title="Reads the given compression block (by index) from the given file controller and decompresses it using..." alt="" coords="1031,175,1172,200"/>
+<area shape="poly" id="edge19_Node000018_Node000019" title=" " alt="" coords="949,273,1063,206,1066,211,952,278"/>
+<area shape="poly" id="edge24_Node000019_Node000016" title=" " alt="" coords="1138,199,1173,217,1197,240,1207,250,1221,260,1265,276,1263,281,1218,265,1203,254,1193,244,1170,222,1136,203"/>
+<area shape="rect" id="Node000020" href="$comblock_8c.html#a184922fb41719bd272b55c1402a9e7de" title="Calculates the absolute address of the given compression block index and its encoded size." alt="" coords="1220,175,1408,200"/>
+<area shape="poly" id="edge20_Node000019_Node000020" title=" " alt="" coords="1172,185,1204,185,1204,190,1172,190"/>
+<area shape="rect" id="Node000021" href="$fc_8c.html#a567dd57b805c1d46e224bd218e9c4293" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="1456,149,1527,175"/>
+<area shape="poly" id="edge22_Node000019_Node000021" title=" " alt="" coords="1153,171,1219,160,1338,154,1441,156,1440,162,1339,159,1220,165,1154,177"/>
+<area shape="rect" id="Node000022" href="$fd_8c.html#a0adfd6501d174720db95b64d706ac476" title="Appends a new frame data block to the end of the list. The frame data provided is not copied,..." alt="" coords="1270,224,1358,250"/>
+<area shape="poly" id="edge23_Node000019_Node000022" title=" " alt="" coords="1161,198,1255,221,1254,226,1160,204"/>
+<area shape="poly" id="edge21_Node000020_Node000021" title=" " alt="" coords="1408,171,1440,167,1441,172,1409,177"/>
+<area shape="poly" id="edge28_Node000023_Node000016" title=" " alt="" coords="1148,304,1264,290,1265,295,1149,310"/>
+<area shape="poly" id="edge27_Node000023_Node000022" title=" " alt="" coords="1129,297,1219,258,1253,248,1255,253,1221,263,1131,302"/>
+<area shape="rect" id="Node000024" href="$fc_8c.html#a479c14c40649932a98343269452e6111" title="Reads up to the given number of bytes from the file controller starting at the given offset,..." alt="" coords="1273,323,1355,348"/>
+<area shape="poly" id="edge26_Node000023_Node000024" title=" " alt="" coords="1149,315,1257,327,1257,332,1148,320"/>
+<area shape="poly" id="edge31_Node000026_Node000016" title=" " alt="" coords="642,390,742,392,875,387,1024,370,1099,355,1171,336,1195,323,1219,308,1264,293,1265,298,1221,313,1197,327,1173,341,1100,360,1025,375,876,392,743,397,642,396"/>
+<area shape="poly" id="edge33_Node000026_Node000017" title=" " alt="" coords="618,374,712,331,715,336,620,379"/>
+<area shape="rect" id="Node000027" href="$fd_8c.html#a090f54adf1443ed24378fe4f6e5e3c51" title="Returns the first node in the list and removes it for consumption by the caller. The caller is respon..." alt="" coords="722,428,794,454"/>
+<area shape="poly" id="edge32_Node000026_Node000027" title=" " alt="" coords="634,401,708,423,707,429,633,406"/>
+<area shape="rect" id="Node000029" href="$serial_8c.html#a59d3d8b6bd5c63d8346079182204f30e" title="Writes the binary data to the open serial port. The data is copied to an internal buffer and written ..." alt="" coords="543,529,633,555"/>
+<area shape="poly" id="edge35_Node000028_Node000029" title=" " alt="" coords="457,452,483,462,526,489,562,517,559,521,523,493,480,467,455,457"/>
+<area shape="rect" id="Node000030" href="$serial_8c.html#a4ff646f526789549fa410a488a47abae" title="Writes the binary data to the &quot;real&quot; opened serial port handle within the virtual serial device struc..." alt="" coords="700,579,816,604"/>
+<area shape="poly" id="edge36_Node000029_Node000030" title=" " alt="" coords="634,553,698,571,696,576,632,558"/>
+<area shape="rect" id="Node000032" href="$serial_8c.html#a1375dc381934802544fa63f692f1d782" title="Writes the binary data to the virtual file handle within the virtual serial device structure." alt="" coords="695,529,821,555"/>
+<area shape="poly" id="edge38_Node000029_Node000032" title=" " alt="" coords="633,540,679,540,679,545,633,545"/>
+<area shape="rect" id="Node000031" href="$serial_8c.html#a706542c2b6ac4b13b60019221d8972ee" title="Prints an error message to stderr for the given error code, including the libserialport error message..." alt="" coords="869,528,983,554"/>
+<area shape="poly" id="edge37_Node000030_Node000031" title=" " alt="" coords="802,576,866,556,868,561,804,581"/>
+<area shape="poly" id="edge40_Node000033_Node000031" title=" " alt="" coords="447,488,612,494,716,502,821,514,860,521,859,527,821,519,716,507,612,499,447,493"/>
+<area shape="poly" id="edge43_Node000034_Node000029" title=" " alt="" coords="258,499,323,513,432,527,528,536,528,541,431,532,323,518,257,505"/>
+<area shape="poly" id="edge42_Node000034_Node000033" title=" " alt="" coords="257,488,342,488,342,493,257,493"/>
+<area shape="poly" id="edge45_Node000035_Node000029" title=" " alt="" coords="275,564,373,563,481,557,528,551,528,556,482,562,373,568,276,570"/>
+<area shape="rect" id="Node000037" href="$sleep_8c.html#a3d2e831c98e7d09d673e3a4e9d9a3be3" title="Appends the given sleep time to the sleep collector, updating the collector&#39;s internal state...." alt="" coords="354,680,451,706"/>
+<area shape="poly" id="edge47_Node000036_Node000037" title=" " alt="" coords="247,710,338,698,338,703,247,715"/>
+<area shape="rect" id="Node000038" href="$sleep_8c.html#ab2391db426ae715d9758d1e14ce9fc39" title="Sleeps for the given number of nanoseconds using a spin lock. This is a blocking operation that will ..." alt="" coords="346,729,459,755"/>
+<area shape="poly" id="edge48_Node000036_Node000038" title=" " alt="" coords="247,719,331,730,330,735,247,724"/>
+<area shape="rect" id="Node000039" href="$time_8c.html#a7289d3896393480a4d4e8cfff5ff88e9" title="Return the time elapsed from end since the start time in nanoseconds." alt="" coords="533,729,643,755"/>
+<area shape="poly" id="edge55_Node000036_Node000039" title=" " alt="" coords="232,701,273,681,322,665,367,656,403,651,438,654,482,665,528,688,565,717,561,721,525,692,480,670,438,659,403,657,368,661,324,670,275,686,234,706"/>
+<area shape="rect" id="Node000040" href="$time_8c.html#a0df3061922c6f7365103ab1d2a74d383" title="Get the current system time." alt="" coords="541,828,635,854"/>
+<area shape="poly" id="edge56_Node000036_Node000040" title=" " alt="" coords="222,728,263,773,292,796,324,814,375,831,428,840,479,843,525,843,525,848,479,849,427,845,374,836,322,819,289,800,260,777,218,732"/>
+<area shape="rect" id="Node000041" href="$sleep_8c.html#adf273c242d25fa04b2e3d61d4f3e539a" title="Sleeps for the given number of nanoseconds using incremental sleep calls that estimate the time remai..." alt="" coords="359,779,445,804"/>
+<area shape="poly" id="edge51_Node000036_Node000041" title=" " alt="" coords="239,728,324,765,345,772,343,777,322,770,237,733"/>
+<area shape="poly" id="edge49_Node000038_Node000039" title=" " alt="" coords="459,740,517,740,517,745,459,745"/>
+<area shape="poly" id="edge50_Node000038_Node000040" title=" " alt="" coords="461,753,483,764,498,777,508,789,517,802,531,815,536,818,534,823,528,819,513,806,503,793,494,780,480,768,458,758"/>
+<area shape="poly" id="edge53_Node000041_Node000039" title=" " alt="" coords="445,777,521,757,522,762,447,783"/>
+<area shape="poly" id="edge54_Node000041_Node000040" title=" " alt="" coords="447,800,527,822,525,827,445,806"/>
+<area shape="rect" id="Node000042" href="$sleep_8c.html#aa1f93b05367399c7c43b3b6b7acefaeb" title="Sleeps for one millisecond using the system&#39;s equivalent sleep function. This is used to provide a ba..." alt="" coords="535,779,641,804"/>
+<area shape="poly" id="edge52_Node000041_Node000042" title=" " alt="" coords="446,789,520,789,520,794,446,794"/>
+</map>

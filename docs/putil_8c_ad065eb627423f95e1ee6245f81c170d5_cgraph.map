@@ -1,0 +1,11 @@
+<map id="PU_writeHeartbeat" name="PU_writeHeartbeat">
+<area shape="rect" id="Node000001" title="Encodes and writes a LOR heartbeat message to the serial port." alt="" coords="5,31,138,56"/>
+<area shape="rect" id="Node000002" href="$serial_8c.html#a59d3d8b6bd5c63d8346079182204f30e" title="Writes the binary data to the open serial port. The data is copied to an internal buffer and written ..." alt="" coords="186,31,275,56"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="138,41,170,41,170,46,138,46"/>
+<area shape="rect" id="Node000003" href="$serial_8c.html#a4ff646f526789549fa410a488a47abae" title="Writes the binary data to the &quot;real&quot; opened serial port handle within the virtual serial device struc..." alt="" coords="328,5,444,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="275,34,313,27,313,33,276,39"/>
+<area shape="rect" id="Node000005" href="$serial_8c.html#a1375dc381934802544fa63f692f1d782" title="Writes the binary data to the virtual file handle within the virtual serial device structure." alt="" coords="323,55,449,80"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="276,48,308,53,307,58,275,53"/>
+<area shape="rect" id="Node000004" href="$serial_8c.html#a706542c2b6ac4b13b60019221d8972ee" title="Prints an error message to stderr for the given error code, including the libserialport error message..." alt="" coords="497,5,612,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="445,16,482,16,482,21,445,21"/>
+</map>

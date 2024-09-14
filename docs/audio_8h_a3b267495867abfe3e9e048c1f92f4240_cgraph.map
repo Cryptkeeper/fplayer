@@ -1,0 +1,16 @@
+<map id="Audio_play" name="Audio_play">
+<area shape="rect" id="Node000001" title="Attempts to play the audio file at the given file path. This function initializes the audio system if..." alt="" coords="5,107,91,132"/>
+<area shape="rect" id="Node000002" href="$audio_8c.html#a31ee90daccbe20571bf17f4706a8103a" title="Checks the playback status of the audio system." alt="" coords="139,56,253,82"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,104,141,85,143,90,89,109"/>
+<area shape="rect" id="Node000003" href="$audio_8c.html#a088c9ba211c55d9a74c2cdba5f880a61" title="Stops the current audio playback, if any. The last allocated AL buffer is then detached from the sour..." alt="" coords="301,5,434,31"/>
+<area shape="poly" id="edge6_Node000001_Node000003" title=" " alt="" coords="59,104,91,71,113,55,138,41,174,28,212,20,285,13,286,18,213,25,175,34,140,46,116,59,95,75,62,108"/>
+<area shape="rect" id="Node000004" href="$audio_8c.html#ab8d211abfcf3a5272bc45db36f041ea8" title="Prints the last OpenAL error to stderr with the given message." alt="" coords="482,56,554,82"/>
+<area shape="poly" id="edge7_Node000001_Node000004" title=" " alt="" coords="91,112,467,72,467,77,92,118"/>
+<area shape="rect" id="Node000005" href="$audio_8c.html#a42e1c8367745030b6c984745e79dc43e" title="Initializes the audio system if it has not been initialized yet." alt="" coords="161,157,231,183"/>
+<area shape="poly" id="edge5_Node000001_Node000005" title=" " alt="" coords="89,130,147,151,145,156,87,135"/>
+<area shape="rect" id="Node000006" href="$audio_8c.html#a684cbaee8df68440661b3b06ff1b8f51" title="Prints the last ALUT error to stderr with the given message." alt="" coords="155,207,237,232"/>
+<area shape="poly" id="edge8_Node000001_Node000006" title=" " alt="" coords="64,131,97,161,140,193,147,197,144,202,137,198,94,165,60,135"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="241,53,307,33,308,38,243,58"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="254,66,467,66,467,72,254,72"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="409,29,469,49,467,55,407,34"/>
+</map>

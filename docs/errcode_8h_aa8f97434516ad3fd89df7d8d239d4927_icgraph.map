@@ -1,0 +1,20 @@
+<map id="FP_strerror" name="FP_strerror">
+<area shape="rect" id="Node000001" title="Returns the error message string for the given error code." alt="" coords="861,81,948,107"/>
+<area shape="rect" id="Node000002" href="$pump_8c.html#a41c6c4a221b68550e0b0ad6fbf0fd1ce" title=" " alt="" coords="732,5,813,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="866,75,795,34,798,29,869,71"/>
+<area shape="rect" id="Node000006" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,56,196,82"/>
+<area shape="poly" id="edge10_Node000001_Node000006" title=" " alt="" coords="846,89,742,77,623,71,445,72,197,72,197,66,445,66,623,66,743,72,846,83"/>
+<area shape="rect" id="Node000007" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,107,55,132"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="846,105,743,116,623,122,287,122,55,122,55,117,287,117,623,117,742,111,846,100"/>
+<area shape="rect" id="Node000008" href="$main_8c.html#a9dc5e5175937c64fec9827bdb18a7531" title="Parse command line options and sets global variables for program execution via gOpts." alt="" coords="581,157,662,183"/>
+<area shape="poly" id="edge8_Node000001_Node000008" title=" " alt="" coords="869,117,814,141,734,160,663,169,663,164,733,154,812,136,866,112"/>
+<area shape="rect" id="Node000003" href="$pump_8c.html#a52ae12b729974435a410e9753a2c6bb6" title="Checks if the pump&#39;s internal buffer is low, and if so, preloads the next frame set from the file con..." alt="" coords="560,5,684,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="716,21,684,21,684,16,716,16"/>
+<area shape="rect" id="Node000004" href="$player_8c.html#a0be44cb011fa97a198c60458b0761809" title="Increments the current frame index and writes the minified frame data to the serial output...." alt="" coords="381,5,512,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="544,21,512,21,512,16,544,16"/>
+<area shape="rect" id="Node000005" href="$player_8c.html#a30eb7f640562f5e082f537431fabfae0" title="Main loop of the player that drives the playback of the sequence. This function will block until the ..." alt="" coords="244,5,333,31"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="365,21,334,21,334,16,365,16"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="238,39,188,58,186,53,236,34"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="105,91,56,112,54,107,102,86"/>
+<area shape="poly" id="edge9_Node000008_Node000007" title=" " alt="" coords="566,173,361,167,232,157,102,141,54,129,55,124,103,136,232,152,361,161,566,168"/>
+</map>

@@ -1,0 +1,19 @@
+<map id="Sleep_do" name="Sleep_do">
+<area shape="rect" id="Node000001" title="Sleeps for the given number of milliseconds using incremental sleep calls that estimate the time rema..." alt="" coords="5,107,81,132"/>
+<area shape="rect" id="Node000002" href="$sleep_8c.html#a3d2e831c98e7d09d673e3a4e9d9a3be3" title="Appends the given sleep time to the sleep collector, updating the collector&#39;s internal state...." alt="" coords="137,5,234,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="57,104,127,48,144,37,147,42,130,52,60,109"/>
+<area shape="rect" id="Node000003" href="$sleep_8c.html#ab2391db426ae715d9758d1e14ce9fc39" title="Sleeps for the given number of nanoseconds using a spin lock. This is a blocking operation that will ..." alt="" coords="129,156,242,182"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="82,130,133,148,131,153,80,135"/>
+<area shape="rect" id="Node000004" href="$time_8c.html#a7289d3896393480a4d4e8cfff5ff88e9" title="Return the time elapsed from end since the start time in nanoseconds." alt="" coords="290,107,400,132"/>
+<area shape="poly" id="edge9_Node000001_Node000004" title=" " alt="" coords="80,103,128,92,185,86,242,92,285,100,284,105,242,97,185,92,129,97,81,109"/>
+<area shape="rect" id="Node000005" href="$time_8c.html#a0df3061922c6f7365103ab1d2a74d383" title="Get the current system time." alt="" coords="298,156,392,182"/>
+<area shape="poly" id="edge10_Node000001_Node000005" title=" " alt="" coords="56,131,86,164,107,180,130,192,172,201,216,201,258,194,295,184,297,190,259,200,216,206,171,206,128,197,104,184,83,167,52,134"/>
+<area shape="rect" id="Node000006" href="$sleep_8c.html#adf273c242d25fa04b2e3d61d4f3e539a" title="Sleeps for the given number of nanoseconds using incremental sleep calls that estimate the time remai..." alt="" coords="142,107,228,132"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="81,117,127,117,127,122,81,122"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="229,153,286,135,287,140,230,158"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="243,166,282,166,282,172,243,172"/>
+<area shape="poly" id="edge7_Node000006_Node000004" title=" " alt="" coords="229,117,274,117,274,122,229,122"/>
+<area shape="poly" id="edge8_Node000006_Node000005" title=" " alt="" coords="230,130,288,148,286,153,228,135"/>
+<area shape="rect" id="Node000007" href="$sleep_8c.html#aa1f93b05367399c7c43b3b6b7acefaeb" title="Sleeps for one millisecond using the system&#39;s equivalent sleep function. This is used to provide a ba..." alt="" coords="292,57,398,83"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="228,104,286,86,288,91,230,109"/>
+</map>

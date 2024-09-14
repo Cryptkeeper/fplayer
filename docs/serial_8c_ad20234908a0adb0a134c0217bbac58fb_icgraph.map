@@ -1,0 +1,5 @@
+<map id="Serial_init" name="Serial_init">
+<area shape="rect" id="Node000001" title="Initializes a write&#45;mode serial port with the provided device name and baud rate pre&#45;configured for u..." alt="" coords="103,5,181,31"/>
+<area shape="rect" id="Node000002" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,5,55,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,21,55,21,55,16,87,16"/>
+</map>

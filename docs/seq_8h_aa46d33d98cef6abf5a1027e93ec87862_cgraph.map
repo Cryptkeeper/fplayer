@@ -1,0 +1,7 @@
+<map id="Seq_getMediaFile" name="Seq_getMediaFile">
+<area shape="rect" id="Node000001" title="Retrieves the audio file path from the sequence for playback by searching the FSEQ&#39;s variable table f..." alt="" coords="5,31,131,56"/>
+<area shape="rect" id="Node000002" href="$fc_8c.html#a567dd57b805c1d46e224bd218e9c4293" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="191,5,262,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,31,175,24,176,29,132,36"/>
+<area shape="rect" id="Node000003" href="$seq_8c.html#a45be30e286fb245a61523a355f63ee95" title="Reads a variable from the variable table and populates the provided var struct with the variable id,..." alt="" coords="179,55,274,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="132,50,164,55,163,61,131,56"/>
+</map>

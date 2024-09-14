@@ -1,0 +1,7 @@
+<map id="src/sleep.h" name="src/sleep.h">
+<area shape="rect" id="Node000001" title="Adaptive sleep time controller for frame rate control." alt="" coords="62,5,147,31"/>
+<area shape="rect" id="Node000002" href="$player_8c.html" title="Playback execution function implementation." alt="" coords="5,79,94,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="88,45,61,80,57,77,84,41"/>
+<area shape="rect" id="Node000003" href="$sleep_8c.html" title="Adaptive sleep time controller implementation." alt="" coords="118,79,203,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="125,41,153,77,149,80,121,45"/>
+</map>

@@ -1,0 +1,11 @@
+<map id="src/crmap.h" name="src/crmap.h">
+<area shape="rect" id="Node000001" title="Channel range map interface." alt="" coords="159,5,249,31"/>
+<area shape="rect" id="Node000002" href="$cell_8c.html" title="Cell table for tracking output states." alt="" coords="5,79,80,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="164,40,71,81,69,76,162,35"/>
+<area shape="rect" id="Node000003" href="$crmap_8c.html" title="Channel range map implementation." alt="" coords="104,79,194,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="188,45,161,80,156,77,184,41"/>
+<area shape="rect" id="Node000004" href="$main_8c.html" title="Main program entry point." alt="" coords="219,79,301,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="224,41,252,77,248,80,220,45"/>
+<area shape="rect" id="Node000005" href="$player_8c.html" title="Playback execution function implementation." alt="" coords="325,79,413,105"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="247,35,342,76,340,81,245,40"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="src/serial.h" name="src/serial.h">
+<area shape="rect" id="Node000001" title="Serial port communication interface." alt="" coords="34,5,119,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,79,70,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="72,32,54,66,49,64,67,30"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="94,79,136,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="85,30,103,64,99,66,80,32"/>
+</map>

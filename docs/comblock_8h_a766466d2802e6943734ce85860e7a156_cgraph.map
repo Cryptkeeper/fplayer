@@ -1,0 +1,14 @@
+<map id="ComBlock_read" name="ComBlock_read">
+<area shape="rect" id="Node000001" title="Reads the given compression block (by index) from the given file controller and decompresses it (if s..." alt="" coords="5,81,120,107"/>
+<area shape="rect" id="Node000002" href="$comblock_8c.html#abaf2a087d477ec548fe50d7815089279" title="Reads the given compression block (by index) from the given file controller and decompresses it using..." alt="" coords="168,81,308,107"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="120,92,152,92,152,97,120,97"/>
+<area shape="rect" id="Node000003" href="$comblock_8c.html#a184922fb41719bd272b55c1402a9e7de" title="Calculates the absolute address of the given compression block index and its encoded size." alt="" coords="356,5,544,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="273,78,355,48,394,34,395,39,357,53,275,83"/>
+<area shape="rect" id="Node000004" href="$fc_8c.html#a567dd57b805c1d46e224bd218e9c4293" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="592,31,664,56"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="308,82,577,47,578,53,309,88"/>
+<area shape="rect" id="Node000005" href="$fd_8c.html#a0adfd6501d174720db95b64d706ac476" title="Appends a new frame data block to the end of the list. The frame data provided is not copied,..." alt="" coords="406,107,494,132"/>
+<area shape="poly" id="edge5_Node000002_Node000005" title=" " alt="" coords="309,100,391,110,390,115,308,105"/>
+<area shape="rect" id="Node000006" href="$fd_8c.html#a04dc0c764a0555ae69a945fe0531167d" title="Frees all entry nodes in the list, but does not free the list itself." alt="" coords="416,156,484,182"/>
+<area shape="poly" id="edge6_Node000002_Node000006" title=" " alt="" coords="268,105,357,142,402,155,400,161,355,147,266,110"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="545,29,577,34,576,39,544,34"/>
+</map>

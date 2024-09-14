@@ -1,0 +1,24 @@
+<map id="perror_al" name="perror_al">
+<area shape="rect" id="Node000001" title="Prints the last OpenAL error to stderr with the given message." alt="" coords="903,28,975,54"/>
+<area shape="rect" id="Node000002" href="$audio_8c.html#a31ee90daccbe20571bf17f4706a8103a" title="Checks the playback status of the audio system." alt="" coords="560,28,674,54"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="888,44,674,44,674,39,888,39"/>
+<area shape="rect" id="Node000003" href="$audio_8c.html#a0c9f7a75cf5e965c07b70cdde5f15cfa" title="Attempts to play the audio file at the given file path. This function initializes the audio system if..." alt="" coords="424,28,510,54"/>
+<area shape="poly" id="edge8_Node000001_Node000003" title=" " alt="" coords="888,31,855,25,772,15,707,9,643,10,560,19,508,30,507,25,559,13,642,4,708,4,773,9,856,20,889,26"/>
+<area shape="rect" id="Node000008" href="$audio_8c.html#a088c9ba211c55d9a74c2cdba5f880a61" title="Stops the current audio playback, if any. The last allocated AL buffer is then detached from the sour..." alt="" coords="722,79,855,105"/>
+<area shape="poly" id="edge9_Node000001_Node000008" title=" " alt="" coords="889,61,830,81,828,76,888,56"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="544,44,510,44,510,39,544,39"/>
+<area shape="rect" id="Node000007" href="$player_8c.html#a30eb7f640562f5e082f537431fabfae0" title="Main loop of the player that drives the playback of the sequence. This function will block until the ..." alt="" coords="422,79,512,105"/>
+<area shape="poly" id="edge6_Node000002_Node000007" title=" " alt="" coords="563,62,508,81,506,76,561,57"/>
+<area shape="rect" id="Node000004" href="$putil_8c.html#ab280e2231023e7e95533aa0134fc61d9" title="If audiofp is not NULL, this function will attempt to play the audio file at the given path...." alt="" coords="244,28,374,54"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="409,44,375,44,375,39,409,39"/>
+<area shape="rect" id="Node000005" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,79,196,105"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="252,62,193,81,191,76,251,57"/>
+<area shape="rect" id="Node000006" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,104,55,130"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="88,108,56,115,55,109,87,102"/>
+<area shape="poly" id="edge7_Node000007_Node000005" title=" " alt="" coords="407,95,197,95,197,89,407,89"/>
+<area shape="poly" id="edge12_Node000008_Node000002" title=" " alt="" coords="727,77,662,57,663,52,729,72"/>
+<area shape="poly" id="edge13_Node000008_Node000003" title=" " alt="" coords="706,89,635,81,559,69,510,57,511,52,560,64,635,76,707,83"/>
+<area shape="rect" id="Node000009" href="$audio_8c.html#a0f835b89e652069b65ca05572e340add" title="Exits the audio system and frees all resources. This function should be called before the program exi..." alt="" coords="268,130,350,155"/>
+<area shape="poly" id="edge10_Node000008_Node000009" title=" " alt="" coords="707,103,351,141,350,136,707,98"/>
+<area shape="poly" id="edge11_Node000009_Node000006" title=" " alt="" coords="252,140,55,122,55,117,253,135"/>
+</map>

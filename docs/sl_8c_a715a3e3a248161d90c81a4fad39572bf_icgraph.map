@@ -1,0 +1,12 @@
+<map id="slfree" name="slfree">
+<area shape="rect" id="Node000001" title="slfree() frees a string list and all its elements." alt="" coords="583,5,636,31"/>
+<area shape="rect" id="Node000002" href="$main_8c.html#ab85a58a9f7a657c797631e1cd40d9d7b" title="Enumerates available serial ports and prints their reported device names to stdout." alt="" coords="232,5,376,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="567,21,377,21,377,16,567,16"/>
+<area shape="rect" id="Node000005" href="$serial_8c.html#ace873b41bf59ecaa670e24591abbd1b6" title="Retrieves a list of available serial ports. The caller is responsible for freeing the list with slfre..." alt="" coords="424,31,535,56"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="568,29,535,35,534,30,567,24"/>
+<area shape="rect" id="Node000003" href="$main_8c.html#a9dc5e5175937c64fec9827bdb18a7531" title="Parse command line options and sets global variables for program execution via gOpts." alt="" coords="103,5,184,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="216,21,184,21,184,16,216,16"/>
+<area shape="rect" id="Node000004" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,5,55,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="87,21,55,21,55,16,87,16"/>
+<area shape="poly" id="edge5_Node000005_Node000002" title=" " alt="" coords="409,36,376,31,377,26,410,31"/>
+</map>

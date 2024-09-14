@@ -1,0 +1,8 @@
+<map id="Seq_open" name="Seq_open">
+<area shape="rect" id="Node000001" title="Reads a FSEQ header and initializes the header struct with the sequence&#39;s metadata...." alt="" coords="5,31,85,56"/>
+<area shape="rect" id="Node000002" href="$comblock_8c.html#a633e09c265a4649fecfa3a3035c953b5" title="Determines the number of compression blocks available within the given sequence file...." alt="" coords="133,5,254,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="85,34,117,29,118,34,85,39"/>
+<area shape="rect" id="Node000003" href="$fc_8c.html#a567dd57b805c1d46e224bd218e9c4293" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="302,31,373,56"/>
+<area shape="poly" id="edge3_Node000001_Node000003" title=" " alt="" coords="85,41,287,41,287,46,85,46"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="255,26,287,32,286,37,254,31"/>
+</map>

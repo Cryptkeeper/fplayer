@@ -1,0 +1,9 @@
+<map id="PU_writeHeartbeat" name="PU_writeHeartbeat">
+<area shape="rect" id="Node000001" title="Encodes and writes a LOR heartbeat message to the serial port." alt="" coords="381,5,514,31"/>
+<area shape="rect" id="Node000002" href="$player_8c.html#a30eb7f640562f5e082f537431fabfae0" title="Main loop of the player that drives the playback of the sequence. This function will block until the ..." alt="" coords="244,5,333,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="366,21,334,21,334,16,366,16"/>
+<area shape="rect" id="Node000003" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,5,196,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="228,21,196,21,196,16,228,16"/>
+<area shape="rect" id="Node000004" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,5,55,31"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="87,21,55,21,55,16,87,16"/>
+</map>

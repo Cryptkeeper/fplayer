@@ -1,0 +1,50 @@
+<map id="src/player.c" name="src/player.c">
+<area shape="rect" id="Node000001" title="Playback execution function implementation." alt="" coords="741,5,829,31"/>
+<area shape="rect" id="Node000002" href="$player_8h.html" title="Playback execution function declaration." alt="" coords="5,79,72,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="741,23,468,38,281,55,88,81,87,76,281,50,468,33,740,18"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="96,79,165,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="741,24,505,41,345,57,180,81,180,76,345,52,504,35,740,19"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="1010,153,1075,178"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="793,30,813,66,828,86,847,103,883,123,922,139,996,156,995,161,920,144,880,128,844,107,824,89,809,69,788,33"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="275,79,335,105"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="741,26,573,45,464,61,351,81,350,76,463,56,572,40,740,21"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="359,79,422,105"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="741,28,609,49,438,81,437,76,608,44,740,23"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="446,79,524,105"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="742,33,540,80,539,75,740,27"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="548,79,614,105"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="751,34,630,76,628,71,750,29"/>
+<area shape="rect" id="Node000009" href="$audio_8h.html" title="Audio system interface." alt="" coords="188,79,252,105"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="741,25,539,43,405,59,267,81,266,76,405,54,538,37,740,20"/>
+<area shape="rect" id="Node000011" href="$cell_8h.html" title="Cell table for tracking output states." alt="" coords="1060,79,1113,105"/>
+<area shape="poly" id="edge10_Node000001_Node000011" title=" " alt="" coords="830,26,1046,76,1045,81,829,31"/>
+<area shape="rect" id="Node000012" href="$crmap_8h.html" title="Channel range map interface." alt="" coords="1228,79,1297,105"/>
+<area shape="poly" id="edge12_Node000001_Node000012" title=" " alt="" coords="830,21,995,41,1214,76,1213,81,994,47,829,27"/>
+<area shape="rect" id="Node000013" href="$seq_8h.html" title="FSEQ sequence file loading API." alt="" coords="857,79,940,105"/>
+<area shape="poly" id="edge14_Node000001_Node000013" title=" " alt="" coords="806,29,868,68,865,73,803,34"/>
+<area shape="rect" id="Node000014" href="$pump_8h.html" title="Frame data loading interface." alt="" coords="1321,79,1385,105"/>
+<area shape="poly" id="edge15_Node000001_Node000014" title=" " alt="" coords="830,20,1033,38,1167,54,1306,76,1305,81,1166,59,1032,43,830,25"/>
+<area shape="rect" id="Node000015" href="$putil_8h.html" title="Playback utility functions." alt="" coords="638,79,695,105"/>
+<area shape="poly" id="edge17_Node000001_Node000015" title=" " alt="" coords="766,34,701,73,698,68,764,29"/>
+<area shape="rect" id="Node000016" href="$queue_8h.html" title="Playback queue interface." alt="" coords="1137,79,1204,105"/>
+<area shape="poly" id="edge19_Node000001_Node000016" title=" " alt="" coords="830,24,958,44,1122,76,1121,81,957,50,829,29"/>
+<area shape="rect" id="Node000017" href="$serial_8h.html" title="Serial port communication interface." alt="" coords="1538,79,1601,105"/>
+<area shape="poly" id="edge20_Node000001_Node000017" title=" " alt="" coords="830,18,948,22,1118,31,1317,49,1523,76,1522,82,1316,54,1117,37,948,27,830,23"/>
+<area shape="rect" id="Node000019" href="$sleep_8h.html" title="Adaptive sleep time controller for frame rate control." alt="" coords="719,79,782,105"/>
+<area shape="poly" id="edge23_Node000001_Node000019" title=" " alt="" coords="782,32,765,66,761,64,777,30"/>
+<area shape="rect" id="Node000020" href="$errcode_8h.html" title="Error code definitions and message strings." alt="" coords="1409,79,1513,105"/>
+<area shape="poly" id="edge25_Node000001_Node000020" title=" " alt="" coords="830,20,1067,39,1394,76,1393,81,1066,45,830,25"/>
+<area shape="rect" id="Node000021" href="$fc_8h.html" title="File controller interface for reading/writing files." alt="" coords="964,79,1036,105"/>
+<area shape="poly" id="edge26_Node000001_Node000021" title=" " alt="" coords="822,29,950,71,948,76,821,34"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="183,153,257,178"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="222,105,222,137,217,137,217,105"/>
+<area shape="poly" id="edge11_Node000011_Node000004" title=" " alt="" coords="1082,106,1060,141,1056,138,1077,103"/>
+<area shape="poly" id="edge13_Node000012_Node000004" title=" " alt="" coords="1229,107,1090,151,1089,146,1227,102"/>
+<area shape="poly" id="edge16_Node000014_Node000004" title=" " alt="" coords="1321,104,1310,107,1090,157,1089,152,1309,102,1320,99"/>
+<area shape="poly" id="edge18_Node000015_Node000004" title=" " alt="" coords="696,99,707,102,865,134,995,155,994,160,864,139,706,107,695,104"/>
+<area shape="poly" id="edge21_Node000017_Node000004" title=" " alt="" coords="1538,105,1526,107,1403,128,1281,144,1090,163,1090,158,1281,139,1402,122,1525,102,1537,99"/>
+<area shape="rect" id="Node000018" title=" " alt="" coords="1548,153,1590,178"/>
+<area shape="poly" id="edge22_Node000017_Node000018" title=" " alt="" coords="1572,105,1572,137,1566,137,1566,105"/>
+<area shape="poly" id="edge24_Node000019_Node000004" title=" " alt="" coords="783,98,996,150,995,155,782,103"/>
+<area shape="poly" id="edge27_Node000021_Node000004" title=" " alt="" coords="1009,104,1030,138,1025,141,1005,106"/>
+</map>

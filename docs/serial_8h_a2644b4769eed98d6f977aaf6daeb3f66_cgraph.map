@@ -1,0 +1,9 @@
+<map id="Serial_write" name="Serial_write">
+<area shape="rect" id="Node000001" title="Writes the binary data to the open serial port. The data is copied to an internal buffer and written ..." alt="" coords="5,31,95,56"/>
+<area shape="rect" id="Node000002" href="$serial_8c.html#a4ff646f526789549fa410a488a47abae" title="Writes the binary data to the &quot;real&quot; opened serial port handle within the virtual serial device struc..." alt="" coords="148,5,264,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="95,34,132,27,133,33,96,39"/>
+<area shape="rect" id="Node000004" href="$serial_8c.html#a1375dc381934802544fa63f692f1d782" title="Writes the binary data to the virtual file handle within the virtual serial device structure." alt="" coords="143,55,269,80"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="96,48,128,53,127,58,95,53"/>
+<area shape="rect" id="Node000003" href="$serial_8c.html#a706542c2b6ac4b13b60019221d8972ee" title="Prints an error message to stderr for the given error code, including the libserialport error message..." alt="" coords="317,5,431,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="265,16,301,16,301,21,265,21"/>
+</map>

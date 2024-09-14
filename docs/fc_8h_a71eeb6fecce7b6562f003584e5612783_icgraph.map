@@ -1,0 +1,17 @@
+<map id="FC_close" name="FC_close">
+<area shape="rect" id="Node000001" title="Closes the given file controller instance and frees its resources." alt="" coords="503,56,580,82"/>
+<area shape="rect" id="Node000002" href="$crmap_8c.html#aa78ac33184789e0eefd5c7d832c4e0ee" title="Reads a channel range map from the given file path. The channel range map is a linked list of channel..." alt="" coords="244,5,332,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="487,55,454,46,332,26,333,21,455,41,488,49"/>
+<area shape="rect" id="Node000005" href="$player_8c.html#aaf3b0aad85ffca607bbf0daa9d634dc1" title="Initializes and starts playback of the given playback configuration. Execution will block until the s..." alt="" coords="103,56,196,82"/>
+<area shape="poly" id="edge9_Node000001_Node000005" title=" " alt="" coords="489,89,455,97,384,102,313,99,196,82,197,76,314,93,384,96,454,92,488,84"/>
+<area shape="rect" id="Node000006" href="$fc_8c.html#a187fc5e1ed767a5f93723badd5522f9c" title="Opens a file controller instance for the given file path and mode." alt="" coords="380,56,455,82"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="487,71,455,71,455,66,487,66"/>
+<area shape="rect" id="Node000003" href="$main_8c.html#a9dc5e5175937c64fec9827bdb18a7531" title="Parse command line options and sets global variables for program execution via gOpts." alt="" coords="109,7,190,32"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="228,21,191,22,190,16,228,16"/>
+<area shape="poly" id="edge4_Node000002_Node000005" title=" " alt="" coords="238,39,187,58,186,53,236,34"/>
+<area shape="rect" id="Node000004" href="$main_8c.html#ad5a52bc0401ed1bc06c779de5371d560" title=" " alt="" coords="5,32,55,58"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="94,34,56,42,55,37,93,29"/>
+<area shape="poly" id="edge5_Node000005_Node000004" title=" " alt="" coords="87,59,55,52,56,47,88,54"/>
+<area shape="poly" id="edge7_Node000006_Node000002" title=" " alt="" coords="368,52,322,34,324,29,370,47"/>
+<area shape="poly" id="edge8_Node000006_Node000005" title=" " alt="" coords="365,71,196,71,196,66,365,66"/>
+</map>

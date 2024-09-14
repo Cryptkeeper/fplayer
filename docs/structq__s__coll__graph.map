@@ -1,0 +1,5 @@
+<map id="q_s" name="q_s">
+<area shape="rect" id="Node000001" title="Queue structure for managing playback requests." alt="" coords="20,94,62,120"/>
+<area shape="rect" id="Node000002" href="$structqentry__s.html" title="Queue entry structure that holds playback configuration data." alt="" coords="5,5,77,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="44,47,44,94,38,94,38,47"/>
+</map>

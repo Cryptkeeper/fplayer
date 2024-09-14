@@ -1,0 +1,29 @@
+<map id="FP_checkPreload" name="FP_checkPreload">
+<area shape="rect" id="Node000001" title="Checks if the pump&#39;s internal buffer is low, and if so, preloads the next frame set from the file con..." alt="" coords="5,183,130,208"/>
+<area shape="rect" id="Node000002" href="$pump_8c.html#a41c6c4a221b68550e0b0ad6fbf0fd1ce" title=" " alt="" coords="178,183,259,208"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="130,193,162,193,162,198,130,198"/>
+<area shape="rect" id="Node000003" href="$fd_8c.html#a04dc0c764a0555ae69a945fe0531167d" title="Frees all entry nodes in the list, but does not free the list itself." alt="" coords="852,156,920,182"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="259,191,836,168,837,173,259,197"/>
+<area shape="rect" id="Node000004" href="$pump_8c.html#a0264c0768947899db76d3ab1ce394f95" title="Reads the next frame set from the file controller and stores it in the provided frame data node point..." alt="" coords="315,132,385,158"/>
+<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="253,180,300,161,302,166,255,185"/>
+<area shape="rect" id="Node000012" href="$errcode_8c.html#aa8f97434516ad3fd89df7d8d239d4927" title="Returns the error message string for the given error code." alt="" coords="307,233,393,259"/>
+<area shape="poly" id="edge15_Node000002_Node000012" title=" " alt="" coords="255,206,302,225,300,230,253,211"/>
+<area shape="rect" id="Node000005" href="$comblock_8c.html#aa718f4faf13580abe13ffdba68e8d81c" title="Reads the given compression block (by index) from the given file controller and decompresses it (if s..." alt="" coords="441,81,556,107"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="385,130,443,110,445,115,387,135"/>
+<area shape="rect" id="Node000010" href="$pump_8c.html#ae3e1163b243cb1bf5d8175efcff04362" title="Reads the next frame set from the file controller and stores it in the provided frame data node point..." alt="" coords="627,132,720,158"/>
+<area shape="poly" id="edge11_Node000004_Node000010" title=" " alt="" coords="386,142,611,142,611,148,386,148"/>
+<area shape="rect" id="Node000006" href="$comblock_8c.html#abaf2a087d477ec548fe50d7815089279" title="Reads the given compression block (by index) from the given file controller and decompresses it using..." alt="" coords="604,81,744,107"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="556,92,588,92,588,97,556,97"/>
+<area shape="poly" id="edge10_Node000006_Node000003" title=" " alt="" coords="715,105,745,117,769,130,793,142,838,156,836,161,791,147,767,135,743,122,713,110"/>
+<area shape="rect" id="Node000007" href="$comblock_8c.html#a184922fb41719bd272b55c1402a9e7de" title="Calculates the absolute address of the given compression block index and its encoded size." alt="" coords="792,5,980,31"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="709,78,791,48,830,34,831,39,793,53,711,83"/>
+<area shape="rect" id="Node000008" href="$fc_8c.html#a567dd57b805c1d46e224bd218e9c4293" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="1028,31,1100,56"/>
+<area shape="poly" id="edge8_Node000006_Node000008" title=" " alt="" coords="744,82,1013,47,1014,53,745,88"/>
+<area shape="rect" id="Node000009" href="$fd_8c.html#a0adfd6501d174720db95b64d706ac476" title="Appends a new frame data block to the end of the list. The frame data provided is not copied,..." alt="" coords="842,107,930,132"/>
+<area shape="poly" id="edge9_Node000006_Node000009" title=" " alt="" coords="745,100,827,110,826,115,744,105"/>
+<area shape="poly" id="edge7_Node000007_Node000008" title=" " alt="" coords="981,29,1013,34,1012,39,980,34"/>
+<area shape="poly" id="edge14_Node000010_Node000003" title=" " alt="" coords="721,147,837,161,836,166,720,153"/>
+<area shape="poly" id="edge13_Node000010_Node000009" title=" " alt="" coords="720,137,826,124,827,129,721,142"/>
+<area shape="rect" id="Node000011" href="$fc_8c.html#a479c14c40649932a98343269452e6111" title="Reads up to the given number of bytes from the file controller starting at the given offset,..." alt="" coords="845,205,927,231"/>
+<area shape="poly" id="edge12_Node000010_Node000011" title=" " alt="" coords="705,156,793,192,831,203,829,208,791,197,703,161"/>
+</map>

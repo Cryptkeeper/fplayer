@@ -1,0 +1,9 @@
+<map id="FP_readSeq" name="FP_readSeq">
+<area shape="rect" id="Node000001" title="Reads the next frame set from the file controller and stores it in the provided frame data node point..." alt="" coords="5,55,99,80"/>
+<area shape="rect" id="Node000002" href="$fc_8c.html#a479c14c40649932a98343269452e6111" title="Reads up to the given number of bytes from the file controller starting at the given offset,..." alt="" coords="150,5,232,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="90,52,137,34,139,39,91,57"/>
+<area shape="rect" id="Node000003" href="$fd_8c.html#a0adfd6501d174720db95b64d706ac476" title="Appends a new frame data block to the end of the list. The frame data provided is not copied,..." alt="" coords="147,55,235,80"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="99,65,131,65,131,70,99,70"/>
+<area shape="rect" id="Node000004" href="$fd_8c.html#a04dc0c764a0555ae69a945fe0531167d" title="Frees all entry nodes in the list, but does not free the list itself." alt="" coords="157,104,225,130"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="91,78,143,97,141,102,90,83"/>
+</map>

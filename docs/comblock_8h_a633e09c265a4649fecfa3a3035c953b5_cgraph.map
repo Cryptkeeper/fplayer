@@ -1,0 +1,5 @@
+<map id="ComBlock_count" name="ComBlock_count">
+<area shape="rect" id="Node000001" title="Determines the number of compression blocks available within the given sequence file...." alt="" coords="5,5,127,31"/>
+<area shape="rect" id="Node000002" href="$fc_8c.html#a567dd57b805c1d46e224bd218e9c4293" title="Reads the given number of bytes from the file controller starting at the given offset." alt="" coords="175,5,246,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="127,16,159,16,159,21,127,21"/>
+</map>

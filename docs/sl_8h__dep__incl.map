@@ -1,0 +1,16 @@
+<map id="common/std2/sl.h" name="common/std2/sl.h">
+<area shape="rect" id="Node000001" title=" " alt="" coords="105,5,231,31"/>
+<area shape="rect" id="Node000002" href="$sl_8c.html" title=" " alt="" coords="5,79,131,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="140,42,87,81,84,76,137,38"/>
+<area shape="rect" id="Node000003" href="$main_8c.html" title=" " alt="" coords="112,153,194,178"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="168,46,157,152,152,152,163,46"/>
+<area shape="rect" id="Node000004" href="$serial_8h.html" title="Serial port communication interface." alt="" coords="220,79,305,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="198,39,248,77,245,81,195,43"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="233,115,173,154,171,150,230,111"/>
+<area shape="rect" id="Node000005" href="$player_8c.html" title=" " alt="" coords="218,153,307,178"/>
+<area shape="poly" id="edge5_Node000004_Node000005" title=" " alt="" coords="265,120,265,152,260,152,260,120"/>
+<area shape="rect" id="Node000006" href="$putil_8c.html" title="Player utility functions implementation." alt="" coords="332,153,410,178"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="295,111,354,150,351,154,292,116"/>
+<area shape="rect" id="Node000007" href="$serial_8c.html" title="Serial port communication implementation." alt="" coords="433,153,519,178"/>
+<area shape="poly" id="edge7_Node000004_Node000007" title=" " alt="" coords="314,107,440,150,439,155,312,112"/>
+</map>

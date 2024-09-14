@@ -1,0 +1,13 @@
+<map id="common/std2/string.c" name="common/std2/string.c">
+<area shape="rect" id="Node000001" title="String parsing function implementations." alt="" coords="144,5,291,31"/>
+<area shape="rect" id="Node000002" href="$string_8h.html" title="String parsing functions." alt="" coords="5,79,70,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="188,34,83,75,81,70,186,29"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="94,79,162,105"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="204,34,157,71,153,67,201,29"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="187,79,248,105"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="220,31,220,63,215,63,215,31"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="273,79,341,105"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="234,29,282,67,278,71,231,34"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="364,79,428,105"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="249,29,353,70,351,75,247,34"/>
+</map>
