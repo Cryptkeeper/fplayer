@@ -1,8 +1,13 @@
+/// @file crmap.h
+/// @brief Channel range map interface.
 #ifndef FPLAYER_CRMAP_H
 #define FPLAYER_CRMAP_H
 
 #include <stdint.h>
 
+/// @struct cr_s
+/// @brief Channel range node that maps sequence channel indices to unit and
+/// circuit numbers.
 struct cr_s;
 
 /// @brief Reads a channel range map from the given file path. The channel range

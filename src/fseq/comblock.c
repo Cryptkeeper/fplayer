@@ -1,3 +1,5 @@
+/// @file comblock.c
+/// @brief FSEQ compression block loading implementation.
 #include "comblock.h"
 
 #include <assert.h>
@@ -13,6 +15,8 @@
 #include "std2/errcode.h"
 #include "std2/fc.h"
 
+/// @def COMBLOCK_SIZE
+/// @brief Size of a FSEQ file format compression block entry in bytes.
 #define COMBLOCK_SIZE 8
 
 /// @brief Calculates the absolute address of the given compression block index
@@ -94,7 +98,7 @@ ret:
 /// @param fc target file controller instance
 /// @param seq sequence file for file layout information
 /// @param index index of the compression block to read
-/// @param fn out pointer to the decompressed block data (array of frames) or
+/// @param list out pointer to the decompressed block data (array of frames) or
 /// NULL on failure
 /// @return 0 on success, a negative error code on failure
 static int ComBlock_readZstd(struct FC* fc,

@@ -1,3 +1,5 @@
+/// @file writer.h
+/// @brief FSEQ sequence file encoding functions.
 #ifndef FPLAYER_WRITER_H
 #define FPLAYER_WRITER_H
 
@@ -18,16 +20,18 @@ int fseqWriteHeader(struct FC* fc, const struct tf_header_t* header);
 /// at the end of the format header.
 /// @param fc target file controller
 /// @param header header to account for
-/// @param count number of blocks in the array
+/// @param blocks compression blocks to encode and write
 /// @return 0 on success, a negative error code on failure
 int fseqWriteCompressionBlocks(struct FC* fc,
                                const struct tf_header_t* header,
                                const struct tf_compression_block_t* blocks);
 
+/// @struct fseq_var_s
+/// @brief Represents a variable that can be encoded in the FSEQ format.
 struct fseq_var_s {
-    unsigned char id[2]; /* two char id for identifying the variable */
-    uint16_t size;       /* size of the variable data `value` */
-    char* value;         /* binary variable data */
+    unsigned char id[2]; ///< Two char id for identifying the variable
+    uint16_t size;       ///< Size of the variable data \p value
+    char* value;         ///< Binary variable data
 };
 
 /// @brief Encodes the given variables and writes them to the file after the

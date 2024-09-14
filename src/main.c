@@ -1,3 +1,5 @@
+/// @file main.c
+/// @brief Main program entry point.
 #include <getopt.h>
 #include <limits.h>
 #include <stdio.h>
@@ -10,13 +12,15 @@
 #define TINYLOR_IMPL
 #include "tinylor.h"
 
+#define SL_IMPL
+#include "sl.h"
+
 #include "audio.h"
 #include "crmap.h"
 #include "player.h"
 #include "queue.h"
 #include "serial.h"
 #include "std2/errcode.h"
-#include "std2/sl.h"
 #include "std2/string.h"
 
 /// @brief Prints the program usage message to stdout.
@@ -53,13 +57,13 @@ static void printSerialEnumPorts(void) {
 }
 
 static struct {
-    char* seqfp;          /* sequence file path        */
-    char* audiofp;        /* audio override file path  */
-    char* cmapfp;         /* channel map file path     */
-    unsigned int waitsec; /* playback start delay      */
-    char* spname;         /* serial port device name   */
-    int spbaud;           /* serial port baud rate     */
-} gOpts;
+    char* seqfp;          ///< Sequence file path
+    char* audiofp;        ///< Audio override file path
+    char* cmapfp;         ///< Channel map file path
+    unsigned int waitsec; ///< Playback start delay
+    char* spname;         ///< Serial port device name
+    int spbaud;           ///< Serial port baud rate
+} gOpts; ///< Global program options
 
 /// @brief Parse command line options and sets global variables for program
 /// execution via `gOpts`.
@@ -136,6 +140,7 @@ static int parseOpts(const int argc, char** const argv) {
     return FP_EOK;
 }
 
+/// @brief Frees all allocated memory retained by \p gOpts.
 static void freeOpts(void) {
     free(gOpts.seqfp);
     free(gOpts.audiofp);
@@ -177,7 +182,7 @@ int main(const int argc, char** const argv) {
                 FP_strerror(err), err);
         goto ret;
     }
-    
+
     // loop through the queue and execute each entry
     struct qentry_s req;
     while (!Q_next(pq, &req)) {

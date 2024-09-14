@@ -1,3 +1,5 @@
+/// @file player.h
+/// @brief Playback execution function declaration.
 #ifndef FPLAYER_PLAYER_H
 #define FPLAYER_PLAYER_H
 

@@ -1,3 +1,5 @@
+/// @file queue.c
+/// @brief Playback queue implementation.
 #include "queue.h"
 
 #include <assert.h>
@@ -6,9 +8,9 @@
 #include "std2/errcode.h"
 
 struct q_s {
-    struct qentry_s* entries;
-    int size;
-    int cap;
+    struct qentry_s* entries;///< Queue entries
+    int size;                ///< Number of entries in the queue
+    int cap;                 ///< Capacity of the queue
 };
 
 int Q_init(struct q_s** q) {

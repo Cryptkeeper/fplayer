@@ -1,3 +1,5 @@
+/// @file sleep.h
+/// @brief Adaptive sleep time controller for frame rate control.
 #ifndef FPLAYER_SLEEP_H
 #define FPLAYER_SLEEP_H
 

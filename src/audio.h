@@ -1,3 +1,5 @@
+/// @file audio.h
+/// @brief Audio system interface.
 #ifndef FPLAYER_AUDIO_H
 #define FPLAYER_AUDIO_H
 

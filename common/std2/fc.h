@@ -1,15 +1,20 @@
+/// @file fc.h
+/// @brief File controller interface for reading/writing files.
 #ifndef FPLAYER_FC_H
 #define FPLAYER_FC_H
 
 #include <stdint.h>
 
+/// @struct FC
 /// @brief File controller that wraps a stdlib file pointer and provides
 /// additional functionality for reading files, including thread-safe access.
 struct FC;
 
+/// @enum fc_mode_t
+/// @brief File controller open mode.
 enum fc_mode_t {
-    FC_MODE_READ,  /* equivalent to "rb" */
-    FC_MODE_WRITE, /* equivalent to "wb" */
+    FC_MODE_READ,  ///< Equivalent to "rb"
+    FC_MODE_WRITE, ///< Equivalent to "wb"
 };
 
 /// @brief Opens a file controller instance for the given file path and mode.

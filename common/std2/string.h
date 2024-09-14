@@ -1,3 +1,5 @@
+/// @file string.h
+/// @brief String parsing functions.
 #ifndef FPLAYER_STRING_H
 #define FPLAYER_STRING_H
 

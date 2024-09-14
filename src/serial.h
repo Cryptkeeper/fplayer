@@ -1,10 +1,14 @@
+/// @file serial.h
+/// @brief Serial port communication interface.
 #ifndef FPLAYER_SERIAL_H
 #define FPLAYER_SERIAL_H
 
 #include <stdint.h>
 
-#include "std2/sl.h"
+#include "sl.h"
 
+/// @struct serialdev_s
+/// @brief Serial port communication device.
 struct serialdev_s;
 
 /// @brief Initializes a write-mode serial port with the provided device name

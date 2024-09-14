@@ -1,3 +1,5 @@
+/// @file serial.c
+/// @brief Serial port communication implementation.
 #include "serial.h"
 
 #include <assert.h>
@@ -10,13 +12,13 @@
 #include "std2/errcode.h"
 
 struct serialdev_s {
-    _Bool virtual : 1;  /* if true, output is written to `vfile` */
-    _Bool real : 1;     /* if true, output is written to `rport` */
-    _Bool silenced : 1; /* if true, output is discarded */
+    _Bool virtual : 1;  ///< If true, output is written to \p vfile
+    _Bool real : 1;     ///< If true, output is written to \p rport
+    _Bool silenced : 1; ///< If true, output is discarded
     union {
-        FILE* vfile;           /* virtual file handle */
-        struct sp_port* rport; /* real serial port handle */
-    } dev;
+        FILE* vfile;           ///< Virtual file handle
+        struct sp_port* rport; ///< Real serial port handle
+    } dev; ///< Device handle
 };
 
 /// @brief Prints an error message to stderr for the given error code, including
@@ -36,6 +38,7 @@ static void Serial_printError(const enum sp_return err) {
 }
 
 /// @brief Opens the serial port with the given device name and baud rate.
+/// @param sdev the serial device structure to populate
 /// @param devName the device name to open
 /// @param baudRate the baud rate to configure the device connection with
 /// @return 0 on success, a negative error code on failure

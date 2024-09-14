@@ -1,3 +1,5 @@
+/// @file putil.c
+/// @brief Player utility functions implementation.
 #include "putil.h"
 
 #include <assert.h>

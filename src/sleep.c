@@ -1,3 +1,5 @@
+/// @file sleep.c
+/// @brief Adaptive sleep time controller implementation.
 #include "sleep.h"
 
 #include <assert.h>
@@ -12,14 +14,17 @@
 #include "std2/errcode.h"
 #include "std2/time.h"
 
+/// @def SLEEP_COLL_SAMPLE_COUNT
+/// @brief Number of sleep time samples to store in the sleep collector.
 #define SLEEP_COLL_SAMPLE_COUNT 20
 
+/// @struct sleep_coll_s
 /// @brief Sleep collector structure for providing historical sleep performance
 /// data to better estimate sleep times.
 struct sleep_coll_s {
-    int64_t ns[SLEEP_COLL_SAMPLE_COUNT]; /* sleep time samples in nanoseconds */
-    int idx; /* current index in the sleep time samples */
-    int cnt; /* number of sleep time samples */
+    int64_t ns[SLEEP_COLL_SAMPLE_COUNT]; ///< Sleep time samples in nanoseconds
+    int idx; ///< Current index in the sleep time samples
+    int cnt; ///< Number of sleep time samples
 };
 
 int Sleep_init(struct sleep_coll_s** coll) {

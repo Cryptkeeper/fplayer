@@ -1,3 +1,5 @@
+/// @file crmap.c
+/// @brief Channel range map implementation.
 #include "crmap.h"
 
 #include <assert.h>
@@ -9,10 +11,10 @@
 #include "std2/fc.h"
 
 struct cr_s {
-    uint32_t indexr[2];   /* start index (incl.), end index (incl.) */
-    uint16_t circuitr[2]; /* start circuit (incl.), end circuit (incl.) */
-    uint8_t unit;         /* unit id */
-    struct cr_s* next;    /* next cr_s in the list, NULL if last */
+    uint32_t indexr[2];  ///< Start index (incl.), end index (incl.)
+    uint16_t circuitr[2];///< Start circuit (incl.), end circuit (incl.)
+    uint8_t unit;        ///< Unit ID
+    struct cr_s* next;   ///< Next \p cr_s in the list, otherwise NULL
 };
 
 /// @brief Parses a single channel range map object into the given `cr` struct.

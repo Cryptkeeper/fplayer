@@ -1,3 +1,5 @@
+/// @file cell.c
+/// @brief Cell table for tracking output states.
 #include "cell.h"
 
 #include <assert.h>
@@ -7,18 +9,20 @@
 #include "crmap.h"
 #include "std2/errcode.h"
 
+/// @struct cell_s
+/// @brief A single cell in the cell table, repesenting a single output channel.
 struct cell_s {
-    _Bool valid : 1;    /* cell is configured and valid */
-    _Bool modified : 1; /* cell has been modified since last groupof */
-    uint8_t unit;       /* hardware unit id for routing */
-    uint8_t section;    /* circuit id / 16 for 16-bit proto alignment */
-    uint8_t offset;     /* circuit id % 16 for 16-bit proto alignment */
-    uint8_t intensity;  /* current output intensity */
+    _Bool valid : 1;    ///< True if cell is configured and valid
+    _Bool modified : 1; ///< True if cell has been modified since last check
+    uint8_t unit;       ///< Hardware unit ID for routing
+    uint8_t section;    ///< Circuit ID / 16 for 16-bit proto alignment
+    uint8_t offset;     ///< Circuit ID % 16 for 16-bit proto alignment
+    uint8_t intensity;  ///< Current output intensity
 };
 
 struct ctable_s {
-    struct cell_s* cells;
-    size_t size;
+    struct cell_s* cells; ///< Array of cells
+    size_t size;         ///< Number of cells in the table
 };
 
 int CT_init(const struct cr_s* cmap,
@@ -103,6 +107,10 @@ static inline int CT_matches(const struct cell_s* a, const struct cell_s* b) {
            a->intensity == b->intensity;
 }
 
+/// @def MAX_MATCHES
+/// @brief Maximum number of matching cells to find in a single group.
+/// @note This is derived from the maximum value supported by the protocol. It
+/// is not a software limitation.
 #define MAX_MATCHES 16
 
 /// @brief Finds all cells in the table that match the provided reference cell.
@@ -132,6 +140,10 @@ static int CT_findMatches(struct ctable_s* table,
     return pos;
 }
 
+/// @def CHANNEL_BIT
+/// @brief Returns a bitmask for the given channel index.
+/// @param i channel index
+/// @return bitmask for the channel index
 #define CHANNEL_BIT(i) (1 << (i))
 
 int CT_groupof(struct ctable_s* table, uint32_t at, struct ctgroup_s* group) {

@@ -1,3 +1,5 @@
+/// @file time.c
+/// @brief Basic time tracking utility function implementations.
 #include "time.h"
 
 #ifdef _WIN32

@@ -1,17 +1,23 @@
+/// @file fd.h
+/// @brief Frame data block list utility functions.
 #ifndef FPLAYER_FD_H
 #define FPLAYER_FD_H
 
 #include <stdint.h>
 
+/// @struct fd_list_s
+/// @brief Represents a list of frame data blocks.
 struct fd_list_s {
-    struct fd_node_s* head;
-    struct fd_node_s* tail;
-    int count;
+    struct fd_node_s* head; ///< First node in the list
+    struct fd_node_s* tail; ///< Last node in the list
+    int count; ///< Number of nodes in the list
 };
 
+/// @struct fd_node_s
+/// @brief Represents a node in a list of frame data blocks.
 struct fd_node_s {
-    uint8_t* frame;
-    struct fd_node_s* next;
+    uint8_t* frame; ///< Frame data block
+    struct fd_node_s* next; ///< Next node in the list
 };
 
 /// @brief Frees all entry nodes in the list, but does not free the list itself.

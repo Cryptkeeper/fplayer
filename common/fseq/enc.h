@@ -1,3 +1,5 @@
+/// @file enc.h
+/// @brief Binary encoding utility functions.
 #ifndef FPLAYER_ENC_H
 #define FPLAYER_ENC_H
 

@@ -1,3 +1,5 @@
+/// @file fc.c
+/// @brief File controller implementation.
 #include "fc.h"
 
 #include <pthread.h>
@@ -6,9 +8,9 @@
 #include <string.h>
 
 struct FC {
-    char* fp;              /* duplicate of filepath provided to `FC_open` */
-    FILE* file;            /* file pointer */
-    pthread_mutex_t mutex; /* mutex for file access */
+    char* fp;              ///< Duplicate of filepath provided to \p FC_open
+    FILE* file;            ///< File handle
+    pthread_mutex_t mutex; ///< Mutex for thread-safe file access
 };
 
 struct FC* FC_open(const char* const fp, const enum fc_mode_t mode) {

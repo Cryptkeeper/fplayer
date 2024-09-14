@@ -1,3 +1,5 @@
+/// @file pump.c
+/// @brief Frame data loading implementation.
 #include "pump.h"
 
 #include <assert.h>
@@ -15,16 +17,16 @@
 #include "std2/fc.h"
 
 struct frame_pump_s {
-    struct FC* fc;                 /* file controller to read frames from */
-    const struct tf_header_t* seq; /* sequence file metadata header */
-    struct fd_list_s curr;         /* current frame set to read from */
-    struct fd_list_s next;         /* preloaded frame set to read from next */
-    bool preloading;               /* preloading/preloaded state flag */
-    pthread_t thread;              /* preload thread */
+    struct FC* fc;                 ///< File controller to read from
+    const struct tf_header_t* seq; ///< Sequence file metadata header
+    struct fd_list_s curr;         ///< Current frame set to read from
+    struct fd_list_s next;         ///< Preloaded frame set to read from next
+    bool preloading;               ///< Preloading/preloaded state flag
+    pthread_t thread;              ///< Preload thread
     union {
-        uint32_t frame; /* target frame index */
-        int cb;         /* target compression block index */
-    } pos;              /* read position data */
+        uint32_t frame; ///< Target frame index
+        int cb;         ///< Target compression block index
+    } pos;              ///< Read position data
 };
 
 int FP_init(struct FC* fc,
@@ -137,12 +139,6 @@ static void* FP_thread(void* pargs) {
     return NULL;
 }
 
-/// @brief Checks if the current frame set is running low and triggers a preload
-/// of the next frame set if necessary. An empty frame pump is NOT considered
-/// low, as it will immediately read the next frame set from the file controller.
-/// @param pump frame pump to check
-/// @param frame current frame index
-/// @return 0 on success, a negative error code on failure
 int FP_checkPreload(struct frame_pump_s* pump, const uint32_t frame) {
     assert(pump != NULL);
 

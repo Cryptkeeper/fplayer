@@ -1,3 +1,5 @@
+/// @file string.c
+/// @brief String parsing function implementations.
 #include "string.h"
 
 #include <assert.h>

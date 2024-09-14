@@ -1,3 +1,5 @@
+/// @file comblock.h
+/// @brief FSEQ compression block loading API.
 #ifndef FPLAYER_COMBLOCK_H
 #define FPLAYER_COMBLOCK_H
 

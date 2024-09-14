@@ -1,3 +1,5 @@
+/// @file player.c
+/// @brief Playback execution function implementation.
 #include "player.h"
 
 #include <assert.h>
@@ -20,13 +22,15 @@
 #include "std2/errcode.h"
 #include "std2/fc.h"
 
+/// @struct player_rtd_s
+/// @brief Player runtime data structure.
 struct player_rtd_s {
-    uint32_t nextFrame;         /* index of the next frame to be played       */
-    struct tf_header_t* seq;    /* decoded sequence file metadata header      */
-    struct frame_pump_s* pump;  /* frame pump for reading/queueing frame data */
-    struct sleep_coll_s* scoll; /* sleep collector for frame rate control     */
-    struct ctable_s* ctable;    /* computed+cached channel map lookup table   */
-    uint32_t written;           /* network bytes written in the last second   */
+    uint32_t nextFrame;         ///< Index of the next frame to be played
+    struct tf_header_t* seq;    ///< Decoded sequence file metadata header
+    struct frame_pump_s* pump;  ///< Frame pump for reading/queueing frame data
+    struct sleep_coll_s* scoll; ///< Sleep collector for frame rate control
+    struct ctable_s* ctable;    ///< Computed+cached channel map lookup table
+    uint32_t written;           ///< Network bytes written in the last second
 };
 
 /// @brief Frees dynamic allocated structures referenced by the player runtime data.

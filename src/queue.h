@@ -1,13 +1,19 @@
+/// @file queue.h
+/// @brief Playback queue interface.
 #ifndef FPLAYER_QUEUE_H
 #define FPLAYER_QUEUE_H
 
+/// @struct qentry_s
+/// @brief Queue entry structure that holds playback configuration data.
 struct qentry_s {
-    const char* seqfp;    /* sequence file path */
-    const char* audiofp;  /* audio override file path */
-    const char* cmapfp;   /* channel map file path */
-    unsigned int waitsec; /* wait time in seconds before starting */
+    const char* seqfp;    ///< Sequence file path
+    const char* audiofp;  ///< Audio override file path
+    const char* cmapfp;   ///< Channel map file path
+    unsigned int waitsec; ///< Playback start delay in seconds
 };
 
+/// @struct q_s
+/// @brief Queue structure for managing playback requests.
 struct q_s;
 
 /// @brief Allocates and initializes a new queue instance.

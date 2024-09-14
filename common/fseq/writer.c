@@ -1,3 +1,5 @@
+/// @file writer.c
+/// @brief FSEQ sequence file encoding function implementations.
 #include "writer.h"
 
 #include <assert.h>
@@ -12,6 +14,8 @@
 #include "std2/errcode.h"
 #include "std2/fc.h"
 
+/// @def HEADER_SIZE
+/// @brief Size of the FSEQ file format header in bytes.
 #define HEADER_SIZE 32
 
 // FSEQ File Format Header
@@ -78,6 +82,8 @@ int fseqWriteCompressionBlocks(struct FC* fc,
     return FP_EOK;
 }
 
+/// @def VAR_HEADER_SIZE
+/// @brief Size of a FSEQ file format variable header in bytes.
 #define VAR_HEADER_SIZE 4
 
 /// @brief Calculates the size in bytes of the variable section according to the

@@ -32,7 +32,7 @@ endif ()
 file(GLOB_RECURSE COMMON_FILES "common/*.[ch]")
 set_source_files_properties(${COMMON_FILES} PROPERTIES COMPILE_FLAGS ${PEDANTIC_COMPILER_FLAGS})
 add_library(common STATIC ${COMMON_FILES})
-target_include_directories(common PUBLIC "dep/libtinyfseq" "dep/libtinylor" common)
+target_include_directories(common PUBLIC "dep/libtinyfseq" "dep/libtinylor" "dep/sl" common)
 
 # mftool executable
 file(GLOB_RECURSE MFTOOL_FILES "tool/mftool/*.c")

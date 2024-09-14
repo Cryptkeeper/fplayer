@@ -1,3 +1,5 @@
+/// @file seq.c
+/// @brief FSEQ sequence file loading implementation.
 #include "seq.h"
 
 #include <assert.h>
@@ -41,6 +43,8 @@ int Seq_open(struct FC* fc, struct tf_header_t** seq) {
     return FP_EOK;
 }
 
+/// @def VARHEADER_SIZE
+/// @brief Size of a FSEQ file format variable header in bytes.
 #define VARHEADER_SIZE 4
 
 /// @brief Reads a variable from the variable table and populates the provided

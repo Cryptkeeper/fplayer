@@ -1,3 +1,5 @@
+/// @file enc.c
+/// @brief Binary encoding utility function implementations.
 #include "enc.h"
 
 #include <assert.h>

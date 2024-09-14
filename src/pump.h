@@ -1,3 +1,5 @@
+/// @file pump.h
+/// @brief Frame data loading interface.
 #ifndef FPLAYER_PUMP_H
 #define FPLAYER_PUMP_H
 
@@ -7,6 +9,8 @@ struct FC;
 
 struct tf_header_t;
 
+/// @struct frame_pump_s
+/// @brief Frame pump state controller for loading/tracking frame data.
 struct frame_pump_s;
 
 /// @brief Initializes a frame pump with the provided file controller. The pump

@@ -1,8 +1,13 @@
+/// @file cell.h
+/// @brief Cell table for tracking output states.
 #ifndef FPLAYER_CELL_H
 #define FPLAYER_CELL_H
 
 #include <stdint.h>
 
+/// @struct ctable_s
+/// @brief Represents a table of cells that map raw FSEQ sequence indexes to a
+/// known unit and channel number.
 struct ctable_s;
 
 struct cr_s;
@@ -33,12 +38,15 @@ void CT_set(struct ctable_s* table, uint32_t index, uint8_t output);
 /// @param output intensity to change to
 void CT_change(struct ctable_s* table, uint32_t index, uint8_t output);
 
+/// @struct ctgroup_s
+/// @brief Represents a group of linked cells that share the same unit number,
+/// channel selection bitmask, and output intensity value.
 struct ctgroup_s {
-    uint8_t unit;      /* unit number shared by all channels */
-    uint8_t offset;    /* channel selection offset */
-    uint16_t cs;       /* channel selection bitmask */
-    uint8_t intensity; /* intensity output value for all channels */
-    int size;          /* the number of active channels */
+    uint8_t unit;      ///< Unit number shared by all channels
+    uint8_t offset;    ///< Channel selection offset
+    uint16_t cs;       ///< Channel selection bitmask
+    uint8_t intensity; ///< Intensity output value for all channels
+    int size;          ///< The number of active channels
 };
 
 /// @brief Returns a group of linked cells starting at the given index. The
@@ -49,7 +57,7 @@ struct ctgroup_s {
 /// @param table table to search
 /// @param at index to start the group search
 /// @param group pointer to store the group
-/// @param 1 if a group was found, 0 if no group was found
+/// @return 1 if a group was found, 0 if no group was found
 int CT_groupof(struct ctable_s* table, uint32_t at, struct ctgroup_s* group);
 
 /// @brief Frees the table and any held resources.

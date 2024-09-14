@@ -1,3 +1,5 @@
+/// @file putil.h
+/// @brief Playback utility functions.
 #ifndef FPLAYER_PUTIL_H
 #define FPLAYER_PUTIL_H
 

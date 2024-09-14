@@ -1,3 +1,5 @@
+/// @file audio.c
+/// @brief Audio system implementation.
 #include "audio.h"
 
 #include <assert.h>
@@ -7,12 +9,18 @@
 
 #include "std2/errcode.h"
 
+/// @brief Prints the last OpenAL error to stderr with the given message.
+/// @param msg message to print before the error message
+/// @note If no OpenAL error has occurred, this function does nothing.
 static void perror_al(const char* const msg) {
     ALenum err;
     if ((err = alGetError()) != AL_NO_ERROR)
         fprintf(stderr, "%s: OpenAL error 0x%02x\n", msg, err);
 }
 
+/// @brief Prints the last ALUT error to stderr with the given message.
+/// @param msg message to print before the error message
+/// @note If no ALUT error has occurred, this function does nothing.
 static void perror_alut(const char* const msg) {
     ALenum err;
     if ((err = alutGetError()) != ALUT_ERROR_NO_ERROR)
@@ -21,11 +29,13 @@ static void perror_alut(const char* const msg) {
 }
 
 static struct {
-    bool init;
-    ALuint sid; /* allocated source id */
-    ALuint bid; /* allocated buffer id */
-} gAudio;
+    bool init; ///< True if the audio system has been initialized
+    ALuint sid; ///< Allocated source id for audio playback
+    ALuint bid; ///< Allocated buffer id for audio data
+} gAudio; ///< Global audio system state
 
+/// @brief Initializes the audio system if it has not been initialized yet.
+/// @return 0 on success, a negative error code on failure
 static int audioInit(void) {
     if (gAudio.init) return FP_EOK;
     gAudio.init = true;
@@ -36,6 +46,8 @@ static int audioInit(void) {
     return FP_EOK;
 }
 
+/// @brief Stops the current audio playback, if any. The last allocated AL
+/// buffer is then detached from the source and deleted. The source is retained.
 static void audioStopPlayback(void) {
     if (!gAudio.init) return;
 

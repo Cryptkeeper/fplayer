@@ -1,3 +1,5 @@
+/// @file seq.h
+/// @brief FSEQ sequence file loading API.
 #ifndef FPLAYER_SEQ_H
 #define FPLAYER_SEQ_H
 

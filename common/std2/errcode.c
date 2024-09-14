@@ -1,5 +1,8 @@
+/// @file errcode.c
+/// @brief Error code definitions and message strings.
 #include "errcode.h"
 
+/// @brief Error message strings for each error code.
 static const char* FP_errstr[FP_ECOUNT] = {
         "FP_EOK",       "FP_ERANGE",   "FP_EINVLARG", "FP_ESYSCALL",
         "FP_ENOMEM",    "FP_EPTHREAD", "FP_EZSTD",    "FP_EAUDINIT",
