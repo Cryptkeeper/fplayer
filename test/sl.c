@@ -2,7 +2,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include <std2/sl.h>
+#define SL_IMPL
+#include "sl.h"
 
 int main(int argc, char** argv) {
     (void) argc;
